@@ -10,5 +10,5 @@ RUN npm install pm2 -g
 
 RUN npm run build
 
-EXPOSE 8071
+EXPOSE 30020
 CMD ["pm2-runtime", "start", "dist/app.js", "--instances", "max"]
