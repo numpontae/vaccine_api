@@ -83,7 +83,7 @@ class registerRoute {
         res.send(data)
       } else {
         //let query = `SELECT PI.*, CTS.Desc_EN Gender_Desc, CTN.Desc_EN Nation_Desc, CTR.Desc_EN Religion_Desc, CTP.Desc_EN Lan_Desc FROM Patient_Info PI`
-        let query = `SELECT PI.Title title, PI.Firstname firstname, PI.Middlename middlename, PI.Lastname lastname, PI.DOB dob, PI.Gender gender, PI.Nationality nationallity, PI.Religion religion, PI.Preferred_Language preferredlanguage, PI.Expatriate expatriate, PI.Marital_Status marital_status, PI.National_ID national_id, PI.Passport passport, PI.Occupation occupation, PI.Address address, PI.Country country, PI.Phone_No phone_no, PI.Email email FROM Patient_Info PI`
+        let query = `SELECT PI.Title title, PI.Firstname firstname, PI.Middlename middlename, PI.Lastname lastname, PI.DOB dob, PI.Gender gender, PI.Nationality nationality, PI.Religion religion, PI.Preferred_Language preferredlanguage, PI.Expatriate expatriate, PI.Marital_Status marital_status, PI.National_ID national_id, PI.Passport passport, PI.Occupation occupation, PI.Address address, PI.Country country, PI.Phone_No phone_no, PI.Email email FROM Patient_Info PI`
         query += ` WHERE 1 = 1`
         query += ` AND PI.Id = ${id}`
         let emerQuery = `SELECT * FROM Emergency WHERE Patient_ID = ${id}`
