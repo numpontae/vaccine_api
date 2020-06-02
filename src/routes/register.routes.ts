@@ -13,7 +13,7 @@ class registerRoute {
       let repos = di.get("repos");
       console.log(_.indexOf(body.financial.payment_method, 'Self pay'));
       let insertInfo = `INSERT INTO Patient_Info (Title, Firstname, Middlename, Lastname, 
-      DOB, Gender, Nationallity, Religion, Preferred_Language, Expatriate, Marital_Status, National_ID, Passport, Occupation, Address, Country, Phone_No, 
+      DOB, Gender, Nationality, Religion, Preferred_Language, Expatriate, Marital_Status, National_ID, Passport, Occupation, Address, Country, Phone_No, 
       Email, Confirm, Consent) 
       VALUES('${body.patient_info.title ? body.patient_info.title : ''}', '${body.patient_info.firstname ? body.patient_info.firstname : ''}', 
       '${body.patient_info.middlename ? body.patient_info.middlename : ''}', '${body.patient_info.lastname ? body.patient_info.lastname : ''}', 
@@ -83,7 +83,7 @@ class registerRoute {
         res.send(data)
       } else {
         //let query = `SELECT PI.*, CTS.Desc_EN Gender_Desc, CTN.Desc_EN Nation_Desc, CTR.Desc_EN Religion_Desc, CTP.Desc_EN Lan_Desc FROM Patient_Info PI`
-        let query = `SELECT PI.Title title, PI.Firstname firstname, PI.Middlename middlename, PI.Lastname lastname, PI.DOB dob, PI.Gender gender, PI.Nationallity nationallity, PI.Religion religion, PI.Preferred_Language preferredlanguage, PI.Expatriate expatriate, PI.Marital_Status marital_status, PI.National_ID national_id, PI.Passport passport, PI.Occupation occupation, PI.Address address, PI.Country country, PI.Phone_No phone_no, PI.Email email FROM Patient_Info PI`
+        let query = `SELECT PI.Title title, PI.Firstname firstname, PI.Middlename middlename, PI.Lastname lastname, PI.DOB dob, PI.Gender gender, PI.Nationality nationallity, PI.Religion religion, PI.Preferred_Language preferredlanguage, PI.Expatriate expatriate, PI.Marital_Status marital_status, PI.National_ID national_id, PI.Passport passport, PI.Occupation occupation, PI.Address address, PI.Country country, PI.Phone_No phone_no, PI.Email email FROM Patient_Info PI`
         query += ` WHERE 1 = 1`
         query += ` AND PI.Id = ${id}`
         let emerQuery = `SELECT * FROM Emergency WHERE Patient_ID = ${id}`
