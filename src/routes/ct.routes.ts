@@ -18,7 +18,7 @@ class ctRoute {
   getNationality() {
     return async (req: Request, res: Response) => {
       let repos = di.get('repos')
-      let query = `SELECT * FROM CT_Nation`
+      let query = `SELECT * FROM CT_Nation ORDER BY CASE WHEN Desc_EN = 'THAI' THEN '1' ELSE Desc_EN END ASC`
       let result = await repos.query(query)
       let response = result.map((d:any ) => {
         return {
@@ -42,7 +42,7 @@ class ctRoute {
   getReligion() {
     return async (req: Request, res: Response) => {
       let repos = di.get('repos')
-      let query = `SELECT * FROM CT_Religion`
+      let query = `SELECT * FROM CT_Religion ORDER BY CASE WHEN Desc_EN = 'Buddhism' THEN '1' ELSE Desc_EN END ASC`
       let result = await repos.query(query)
       res.send(result) 
     }
