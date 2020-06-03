@@ -73,10 +73,10 @@ class registerRoute {
           query += ` AND PI.Phone_No = '${phone_no}'`
         }
         if (!_.isEmpty(passport)) {
-          query += ` AND PI.Passport = '${phone_no}'`
+          query += ` AND PI.Passport = '${passport}'`
         }
         if (!_.isEmpty(national_id)) {
-          query += ` AND PI.National_ID = '${phone_no}'`
+          query += ` AND PI.National_ID = '${national_id}'`
         }
         query += ` AND Confirm != 1`
         let data = await repos.query(query)
