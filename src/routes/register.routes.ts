@@ -21,7 +21,7 @@ class registerRoute {
       '${body.patient_info.expatriate}', '${body.patient_info.marital_status}', '${body.patient_info.national_id ? body.patient_info.national_id : ''}', 
       '${body.patient_info.passport ? body.patient_info.passport : ''}', '${body.patient_info.occupation ? body.patient_info.occupation : ''}', 
       '${body.patient_info.address ? body.patient_info.address : ''}', '${body.patient_info.country}', '${body.patient_info.phone_no ? body.patient_info.phone_no : ''}', 
-      '${body.patient_info.email ? body.patient_info.email : ''}', 'N', 'Y')`;
+      '${body.patient_info.email ? body.patient_info.email : ''}', 0, ${body.consent})`;
       let Info = await repos.query(insertInfo);
       let insertEmergency = `INSERT INTO Emergency (Firstname, Lastname, Relation, Address, Phone_No, Email, Patient_ID, Createdate, Different_Address) VALUES('${body.emergency.first_name}', '${body.emergency.last_name}', '${body.emergency.relation}', '${body.emergency.same_address ? body.emergency.address : body.patient_info.address}', '${body.emergency.phone_no}', '${body.emergency.email}', ${Info.insertId}, current_timestamp(), ${body.emergency.same_address ? 0 : 1});`
       await repos.query(insertEmergency);
@@ -78,12 +78,12 @@ class registerRoute {
         if (!_.isEmpty(national_id)) {
           query += ` AND PI.National_ID = '${phone_no}'`
         }
-        query += ` AND Confirm != 'Y'`
+        query += ` AND Confirm != 1`
         let data = await repos.query(query)
         res.send(data)
       } else {
         //let query = `SELECT PI.*, CTS.Desc_EN Gender_Desc, CTN.Desc_EN Nation_Desc, CTR.Desc_EN Religion_Desc, CTP.Desc_EN Lan_Desc FROM Patient_Info PI`
-        let query = `SELECT PI.Title title, PI.Firstname firstname, PI.Middlename middlename, PI.Lastname lastname, PI.DOB dob, PI.Gender gender, PI.Nationality nationality, PI.Religion religion, PI.Preferred_Language preferredlanguage, PI.Expatriate expatriate, PI.Marital_Status marital_status, PI.National_ID national_id, PI.Passport passport, PI.Occupation occupation, PI.Address address, PI.Country country, PI.Phone_No phone_no, PI.Email email FROM Patient_Info PI`
+        let query = `SELECT PI.Title title, PI.Firstname firstname, PI.Middlename middlename, PI.Lastname lastname, PI.DOB dob, PI.Gender gender, PI.Nationality nationality, PI.Religion religion, PI.Preferred_Language preferredlanguage, PI.Expatriate expatriate, PI.Marital_Status marital_status, PI.National_ID national_id, PI.Passport passport, PI.Occupation occupation, PI.Address address, PI.Country country, PI.Phone_No phone_no, PI.Email email, PI.Consent consent FROM Patient_Info PI`
         query += ` WHERE 1 = 1`
         query += ` AND PI.Id = ${id}`
         let emerQuery = `SELECT * FROM Emergency WHERE Patient_ID = ${id}`
@@ -132,7 +132,7 @@ class registerRoute {
       let { signatureHash, signatureImage, id, consent } = req.body;
       console.log(req.body)
       let repos = di.get("repos");
-      let query = `UPDATE Patient_Info SET Confirm='Y' WHERE Id=${id};`
+      let query = `UPDATE Patient_Info SET Confirm=1, Consent=${consent} WHERE Id=${id};`
       let insertSignature = `INSERT INTO Signature (Patient_ID, Hash_Data, Image) VALUES(${id}, '${signatureHash}', '${signatureImage}');`
       await repos.query(query)
       await repos.query(insertSignature)
