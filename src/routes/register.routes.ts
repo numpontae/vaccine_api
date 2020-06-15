@@ -31,7 +31,7 @@ class registerRoute {
           Postcode: body.present.sameAddress ? body.permanent.postcode : body.present.postcode,
           Subdistrict: body.present.sameAddress ? body.permanent.subdistrict : body.present.subdistrict,
           District: body.present.sameAddress ? body.permanent.district : body.present.district,
-          Address: body.present.sameAddress ? body.permanent.address : body.present.addressaddress,
+          Address: body.present.sameAddress ? body.permanent.address : body.present.address,
           Province: body.present.sameAddress ? body.permanent.province : body.present.province
         }
         let insertPresent = `INSERT INTO Present_Address (Patient_ID, Country, Postcode, Subdistrict, District, Address, Province, sameAddress) VALUES(${Info.insertId}, ${presentAddress.Country}, '${presentAddress.Postcode}', ${presentAddress.Subdistrict}, '${presentAddress.District}', '${presentAddress.Address}', '${presentAddress.Province}', ${body.present.sameAddress});`
@@ -44,7 +44,7 @@ class registerRoute {
           Address: body.emergency.sameAddress ? body.permanent.address : body.emergency.addressaddress,
           Province: body.emergency.sameAddress ? body.permanent.province : body.emergency.province
         }
-        let insertEmergency = `INSERT INTO Emergency (Patient_ID, Firstname, Lastname, Relation, Country, Postcode, Province, Subdistrict, District, Address, sameAddress, Email, Phone_No) VALUES(${Info.insertId}, '${body.emergency.first_name}', '${body.emergency.last_name}', '${body.present.relation}', ${emergencyAddress.Country}, '${emergencyAddress.Postcode}', '${emergencyAddress.Province}', '${emergencyAddress.Subdistrict}', '${emergencyAddress.District}', '${emergencyAddress.Address}', ${body.emergency.sameAddress}, '${body.emergency.email}', '${body.emergency.phone_no}');`
+        let insertEmergency = `INSERT INTO Emergency (Patient_ID, Firstname, Lastname, Relation, Country, Postcode, Province, Subdistrict, District, Address, sameAddress, Email, Phone_No) VALUES(${Info.insertId}, '${body.emergency.first_name}', '${body.emergency.last_name}', '${body.emergency.relation}', ${emergencyAddress.Country}, '${emergencyAddress.Postcode}', '${emergencyAddress.Province}', '${emergencyAddress.Subdistrict}', '${emergencyAddress.District}', '${emergencyAddress.Address}', ${body.emergency.sameAddress}, '${body.emergency.email}', '${body.emergency.phone_no}');`
         await repos.query(insertEmergency);
         let insertFinan = `INSERT INTO Financial (Self_Pay, Company_Contact, Insurance, Company, Payment_As, Patient_ID) VALUES(${_.indexOf(body.financial.payment_method, 'Self pay') >= 0 ? 0 : 1}, ${_.indexOf(body.financial.payment_method, 'Company contact') >= 0 ? 0 : 1}, ${_.indexOf(body.financial.payment_method, 'Insurance') >= 0 ? 0 : 1}, '${body.financial.company ? body.financial.company : ''}', '${body.financial.payment_as}', ${Info.insertId});`
         await repos.query(insertFinan);
@@ -73,20 +73,20 @@ class registerRoute {
           await repos.query(insertFamily, [valuesFamily])
         }
         if (body.personal_history.exercise.status == 'Yes') {
-          let insertExercise = `INSERT INTO Patient_Social (PatientID, Habit, Status, Quantity, Detail, Comment) VALUES(${Info.insertId}, 'exercise', '${body.personal_history.exercise.status}', '${body.personal_history.exercise.quantity}', NULL, '${body.personal_history.exercise.comment}');`
+          let insertExercise = `INSERT INTO Patient_Social (PatientID, Habit, Status, Quantity, Detail, Comment) VALUES(${Info.insertId}, 'exercise', '${body.personal_history.exercise.status}', '${body.personal_history.exercise.quantity}', NULL, '${body.personal_history.exercise.comment ? body.personal_history.exercise.comment : ''}');`
           await repos.query(insertExercise)
         }
         if (body.personal_history.alcohol.status == 'Yes') {
           console.log(JSON.stringify(body.personal_history.alcohol.detail))
-          let insertAlcohol = `INSERT INTO Patient_Social (PatientID, Habit, Status, Quantity, Detail, Comment) VALUES(${Info.insertId}, 'alcohol', '${body.personal_history.alcohol.status}', '${body.personal_history.alcohol.quantity}', '${JSON.stringify(body.personal_history.alcohol.detail)}', '${body.personal_history.alcohol.comment}');`
+          let insertAlcohol = `INSERT INTO Patient_Social (PatientID, Habit, Status, Quantity, Detail, Comment) VALUES(${Info.insertId}, 'alcohol', '${body.personal_history.alcohol.status}', '${body.personal_history.alcohol.quantity}', '${JSON.stringify(body.personal_history.alcohol.detail)}', '${body.personal_history.alcohol.comment ? body.personal_history.alcohol.comment : ''}');`
           await repos.query(insertAlcohol)
         }
         if (body.personal_history.drugabuse.status == 'Yes') {
-          let insertDrugabuse = `INSERT INTO Patient_Social (PatientID, Habit, Status, Quantity, Detail, Comment) VALUES(${Info.insertId}, 'drugabuse', '${body.personal_history.drugabuse.status}', '${body.personal_history.drugabuse.quantity}', '${JSON.stringify(body.personal_history.drugabuse.detail)}', '${body.personal_history.drugabuse.comment}');`
+          let insertDrugabuse = `INSERT INTO Patient_Social (PatientID, Habit, Status, Quantity, Detail, Comment) VALUES(${Info.insertId}, 'drugabuse', '${body.personal_history.drugabuse.status}', '${body.personal_history.drugabuse.quantity}', '${JSON.stringify(body.personal_history.drugabuse.detail)}', '${body.personal_history.drugabuse.comment ? body.personal_history.drugabuse.comment : ''}');`
           await repos.query(insertDrugabuse)
         }
         if (body.personal_history.smoke.status == 'Yes') {
-          let insertSmoke = `INSERT INTO Patient_Social (PatientID, Habit, Status, Quantity, Detail, Comment) VALUES(${Info.insertId}, 'smoke', '${body.personal_history.smoke.status}', '${body.personal_history.smoke.quantity}', '${JSON.stringify(body.personal_history.smoke.detail)}', '${body.personal_history.smoke.comment}');`
+          let insertSmoke = `INSERT INTO Patient_Social (PatientID, Habit, Status, Quantity, Detail, Comment) VALUES(${Info.insertId}, 'smoke', '${body.personal_history.smoke.status}', '${body.personal_history.smoke.quantity}', '${JSON.stringify(body.personal_history.smoke.detail)}', '${body.personal_history.smoke.comment ? body.personal_history.smoke.comment : ''}');`
           await repos.query(insertSmoke)
         }
         
