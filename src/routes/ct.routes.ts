@@ -102,12 +102,14 @@ class ctRoute {
       res.send(result) 
     }
   }
-  getCity() {
+  getCityByIdArea() {
     return async (req: Request, res: Response) => {
       let { id } = req.query
       let repos = di.get('repos')
       let query = ''
-      query = `SELECT * FROM CT_City WHERE ID = '${id}'`
+      query = `SELECT c.* FROM CT_CityArea ca
+               RIGHT JOIN CT_City c ON ca.CITY_ID = c.ID
+               WHERE ca.ID = '${id}'`
       
       let result = await repos.query(query)
       res.send(result) 
@@ -144,6 +146,6 @@ router
   .get("/zip", route.getZip())
   .get("/province", route.getProvince())
   .get("/cityarea", route.getCityArea())
-  .get("/city", route.getCity())
+  .get("/citybyidarea", route.getCityByIdArea())
 
 export const ct = router
