@@ -1,6 +1,7 @@
-import { Request, Response, Router, query } from "express";
+import { Request, Response, Router } from "express";
 import { di } from "../di";
 import * as _ from "lodash";
+const request = require('request')
 
 class registerRoute {
   Capitalize = (s: any) => {
@@ -471,17 +472,28 @@ class registerRoute {
       }
       let queryHistory = `UPDATE Patient_History SET ? Where PatientID = '${body.ID}'`
       // -- //
-     
+      
       await repos.query(queryHistory, dataHistory);
-      res.send({message: 'Success'})
       let dateDob = new Date(body.patient_info.dob)
       let queryNation = `SELECT * FROM CT_Nation Where ID = ${body.patient_info.nationality}`
       let queryReligion = `SELECT * FROM CT_Religion Where ID = ${body.patient_info.religion}`
       let queryGender = `SELECT * FROM CT_Sex Where ID = ${body.patient_info.gender}`
+      
+      
+      let Country = async (id: any) => {
+        let queryCountry = `SELECT * FROM CT_Country Where ID = ${id}`
+        let country = await repos.query(queryCountry)
+        return country[0].Desc
+      }
+      let Subdistrict = async (id: any) => {
+        let querySubdistrict = `SELECT * FROM CT_CityArea WHERE ID = ${id}`
+        let subdistrict = await repos.query(querySubdistrict)
+        console.log(subdistrict)
+        return subdistrict[0].Desc_TH
+      }
       let Nation = await repos.query(queryNation)
       let Religion = await repos.query(queryReligion)
       let Gender = await repos.query(queryGender)
-      console.log(Nation)
       let rpa = {
         "data":{
            "id_patient_information":126,
@@ -512,38 +524,41 @@ class registerRoute {
            "email":body.patient_info.email,
            "home_telephone":body.patient_info.homephone,
            "office_telephone":body.patient_info.officephone,
-           "permanent_address":"123",
-           "permanent_sub_district":"คลองกุ่ม",
-           "permanent_district":"บางกะปิ",
-           "permanent_province":"กรุงเทพฯ",
-           "permanent_postcode":"10240",
-           "permanent_country":"THA",
+           "permanent_address": body.permanent.address,
+           "permanent_sub_district": Subdistrict(body.permanent.subdistrict),
+           "permanent_district": body.permanent.district,
+           "permanent_province": body.permanent.province,
+           "permanent_postcode": body.permanent.postcode,
+           "permanent_country": Country(body.permanent.country),
            "same_permanent":1,
-           "present_address":null,
-           "present_sub_district":null,
-           "present_district":null,
-           "present_province":null,
-           "present_postcode":null,
-           "present_country":null,
-           "ec_firstname":"ชินจัง",
-           "ec_lastname":"จอมแก่น",
-           "ec_relationship":"99",
-           "ec_relationship_other":"เพื่อน",
-           "ec_telephone":"123",
-           "ec_email":null,
+           "present_address":body.present.sameAddress ? body.permanent.address : body.present.address,
+           "present_sub_district":body.present.sameAddress ? Subdistrict(body.permanent.subdistrict) : Subdistrict(body.present.subdistrict),
+           "present_district":body.present.sameAddress ? body.permanent.district : body.present.district,
+           "present_province":body.present.sameAddress ? body.permanent.province : body.present.province,
+           "present_postcode":body.present.sameAddress ? body.permanent.postcode : body.present.postcode,
+           "present_country":body.present.sameAddress ? Country(body.permanent.country) : Country(body.present.country),
+           "ec_firstname":body.emergency.first_name,
+           "ec_lastname":body.emergency.last_name,
+           "ec_relationship":"",
+           "ec_relationship_other":body.emergency.relation,
+           "ec_telephone":body.emergency.phone_no,
+           "ec_email":body.emergency.email,
            "ec_address_same_patient":1,
-           "ec_address":null,
-           "ec_sub_district":null,
-           "ec_district":null,
-           "ec_province":null,
-           "ec_postcode":null,
-           "ec_country":null,
-           "fi_payment_method":null,
-           "fi_company":null,
-           "date_created":"2020-06-28T22:56:53Z",
-           "date_updated":"2020-06-28T22:56:53Z",
+           "ec_address":body.emergency.sameAddress ? body.permanent.address : body.emergency.address,
+           "ec_sub_district":body.emergency.sameAddress ? Subdistrict(body.permanent.subdistrict) : body.emergency.subdistrict,
+           "ec_district":body.emergency.sameAddress ? body.permanent.district : body.emergency.district,
+           "ec_province":body.emergency.sameAddress ? body.permanent.province : body.emergency.province,
+           "ec_postcode":body.emergency.sameAddress ? body.permanent.postcode : body.emergency.postcode,
+           "ec_country":body.emergency.sameAddress ? Country(body.permanent.country) : Country(body.emergency.country),
+           "fi_payment_method":body.financial.payment_method,
+           "fi_company":body.financial.company,
+           "date_created":"",
+           "date_updated":"",
            "social_list":[
-     
+            body.personal_history.exercise,
+            body.personal_history.alcohol,
+            body.personal_history.drugabuse ,
+            body.personal_history.smoke,
            ],
            "family_list":[
      
@@ -552,7 +567,21 @@ class registerRoute {
            "Truama":"No",
            "ARI":"No"
         }
-     }
+      }
+      let url = `http://10.105.10.50:8700/api/CpoeRegister/registerCpoe`
+      await new Promise((resolve, reject) => {
+        request.post(url, { rpa, json: true }, async (err: any, res: any, body: any) => {
+          if (err) { reject(err); }
+          if (typeof body === 'string') body = JSON.parse(body)
+          if (res.statusCode != 200) { 
+            return resolve(body); 
+          }
+          resolve(body);
+        }, (error: any) => {
+          reject(error);
+        });
+      });
+      res.send({message: 'Success'})
     }
   }
 }
