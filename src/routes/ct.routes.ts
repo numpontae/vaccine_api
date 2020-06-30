@@ -22,7 +22,7 @@ class ctRoute {
       let result = await repos.query(query)
       let response = result.map((d:any ) => {
         return {
-          "Id": d.Id,
+          "ID": d.ID,
           "Code": d.Code,
           "Desc_EN": this.Capitalize(d.Desc_EN.toLowerCase()),
           "Desc_TH": d.Desc_TH
