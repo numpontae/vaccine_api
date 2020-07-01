@@ -2,7 +2,7 @@ import { Request, Response, Router } from "express";
 import { di } from "../di";
 import * as _ from "lodash";
 const request = require('request')
-
+import CryptoJS from "crypto-js";
 class registerRoute {
   Capitalize = (s: any) => {
     if (typeof s !== "string") return "";
@@ -269,19 +269,25 @@ class registerRoute {
         }
         query += ` AND Confirm != 1`
         let data = await repos.query(query)
+        await data.map((d: any) => {
+          let encrypted = CryptoJS.AES.encrypt(d.UID, 'C36bJmRax7');
+          return d.UID = encrypted.toString()
+        })
         res.send(data)
       } else {
+        let decrypted = await CryptoJS.AES.decrypt(id, "C36bJmRax7")
+        let uid = decrypted.toString(CryptoJS.enc.Utf8)
         let query = `SELECT PI.* FROM Patient_Info PI`
         query += ` WHERE 1 = 1`
-        query += ` AND PI.ID = ${id}`
+        query += ` AND PI.UID = '${uid}'`
         let info = await repos.query(query)
         if (info[0].Type == 0) {
-          let queryAddress = `SELECT * FROM Patient_Address WHERE PatientID = ${id} ORDER BY Type`
-          let queryEmergency = `SELECT * FROM Patient_Emergency WHERE PatientID = ${id}`
-          let queryFinancial = `SELECT * FROM Patient_Financial WHERE PatientID = ${id}`
-          let queryHistory = `SELECT * FROM Patient_History WHERE PatientID = ${id}`
-          let queryFamily = `SELECT * FROM Family_History WHERE PatientID = ${id}`
-          let querySocial = `SELECT * FROM Patient_Social WHERE PatientID = ${id}`
+          let queryAddress = `SELECT * FROM Patient_Address WHERE PatientID = ${info[0].ID} ORDER BY Type`
+          let queryEmergency = `SELECT * FROM Patient_Emergency WHERE PatientID = ${info[0].ID}`
+          let queryFinancial = `SELECT * FROM Patient_Financial WHERE PatientID = ${info[0].ID}`
+          let queryHistory = `SELECT * FROM Patient_History WHERE PatientID = ${info[0].ID}`
+          let queryFamily = `SELECT * FROM Family_History WHERE PatientID = ${info[0].ID}`
+          let querySocial = `SELECT * FROM Patient_Social WHERE PatientID = ${info[0].ID}`
           let address = await repos.query(queryAddress)
           let emergency = await repos.query(queryEmergency)
           let financial = await repos.query(queryFinancial)
@@ -434,7 +440,6 @@ class registerRoute {
     return async (req: Request, res: Response) => {
       let body = req.body
       let repos = di.get("repos");
-      console.log(body)
       let dataHistory = {
         MaritalStatus: body.personal_history.marital_status,
         Children: body.personal_history.children,
@@ -483,12 +488,13 @@ class registerRoute {
       let Country = async (id: any) => {
         let queryCountry = `SELECT * FROM CT_Country Where ID = ${id}`
         let country = await repos.query(queryCountry)
+        if (!country.length) return ''
         return country[0].Desc
       }
       let Subdistrict = async (id: any) => {
         let querySubdistrict = `SELECT * FROM CT_CityArea WHERE ID = ${id}`
         let subdistrict = await repos.query(querySubdistrict)
-        console.log(subdistrict)
+        if (!subdistrict.length) return ''
         return subdistrict[0].Desc_TH
       }
       let Nation = await repos.query(queryNation)
