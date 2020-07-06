@@ -130,6 +130,18 @@ class ctRoute {
       res.send(data) 
     }
   }
+  getLocationByIdHospital() {
+    return async (req: Request, res: Response) => {
+      let { id } = req.query
+      let repos = di.get('repos')
+      let query = ''
+      query = `SELECT ID, CTLOC_Code, CTLOC_Desc, CTLOC_Floor, CTLOC_Hospital_DR FROM CT_Loc
+               WHERE CTLOC_Hospital_DR = ${id}`
+      
+      let result = await repos.query(query)
+      res.send(result) 
+    }
+  }
 }
 
 const router = Router()
@@ -147,5 +159,6 @@ router
   .get("/province", route.getProvince())
   .get("/cityarea", route.getCityArea())
   .get("/citybyidarea", route.getCityByIdArea())
+  .get("/location", route.getLocationByIdHospital())
 
 export const ct = router

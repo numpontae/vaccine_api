@@ -149,10 +149,10 @@ class registerRoute {
         if (body.personal_history.family.length > 0) {
           let valuesFamily: any[] = [] 
           body.personal_history.family.map((p: any) => {
-            let value = [insertInfo.insertId, p]
+            let value = [insertInfo.insertId, p.person, p.illness]
             valuesFamily.push(value) 
           })
-          let insertFamily = `INSERT INTO Family_History (PatientID, Disease) VALUES ?;`
+          let insertFamily = `INSERT INTO Family_History (PatientID, Person, Disease) VALUES ?;`
           await repos.query(insertFamily, [valuesFamily])
         }
         if (body.personal_history.exercise.status != null) {
@@ -248,181 +248,188 @@ class registerRoute {
     return async (req: Request, res: Response) => {
       let {id, firstname, lastname, phone_no, passport, national_id} = req.body;
       let repos = di.get("repos");
-      if (_.isEmpty(id) && !_.isNumber(id)) {
-        let query = `SELECT PI.*, CTS.Desc_EN Gender_Desc FROM Patient_Info PI`
-        query += ` LEFT JOIN CT_Sex CTS ON CTS.Id = PI.Gender`
-        query += ` WHERE 1 = 1`
-        if (!_.isEmpty(firstname)) {
-          query += ` AND (PI.Firstname LIKE '%${firstname}%')`
-        }
-        if (!_.isEmpty(lastname)) {
-          query += ` AND (PI.Lastname LIKE '%${lastname}%')`
-        }
-        if (!_.isEmpty(phone_no)) {
-          query += ` AND PI.PhoneNo = '${phone_no}'`
-        }
-        if (!_.isEmpty(passport)) {
-          query += ` AND PI.Passport = '${passport}'`
-        }
-        if (!_.isEmpty(national_id)) {
-          query += ` AND PI.NationalID = '${national_id}'`
-        }
-        query += ` AND Confirm != 1`
-        let data = await repos.query(query)
-        await data.map((d: any) => {
-          let encrypted = CryptoJS.AES.encrypt(d.UID, 'C36bJmRax7');
-          return d.UID = encrypted.toString()
-        })
-        res.send(data)
-      } else {
-        let decrypted = await CryptoJS.AES.decrypt(id, "C36bJmRax7")
-        let uid = decrypted.toString(CryptoJS.enc.Utf8)
-        let query = `SELECT PI.* FROM Patient_Info PI`
-        query += ` WHERE 1 = 1`
-        query += ` AND PI.UID = '${uid}'`
-        let info = await repos.query(query)
-        if (info[0].Type == 0) {
-          let queryAddress = `SELECT * FROM Patient_Address WHERE PatientID = ${info[0].ID} ORDER BY Type`
-          let queryEmergency = `SELECT * FROM Patient_Emergency WHERE PatientID = ${info[0].ID}`
-          let queryFinancial = `SELECT * FROM Patient_Financial WHERE PatientID = ${info[0].ID}`
-          let queryHistory = `SELECT * FROM Patient_History WHERE PatientID = ${info[0].ID}`
-          let queryFamily = `SELECT * FROM Family_History WHERE PatientID = ${info[0].ID}`
-          let querySocial = `SELECT * FROM Patient_Social WHERE PatientID = ${info[0].ID}`
-          let address = await repos.query(queryAddress)
-          let emergency = await repos.query(queryEmergency)
-          let financial = await repos.query(queryFinancial)
-          let history = await repos.query(queryHistory)
-          let family = await repos.query(queryFamily)
-          let social = await repos.query(querySocial)
-
-          let dataSocial = social.map((d: any) => {
-            let data = {
-              Habit: d.Habit,
-              Status: d.Status,
-              Quantity: d.Quantity,
-              Detail: JSON.parse(d.Detail),
-              Comment: d.Comment
-            }
-            return data
-          })
-          let payment = []
-          let familylist: any = []
-          if (financial.length) {
-            if (financial[0].SelfPay == 1) payment.push('Self pay')
-            if (financial[0].CompanyContact == 1) payment.push('Company contact')
-            if (financial[0].Insurance == 1) payment.push('Insurance')
+      try {
+        if (_.isEmpty(id) && !_.isNumber(id)) {
+          let query = `SELECT PI.*, CTS.Desc_EN Gender_Desc FROM Patient_Info PI`
+          query += ` LEFT JOIN CT_Sex CTS ON CTS.Id = PI.Gender`
+          query += ` WHERE 1 = 1`
+          if (!_.isEmpty(firstname)) {
+            query += ` AND (PI.Firstname LIKE '%${firstname}%')`
           }
-          family.map((d:any) => {
-            familylist.push(d.Disease)
-          })
-          let result = {
-            Info: info[0],
-            Permanent: address[0],
-            Present: address[1],
-            Emergency: {
-              Firstname: emergency[0].Firstname,
-              Lastname: emergency[0].Lastname,
-              Relation: emergency[0].Relation,
-              sameAddress: address[2].sameAddress,
-              Country: address[2].Country,
-              Province: address[2].Province,
-              Postcode: address[2].Postcode,
-              Subdistrict: address[2].Subdistrict,
-              District: address[2].District,
-              Address: address[2].Address,
-              PhoneNo: emergency[0].PhoneNo,
-              Email: emergency[0].Email,
-            },
-            Financial: {
-              payment_method: payment,
-              showInsurance: financial[0].Insurance == 1 ? true : false,
-              showCompany: financial[0].CompanyContact == 1 ? true : false,
-              InsuranceDesc: financial[0].InsuranceDesc,
-              CompanyDesc: financial[0].CompanyDesc,
-              PaymentAs: financial[0].PaymentAs,
-              Title: financial[0].Title,
-              Firstname: financial[0].Firstname,
-              Lastname: financial[0].Lastname,
-              DOB: financial[0].DOB,
-              Aforemention: financial[0].Aforemention,
-            },
-            History: {
-              MaritalStatus: history[0].MaritalStatus,
-              Children: history[0].Children,
-              Diseases: JSON.parse(history[0].Diseases),
-              Medication: history[0].Medication == null ? history[0].Medication : history[0].Medication == 1 ? true : false,
-              CommentMedication: history[0].CommentMedication,
-              Hospitalization: history[0].Hospitalization == null ? history[0].Hospitalization : history[0].Hospitalization == 1 ? true : false,
-              CommentHospitalization: history[0].CommentHospitalization,
-              Physical: history[0].Physical == null ? history[0].Physical : history[0].Physical == 1 ? true : false,
-              CommentPhysical: history[0].CommentPhysical,
-              Exercise: history[0].Exercise == null ? history[0].Exercise : history[0].Exercise == 1 ? true : false,
-              Pregnant: history[0].Pregnant == null ? history[0].Pregnant : history[0].Pregnant == 1 ? true : false,
-              CommentPregnant: history[0].CommentPregnant,
-              Giver: history[0].Giver == null ? history[0].Giver : history[0].Giver == 1 ? true : false,
-              CommentGiver: history[0].CommentGiver,
-              AbsenceFromWork: history[0].AbsenceFromWork == 1 ? true : false,
-              Reimbursement: history[0].Reimbursement == 1 ? true : false,
-              GovernmentReimbursement: history[0].GovernmentReimbursement == 1 ? true : false,
-              StateEnterprise: history[0].StateEnterprise == 1 ? true : false,
-              Authorize: history[0].Authorize == null ? history[0].Authorize : history[0].Authorize == 1 ? true : false,
-              CommentAuthorize: history[0].CommentAuthorize,
-              Spiritual: history[0].Spiritual == null ? history[0].Spiritual : history[0].Spiritual == 1 ? true : false,
-              CommentSpiritual: history[0].CommentSpiritual,
-              Allergies: history[0].Allergies == null ? history[0].Allergies : history[0].Allergies == 1 ? true : false,
-              CommentAllergies: history[0].CommentAllergies,
-              Alcohol: history[0].Alcohol == null ? history[0].Alcohol : history[0].Alcohol == 1 ? true : false,
-              DrugAbuse: history[0].DrugAbuse == null ? history[0].DrugAbuse : history[0].DrugAbuse == 1 ? true : false,
-              Smoke: history[0].Smoke == null ? history[0].Smoke : history[0].Smoke == 1 ? true : false,
-              FatherAlive: history[0].FatherAlive == null ? history[0].FatherAlive : history[0].FatherAlive == 1 ? true : false,
-              FatherAge: history[0].FatherAge,
-              CauseFather: history[0].CauseFather,
-              MotherAlive: history[0].MotherAlive == null ? history[0].MotherAlive : history[0].MotherAlive == 1 ? true : false,
-              MotherAge: history[0].MotherAge,
-              CauseMother: history[0].CauseMother,
-            },
-            Family: familylist,
-            SocialHistory: dataSocial
+          if (!_.isEmpty(lastname)) {
+            query += ` AND (PI.Lastname LIKE '%${lastname}%')`
           }
-          res.send(result)
+          if (!_.isEmpty(phone_no)) {
+            query += ` AND PI.PhoneNo = '${phone_no}'`
+          }
+          if (!_.isEmpty(passport)) {
+            query += ` AND PI.Passport = '${passport}'`
+          }
+          if (!_.isEmpty(national_id)) {
+            query += ` AND PI.NationalID = '${national_id}'`
+          }
+          query += ` AND Confirm != 1`
+          let data = await repos.query(query)
+          await data.map((d: any) => {
+            let encrypted = CryptoJS.AES.encrypt(d.UID, 'C36bJmRax7');
+            return d.UID = encrypted.toString()
+          })
+          res.send(data)
         } else {
-          let permanentQuery = `SELECT * FROM Permanent_Address WHERE Patient_ID = ${id}`
-          let presentQuery = `SELECT * FROM Present_Address WHERE Patient_ID = ${id}`
-          let financialQuery = `SELECT * FROM Financial WHERE Patient_ID = ${id}`
-          let familyQuery = `SELECT * FROM Family_History WHERE Patient_ID = ${id}`
-          let guardianQuery = `SELECT * FROM Guardian WHERE Patient_ID = ${id}`
-          let pediatricQuery = `SELECT * FROM Pediatric WHERE Patient_ID = ${id}`
-          let permanent = await repos.query(permanentQuery)
-          let present = await repos.query(presentQuery)
-          let family = await repos.query(familyQuery)
-          let financial = await repos.query(financialQuery)
-          let guardian = await repos.query(guardianQuery)
-          let pediatric = await repos.query(pediatricQuery)
-          let payment = []
-          let familylist: any = []
-          if (financial.length) {
-            if (financial[0].Self_Pay == 0) payment.push('Self pay')
-            if (financial[0].Company_Contact == 0) payment.push('Company contact')
-            if (financial[0].Insurance == 0) payment.push('Insurance')
+          let decrypted = await CryptoJS.AES.decrypt(id, "C36bJmRax7")
+          let uid = decrypted.toString(CryptoJS.enc.Utf8)
+          let query = `SELECT PI.* FROM Patient_Info PI`
+          query += ` WHERE 1 = 1`
+          query += ` AND PI.UID = '${uid}'`
+          let info = await repos.query(query)
+          if (info[0].Type == 0) {
+            let queryAddress = `SELECT * FROM Patient_Address WHERE PatientID = ${info[0].ID} ORDER BY Type`
+            let queryEmergency = `SELECT * FROM Patient_Emergency WHERE PatientID = ${info[0].ID}`
+            let queryFinancial = `SELECT * FROM Patient_Financial WHERE PatientID = ${info[0].ID}`
+            let queryHistory = `SELECT * FROM Patient_History WHERE PatientID = ${info[0].ID}`
+            let queryFamily = `SELECT * FROM Family_History WHERE PatientID = ${info[0].ID}`
+            let querySocial = `SELECT * FROM Patient_Social WHERE PatientID = ${info[0].ID}`
+            let address = await repos.query(queryAddress)
+            let emergency = await repos.query(queryEmergency)
+            let financial = await repos.query(queryFinancial)
+            let history = await repos.query(queryHistory)
+            let family = await repos.query(queryFamily)
+            let social = await repos.query(querySocial)
+  
+            let dataSocial = social.map((d: any) => {
+              let data = {
+                Habit: d.Habit,
+                Status: d.Status,
+                Quantity: d.Quantity,
+                Detail: JSON.parse(d.Detail),
+                Comment: d.Comment
+              }
+              return data
+            })
+            let payment = []
+            let familylist: any = []
+            if (financial.length) {
+              if (financial[0].SelfPay == 1) payment.push('Self pay')
+              if (financial[0].CompanyContact == 1) payment.push('Company contact')
+              if (financial[0].Insurance == 1) payment.push('Insurance')
+            }
+            family.map((d:any) => {
+              let data = {
+                illness: d.Disease,
+                person: d.Person
+              }
+              familylist.push(data)
+            })
+            let result = {
+              Info: info[0],
+              Permanent: address[0],
+              Present: address[1],
+              Emergency: {
+                Firstname: emergency[0].Firstname,
+                Lastname: emergency[0].Lastname,
+                Relation: emergency[0].Relation,
+                sameAddress: address[2].sameAddress,
+                Country: address[2].Country,
+                Province: address[2].Province,
+                Postcode: address[2].Postcode,
+                Subdistrict: address[2].Subdistrict,
+                District: address[2].District,
+                Address: address[2].Address,
+                PhoneNo: emergency[0].PhoneNo,
+                Email: emergency[0].Email,
+              },
+              Financial: {
+                payment_method: payment,
+                showInsurance: financial[0].Insurance == 1 ? true : false,
+                showCompany: financial[0].CompanyContact == 1 ? true : false,
+                InsuranceDesc: financial[0].InsuranceDesc,
+                CompanyDesc: financial[0].CompanyDesc,
+                PaymentAs: financial[0].PaymentAs,
+                Title: financial[0].Title,
+                Firstname: financial[0].Firstname,
+                Lastname: financial[0].Lastname,
+                DOB: financial[0].DOB,
+                Aforemention: financial[0].Aforemention,
+              },
+              History: {
+                MaritalStatus: history[0].MaritalStatus,
+                Children: history[0].Children,
+                Diseases: JSON.parse(history[0].Diseases),
+                Medication: history[0].Medication == null ? history[0].Medication : history[0].Medication == 1 ? true : false,
+                CommentMedication: history[0].CommentMedication,
+                Hospitalization: history[0].Hospitalization == null ? history[0].Hospitalization : history[0].Hospitalization == 1 ? true : false,
+                CommentHospitalization: history[0].CommentHospitalization,
+                Physical: history[0].Physical == null ? history[0].Physical : history[0].Physical == 1 ? true : false,
+                CommentPhysical: history[0].CommentPhysical,
+                Exercise: history[0].Exercise == null ? history[0].Exercise : history[0].Exercise == 1 ? true : false,
+                Pregnant: history[0].Pregnant == null ? history[0].Pregnant : history[0].Pregnant == 1 ? true : false,
+                CommentPregnant: history[0].CommentPregnant,
+                Giver: history[0].Giver == null ? history[0].Giver : history[0].Giver == 1 ? true : false,
+                CommentGiver: history[0].CommentGiver,
+                AbsenceFromWork: history[0].AbsenceFromWork == 1 ? true : false,
+                Reimbursement: history[0].Reimbursement == 1 ? true : false,
+                GovernmentReimbursement: history[0].GovernmentReimbursement == 1 ? true : false,
+                StateEnterprise: history[0].StateEnterprise == 1 ? true : false,
+                Authorize: history[0].Authorize == null ? history[0].Authorize : history[0].Authorize == 1 ? true : false,
+                CommentAuthorize: history[0].CommentAuthorize,
+                Spiritual: history[0].Spiritual == null ? history[0].Spiritual : history[0].Spiritual == 1 ? true : false,
+                CommentSpiritual: history[0].CommentSpiritual,
+                Allergies: history[0].Allergies == null ? history[0].Allergies : history[0].Allergies == 1 ? true : false,
+                CommentAllergies: history[0].CommentAllergies,
+                Alcohol: history[0].Alcohol == null ? history[0].Alcohol : history[0].Alcohol == 1 ? true : false,
+                DrugAbuse: history[0].DrugAbuse == null ? history[0].DrugAbuse : history[0].DrugAbuse == 1 ? true : false,
+                Smoke: history[0].Smoke == null ? history[0].Smoke : history[0].Smoke == 1 ? true : false,
+                FatherAlive: history[0].FatherAlive == null ? history[0].FatherAlive : history[0].FatherAlive == 1 ? true : false,
+                FatherAge: history[0].FatherAge,
+                CauseFather: history[0].CauseFather,
+                MotherAlive: history[0].MotherAlive == null ? history[0].MotherAlive : history[0].MotherAlive == 1 ? true : false,
+                MotherAge: history[0].MotherAge,
+                CauseMother: history[0].CauseMother,
+              },
+              Family: familylist,
+              SocialHistory: dataSocial
+            }
+            res.send(result)
+          } else {
+            let permanentQuery = `SELECT * FROM Permanent_Address WHERE Patient_ID = ${id}`
+            let presentQuery = `SELECT * FROM Present_Address WHERE Patient_ID = ${id}`
+            let financialQuery = `SELECT * FROM Financial WHERE Patient_ID = ${id}`
+            let familyQuery = `SELECT * FROM Family_History WHERE Patient_ID = ${id}`
+            let guardianQuery = `SELECT * FROM Guardian WHERE Patient_ID = ${id}`
+            let pediatricQuery = `SELECT * FROM Pediatric WHERE Patient_ID = ${id}`
+            let permanent = await repos.query(permanentQuery)
+            let present = await repos.query(presentQuery)
+            let family = await repos.query(familyQuery)
+            let financial = await repos.query(financialQuery)
+            let guardian = await repos.query(guardianQuery)
+            let pediatric = await repos.query(pediatricQuery)
+            let payment = []
+            let familylist: any = []
+            if (financial.length) {
+              if (financial[0].Self_Pay == 0) payment.push('Self pay')
+              if (financial[0].Company_Contact == 0) payment.push('Company contact')
+              if (financial[0].Insurance == 0) payment.push('Insurance')
+            }
+            family.map((d:any) => {
+              familylist.push(d.Disease)
+            })
+            let result = {
+              info: info[0],
+              guardian: guardian[0],
+              finan: {
+                payment: payment
+              },
+              permanent: permanent[0],
+              present: present[0],
+              pediatric: pediatric[0],
+              family: familylist,
+            }
+            res.send(result)
           }
-          family.map((d:any) => {
-            familylist.push(d.Disease)
-          })
-          let result = {
-            info: info[0],
-            guardian: guardian[0],
-            finan: {
-              payment: payment
-            },
-            permanent: permanent[0],
-            present: present[0],
-            pediatric: pediatric[0],
-            family: familylist,
-          }
-          res.send(result)
         }
+      } catch (error) {
+        res.status(404).json([])
       }
-      
     }
   }
   saveSignature() {
@@ -569,7 +576,8 @@ class registerRoute {
            "family_list":[
      
            ],
-           "location":"2-OPD Medicine",
+           "hospital": body.hospital,
+           "location": body.location,
            "Truama":"No",
            "ARI":"No"
         }
