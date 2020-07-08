@@ -36,6 +36,7 @@ class registerRoute {
           Consent: body.consent,
           Confirm: 0,
           Type: body.type,
+          Site: body.site
         }
         let queryInfo = `INSERT INTO Patient_Info SET ?`
         let insertInfo = await repos.query(queryInfo, dataInfo);
@@ -89,7 +90,7 @@ class registerRoute {
         let dataFinancial = {
           PatientID: insertInfo.insertId,
           SelfPay: _.indexOf(body.financial.payment_method, 'Self pay') >= 0 ? 1 : 0,
-          CompanyContact: _.indexOf(body.financial.payment_method, 'Company contact') >= 0 ? 1 : 0,
+          CompanyContact: _.indexOf(body.financial.payment_method, 'Company contract') >= 0 ? 1 : 0,
           Insurance: _.indexOf(body.financial.payment_method, 'Insurance') >= 0 ? 1 : 0,
           CompanyDesc: body.financial.company,
           InsuranceDesc: body.financial.insurance,
@@ -310,7 +311,7 @@ class registerRoute {
             let familylist: any = []
             if (financial.length) {
               if (financial[0].SelfPay == 1) payment.push('Self pay')
-              if (financial[0].CompanyContact == 1) payment.push('Company contact')
+              if (financial[0].CompanyContact == 1) payment.push('Company contract')
               if (financial[0].Insurance == 1) payment.push('Insurance')
             }
             family.map((d:any) => {
@@ -407,7 +408,7 @@ class registerRoute {
             let familylist: any = []
             if (financial.length) {
               if (financial[0].Self_Pay == 0) payment.push('Self pay')
-              if (financial[0].Company_Contact == 0) payment.push('Company contact')
+              if (financial[0].Company_Contact == 0) payment.push('Company contract')
               if (financial[0].Insurance == 0) payment.push('Insurance')
             }
             family.map((d:any) => {
@@ -576,7 +577,7 @@ class registerRoute {
            "family_list":[
      
            ],
-           "hospital": body.hospital,
+           "site": body.site,
            "location": body.location,
            "Truama":"No",
            "ARI":"No"
