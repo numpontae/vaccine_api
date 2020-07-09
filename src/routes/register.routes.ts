@@ -4,6 +4,8 @@ import * as _ from "lodash";
 const request = require('request')
 import CryptoJS from "crypto-js";
 import { head } from "lodash";
+const axios = require('axios');
+
 class registerRoute {
   Capitalize = (s: any) => {
     if (typeof s !== "string") return "";
@@ -654,7 +656,7 @@ class registerRoute {
         if (body.personal_history.alcohol.status) social.push(dataalcohol)
         if (body.personal_history.drugabuse.status) social.push(datadrugabuse)
         if (body.personal_history.smoke.status) social.push(datasmoke) 
-        let rpa = {
+        let rpa = await {
           "data":{
             "id_patient_information":126,
             "patient_code":"9xkevj",
@@ -722,19 +724,12 @@ class registerRoute {
             "ARI":"No"
           }
         }
-        let url = `http://10.105.10.50:8700/api/CpoeRegister/registerCpoe`
-        await new Promise((resolve, reject) => {
-          request.post(url, { rpa, json: true }, async (err: any, res: any, body: any) => {
-            if (err) { reject(err); }
-            if (typeof body === 'string') body = JSON.parse(body)
-            if (res.statusCode != 200) { 
-              return resolve(body); 
-            }
-            resolve(body);
-          }, (error: any) => {
-            reject(error);
-          });
-        });
+        let time = new Date();
+        const filename = `${body.ID}+${time.getFullYear()}-${("0" + (time.getMonth() + 1)).slice(-2)}-${time.getDate()}+${time.getTime()}.txt`
+        const path = '/Process'
+        let sendrpa = await axios.post(`http://10.105.10.50:8700/api/CpoeRegister/registerCpoe`, { path, filename, data: { data: rpa } })
+        
+        console.log(sendrpa)
       } else {
         let dateDob = new Date(body.general_info.dob)
         let queryNation = `SELECT * FROM CT_Nation Where ID = ${body.general_info.nationality}`
@@ -856,19 +851,10 @@ class registerRoute {
             "ARI":"No"
           }
         }
-        let url = `http://10.105.10.50:8700/api/CpoeRegister/registerCpoe`
-        await new Promise((resolve, reject) => {
-          request.post(url, { rpa, json: true }, async (err: any, res: any, body: any) => {
-            if (err) { reject(err); }
-            if (typeof body === 'string') body = JSON.parse(body)
-            if (res.statusCode != 200) { 
-              return resolve(body); 
-            }
-            resolve(body);
-          }, (error: any) => {
-            reject(error);
-          });
-        });
+        let time = new Date();
+        const filename = `${body.ID}+${time.getFullYear()}-${("0" + (time.getMonth() + 1)).slice(-2)}-${time.getDate()}+${time.getTime()}.txt`
+        const path = '/Process'
+        let sendrpa = await axios.post(`http://10.105.10.50:8700/api/CpoeRegister/registerCpoe`, { path, filename, data: { data: rpa } })
       }
       res.send({message: 'Success'})
     }
