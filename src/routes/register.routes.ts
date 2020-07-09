@@ -338,7 +338,7 @@ class registerRoute {
   }
   getSearch() {
     return async (req: Request, res: Response) => {
-      let {id, firstname, lastname, phone_no, passport, national_id} = req.body;
+      let {id, firstname, lastname, phone_no, passport, national_id, site} = req.body;
       let repos = di.get("repos");
       try {
         if (_.isEmpty(id) && !_.isNumber(id)) {
@@ -361,6 +361,7 @@ class registerRoute {
             query += ` AND PI.NationalID = '${national_id}'`
           }
           query += ` AND Confirm != 1`
+          query += ` AND Site == '${site}'`
           let data = await repos.query(query)
           await data.map((d: any) => {
             let encrypted = CryptoJS.AES.encrypt(d.UID, 'C36bJmRax7');
