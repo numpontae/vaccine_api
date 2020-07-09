@@ -361,7 +361,7 @@ class registerRoute {
             query += ` AND PI.NationalID = '${national_id}'`
           }
           query += ` AND Confirm != 1`
-          query += ` AND Site == '${site}'`
+          query += ` AND Site IN ('${site}')`
           let data = await repos.query(query)
           await data.map((d: any) => {
             let encrypted = CryptoJS.AES.encrypt(d.UID, 'C36bJmRax7');
