@@ -599,7 +599,7 @@ class registerRoute {
           let queryCountry = `SELECT * FROM CT_Country Where ID = ${id}`
           let country = await repos.query(queryCountry)
           if (!country.length) return ''
-          return country[0].Desc
+          return country[0].Desc_TH
         }
         let Subdistrict = async (id: any) => {
           let querySubdistrict = `SELECT * FROM CT_CityArea WHERE ID = ${id}`
@@ -629,95 +629,123 @@ class registerRoute {
           return data
         })
         let social: any = new Array()
-        let dataalcohol = {
-          "id_patient_social": "",
-          "id_patient_information": "",
-          "habit":"Alcohol Consumption",
-          "quality":body.personal_history.alcohol.quantity,
-          "detail": JSON.stringify(body.personal_history.alcohol.detail),
-          "comment": body.personal_history.alcohol.comment
+        let dataalcohol = await {
+          id_patient_social: "",
+          id_patient_information: "",
+          habit: "Alcohol",
+          quality: body.personal_history.alcohol.quantity,
+          detail: JSON.parse(JSON.stringify(body.personal_history.alcohol.detail)),
+          comment: body.personal_history.alcohol.comment
         }
-        let datadrugabuse = {
-          "id_patient_social": "",
-          "id_patient_information": "",
-          "habit":"Substance Abuse",
-          "quality":body.personal_history.drugabuse.quantity,
-          "detail": JSON.stringify(body.personal_history.drugabuse.detail),
-          "comment": body.personal_history.drugabuse.comment
+        let dataexercise = await {
+          id_patient_social: "",
+          id_patient_information: "",
+          habit: "Exercise",
+          quality :body.personal_history.exercise.quantity,
+          detail: "",
+          comment: body.personal_history.exercise.comment
         }
-        let datasmoke = {
-          "id_patient_social": "",
-          "id_patient_information": "",
-          "habit":"Smoking Habit",
-          "quality":body.personal_history.smoke.quantity,
-          "detail": JSON.stringify(body.personal_history.smoke.detail),
-          "comment": body.personal_history.smoke.comment
+        let datasmoke = await {
+          id_patient_social: "",
+          id_patient_information: "",
+          habit:"Smoking",
+          quality: body.personal_history.smoke.quantity,
+          detail: JSON.parse(JSON.stringify(body.personal_history.smoke.detail)),
+          comment: body.personal_history.smoke.comment
         }
-        if (body.personal_history.alcohol.status) social.push(dataalcohol)
-        if (body.personal_history.drugabuse.status) social.push(datadrugabuse)
-        if (body.personal_history.smoke.status) social.push(datasmoke) 
+        if (body.personal_history.alcohol.status) await social.push(dataalcohol)
+        if (body.personal_history.exercise.status) await social.push(dataexercise)
+        if (body.personal_history.smoke.status) await social.push(datasmoke) 
+        let checkstatus = (d: any) => {
+          if (d == 'Single') return 1
+          if (d == 'Married') return 2
+          if (d == 'Divorced') return 3
+          if (d == 'Widowed') return 4
+          if (d == 'Priest') return 5
+          if (d == 'Separated') return 6
+          if (d == 'Unknown') return 7
+        }
+        let checkrelation = (d: any) => {
+          if (d == 'Wife') return '01'
+          if (d == 'Husband') return '02'
+          if (d == 'Father') return '03'
+          if (d == 'Mother') return '04'
+          if (d == 'Son') return '05'
+          if (d == 'Daughter') return '06'
+          if (d == 'Brother') return '07'
+          if (d == 'Sister') return '08'
+          if (d == 'Grandfather') return '09'
+          if (d == 'Grandmother') return '10'
+          if (d == 'Grandson') return '11'
+          if (d == 'Granddaughter') return '12'
+          if (d == 'Son-In-Law') return '13'
+          if (d == 'Daughter-In-Law') return '14'
+          if (d == 'Son or Daughter') return '15'
+          if (d == 'Others') return '99'
+        }
         let rpa = await {
           "data":{
             "id_patient_information":126,
             "patient_code":"9xkevj",
-            "hn":"",
+            "hn": null,
             "title_th": body.patient_info.title,
             "firstname_th": body.patient_info.firstname,
             "middlename_th": body.patient_info.middlename,
             "lastname_th": body.patient_info.lastname,
-            "title_en":"",
-            "firstname_en":"",
-            "middlename_en":"",
-            "lastname_en":"",
+            "title_en":null,
+            "firstname_en":null,
+            "middlename_en":null,
+            "lastname_en":null,
             "nationality": Nation[0].Desc_EN,
             "religion": body.patient_info.religion,
-            "religion_desc": Religion[0].Desc_EN,
+            "religion_desc": Religion[0].Desc_TH,
+            "religion_desc_en": Religion[0].Desc_EN,
             "national_id":body.patient_info.national_id,
             "passport_id":body.patient_info.passport,
-            "dob":`${dateDob.getFullYear()}-${("0" + (dateDob.getMonth() + 1)).slice(-2)}-${dateDob.getDate()}`,
+            "dob": dateDob,
             "age":null,
             "gender": body.patient_info.gender,
             "gender_desc_en":Gender[0].Desc_EN,
             "gender_desc_th":Gender[0].Desc_TH,
-            "marital_status": body.patient_info.marital_status,
-            "preferrend_language": PreferredLanguage(body.patient_info.preferredlanguage),
+            "marital_status": await checkstatus(body.patient_info.marital_status),
+            "preferrend_language": await PreferredLanguage(body.patient_info.preferredlanguage),
             "occupation":body.patient_info.occupation,
             "mobile_phone":body.patient_info.phone_no,
             "email":body.patient_info.email,
             "home_telephone":body.patient_info.homephone,
             "office_telephone":body.patient_info.officephone,
             "permanent_address": body.permanent.address,
-            "permanent_sub_district": Subdistrict(body.permanent.subdistrict),
+            "permanent_sub_district": await Subdistrict(body.permanent.subdistrict),
             "permanent_district": body.permanent.district,
             "permanent_province": body.permanent.province,
             "permanent_postcode": body.permanent.postcode,
-            "permanent_country": Country(body.permanent.country),
+            "permanent_country": await Country(body.permanent.country),
             "same_permanent": body.present.sameAddress ? 1 : 0,
             "present_address":body.present.sameAddress ? body.permanent.address : body.present.address,
-            "present_sub_district":body.present.sameAddress ? Subdistrict(body.permanent.subdistrict) : Subdistrict(body.present.subdistrict),
+            "present_sub_district":body.present.sameAddress ? await Subdistrict(body.permanent.subdistrict) : await Subdistrict(body.present.subdistrict),
             "present_district":body.present.sameAddress ? body.permanent.district : body.present.district,
             "present_province":body.present.sameAddress ? body.permanent.province : body.present.province,
             "present_postcode":body.present.sameAddress ? body.permanent.postcode : body.present.postcode,
-            "present_country":body.present.sameAddress ? Country(body.permanent.country) : Country(body.present.country),
+            "present_country":body.present.sameAddress ? await Country(body.permanent.country) : await Country(body.present.country),
             "ec_firstname":body.emergency.first_name,
             "ec_lastname":body.emergency.last_name,
-            "ec_relationship":"",
-            "ec_relationship_other":body.emergency.relation,
+            "ec_relationship": await checkrelation(body.emergency.relation),
+            "ec_relationship_other": body.emergency.relation,
             "ec_telephone":body.emergency.phone_no,
             "ec_email":body.emergency.email,
             "ec_address_same_patient": body.emergency.sameAddress ? 1 : 0,
             "ec_address":body.emergency.sameAddress ? body.permanent.address : body.emergency.address,
-            "ec_sub_district":body.emergency.sameAddress ? Subdistrict(body.permanent.subdistrict) : body.emergency.subdistrict,
+            "ec_sub_district":body.emergency.sameAddress ? await Subdistrict(body.permanent.subdistrict) : body.emergency.subdistrict,
             "ec_district":body.emergency.sameAddress ? body.permanent.district : body.emergency.district,
             "ec_province":body.emergency.sameAddress ? body.permanent.province : body.emergency.province,
             "ec_postcode":body.emergency.sameAddress ? body.permanent.postcode : body.emergency.postcode,
-            "ec_country":body.emergency.sameAddress ? Country(body.permanent.country) : Country(body.emergency.country),
+            "ec_country":body.emergency.sameAddress ? await Country(body.permanent.country) : await Country(body.emergency.country),
             "fi_payment_method":body.financial.payment_method,
             "fi_company":body.financial.company,
-            "date_created":"",
-            "date_updated":"",
-            "social_list":social,
-            "family_list":family,
+            "date_created":null,
+            "date_updated":null,
+            "social_list": JSON.parse(JSON.stringify(social)),
+            "family_list": family,
             "site": body.site,
             "location": body.location.CTLOC_Desc,
             "Truama":"No",
@@ -727,9 +755,9 @@ class registerRoute {
         let time = new Date();
         const filename = `${body.ID}+${time.getFullYear()}-${("0" + (time.getMonth() + 1)).slice(-2)}-${time.getDate()}+${time.getTime()}.txt`
         const path = '/Process'
-        let sendrpa = await axios.post(`http://10.105.10.50:8700/api/CpoeRegister/registerCpoe`, { path, filename, data: { data: rpa } })
+        let sendrpa = await axios.post(`http://10.105.10.50:8700/api/CpoeRegister/registerCpoe`, { path, filename, data: rpa  })
         
-        console.log(sendrpa)
+        console.log(rpa)
       } else {
         let dateDob = new Date(body.general_info.dob)
         let queryNation = `SELECT * FROM CT_Nation Where ID = ${body.general_info.nationality}`
@@ -741,7 +769,7 @@ class registerRoute {
           let queryCountry = `SELECT * FROM CT_Country Where ID = ${id}`
           let country = await repos.query(queryCountry)
           if (!country.length) return ''
-          return country[0].Desc
+          return country[0].Desc_TH
         }
         let Subdistrict = async (id: any) => {
           let querySubdistrict = `SELECT * FROM CT_CityArea WHERE ID = ${id}`
@@ -759,24 +787,24 @@ class registerRoute {
         let Gender = await repos.query(queryGender)
         let family = await body.siblings.family.map((d: any) => {
           let data = {
-            "id_patient_family": "",
-            "id_patient_information": "",
+            "id_patient_family": null,
+            "id_patient_information": null,
             "relation": d.person,
             "disease": d.illness,
             "start": 0,
             "end": 0,
-            "comment":""
+            "comment":null
           }
           return data
         })
         let social: any = new Array()
         
         let datadrugabuse = {
-          "id_patient_social": "",
-          "id_patient_information": "",
+          "id_patient_social": null,
+          "id_patient_information": null,
           "habit":"Substance Abuse",
-          "quality": "",
-          "detail": "",
+          "quality": null,
+          "detail": null,
           "comment": body.pediatric.c_drug
         }
         
@@ -787,62 +815,62 @@ class registerRoute {
           "data":{
             "id_patient_information":126,
             "patient_code":"9xkevj",
-            "hn":"",
+            "hn":null,
             "title_th": body.general_info.title,
             "firstname_th": body.general_info.firstname,
             "middlename_th": body.general_info.middlename,
             "lastname_th": body.general_info.lastname,
-            "title_en":"",
-            "firstname_en":"",
-            "middlename_en":"",
-            "lastname_en":"",
+            "title_en":null,
+            "firstname_en":null,
+            "middlename_en":null,
+            "lastname_en":null,
             "nationality": Nation[0].Desc_EN,
-            "religion": "",
-            "religion_desc": "",
-            "national_id": "",
-            "passport_id": "",
+            "religion": null,
+            "religion_desc": null,
+            "national_id": null,
+            "passport_id": null,
             "dob":`${dateDob.getFullYear()}-${("0" + (dateDob.getMonth() + 1)).slice(-2)}-${dateDob.getDate()}`,
             "age":null,
             "gender": body.general_info.gender,
             "gender_desc_en":Gender[0].Desc_EN,
             "gender_desc_th":Gender[0].Desc_TH,
-            "marital_status": "",
-            "preferrend_language": "",
-            "occupation": "",
+            "marital_status": null,
+            "preferrend_language": null,
+            "occupation": null,
             "mobile_phone":body.general_info.phone_no,
             "email":body.general_info.email,
-            "home_telephone": "",
-            "office_telephone": "",
+            "home_telephone": null,
+            "office_telephone": null,
             "permanent_address": body.permanent.address,
-            "permanent_sub_district": Subdistrict(body.permanent.subdistrict),
+            "permanent_sub_district": await Subdistrict(body.permanent.subdistrict),
             "permanent_district": body.permanent.district,
             "permanent_province": body.permanent.province,
             "permanent_postcode": body.permanent.postcode,
-            "permanent_country": Country(body.permanent.country),
+            "permanent_country": await Country(body.permanent.country),
             "same_permanent": body.present.sameAddress ? 1 : 0,
             "present_address":body.present.sameAddress ? body.permanent.address : body.present.address,
-            "present_sub_district":body.present.sameAddress ? Subdistrict(body.permanent.subdistrict) : Subdistrict(body.present.subdistrict),
+            "present_sub_district":body.present.sameAddress ? await Subdistrict(body.permanent.subdistrict) : await Subdistrict(body.present.subdistrict),
             "present_district":body.present.sameAddress ? body.permanent.district : body.present.district,
             "present_province":body.present.sameAddress ? body.permanent.province : body.present.province,
             "present_postcode":body.present.sameAddress ? body.permanent.postcode : body.present.postcode,
-            "present_country":body.present.sameAddress ? Country(body.permanent.country) : Country(body.present.country),
-            "ec_firstname": emergency != undefined ? emergency.firstname : "",
-            "ec_lastname": emergency != undefined ? emergency.lastname : "",
-            "ec_relationship":"",
-            "ec_relationship_other": emergency != undefined ? emergency.relation : "",
-            "ec_telephone": emergency != undefined ? emergency.phoneno : "",
-            "ec_email": emergency != undefined ? emergency.email : "",
-            "ec_address_same_patient": emergency != undefined ? emergency.sameAddress ? 1 : 0 : "",
-            "ec_address":emergency != undefined ? emergency.sameAddress ? body.permanent.address : emergency.address : "",
-            "ec_sub_district":emergency != undefined ? emergency.sameAddress ? Subdistrict(body.permanent.subdistrict) : Subdistrict(body.emergency.subdistrict) : null,
-            "ec_district": emergency != undefined ? emergency.sameAddress ? body.permanent.district : emergency.district : "",
-            "ec_province": emergency != undefined ? emergency.sameAddress ? body.permanent.province : emergency.province : "",
-            "ec_postcode": emergency != undefined ? emergency.sameAddress ? body.permanent.postcode : emergency.postcode : "",
-            "ec_country": emergency != undefined ? emergency.sameAddress ? Country(body.permanent.country) : Country(emergency.country) : "",
+            "present_country":body.present.sameAddress ? await Country(body.permanent.country) : await Country(body.present.country),
+            "ec_firstname": emergency != undefined ? emergency.firstname : null,
+            "ec_lastname": emergency != undefined ? emergency.lastname : null,
+            "ec_relationship":null,
+            "ec_relationship_other": emergency != undefined ? emergency.relation : null,
+            "ec_telephone": emergency != undefined ? emergency.phoneno : null,
+            "ec_email": emergency != undefined ? emergency.email : null,
+            "ec_address_same_patient": emergency != undefined ? emergency.sameAddress ? 1 : 0 : null,
+            "ec_address":emergency != undefined ? emergency.sameAddress ? body.permanent.address : emergency.address : null,
+            "ec_sub_district":emergency != undefined ? emergency.sameAddress ? await Subdistrict(body.permanent.subdistrict) : await Subdistrict(body.emergency.subdistrict) : null,
+            "ec_district": emergency != undefined ? emergency.sameAddress ? body.permanent.district : emergency.district : null,
+            "ec_province": emergency != undefined ? emergency.sameAddress ? body.permanent.province : emergency.province : null,
+            "ec_postcode": emergency != undefined ? emergency.sameAddress ? body.permanent.postcode : emergency.postcode : null,
+            "ec_country": emergency != undefined ? emergency.sameAddress ? await Country(body.permanent.country) : await Country(emergency.country) : null,
             "fi_payment_method":body.parent_info.payment_method,
             "fi_company":body.parent_info.company,
-            "date_created":"",
-            "date_updated":"",
+            "date_created":null,
+            "date_updated":null,
             "social_list":social,
             "family_list":family,
             "site": body.site,
@@ -854,7 +882,7 @@ class registerRoute {
         let time = new Date();
         const filename = `${body.ID}+${time.getFullYear()}-${("0" + (time.getMonth() + 1)).slice(-2)}-${time.getDate()}+${time.getTime()}.txt`
         const path = '/Process'
-        let sendrpa = await axios.post(`http://10.105.10.50:8700/api/CpoeRegister/registerCpoe`, { path, filename, data: { data: rpa } })
+        let sendrpa = await axios.post(`http://10.105.10.50:8700/api/CpoeRegister/registerCpoe`, { path, filename, data: rpa })
       }
       res.send({message: 'Success'})
     }
