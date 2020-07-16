@@ -546,10 +546,20 @@ class registerRoute {
       res.send({message: 'Success'})
     }
   }
-  updateDate() {
+  updateData() {
     return async (req: Request, res: Response) => {
       let body = req.body
       let repos = di.get("repos");
+      let getComment = (type: string, data: any) => {
+        if (type == 'alcohol') {
+          console.log(data.detail)
+          return `quantity: ${data.quantity}, duration: ${data.detail.duration}, beverages: ${data.detail.beverages}, comment: ${data.comment}`
+        } else if (type == 'exercise') {
+          return `quantity: ${data.quantity}, comment: ${data.comment}`
+        } else if (type == 'smoke') {
+          return `quantity: ${data.quantity}, duration: ${data.detail.duration}, comment: ${data.comment}`
+        }
+      }
       if (body.type == 0) {
         let dataHistory = {
           MaritalStatus: body.personal_history.marital_status,
@@ -588,7 +598,67 @@ class registerRoute {
         }
         let queryHistory = `UPDATE Patient_History SET ? Where PatientID = '${body.ID}'`
         await repos.query(queryHistory, dataHistory);
-            
+        if (body.personal_history.family.length > 0) {
+          let deleteFamily = `DELETE FROM Family_History WHERE PatientID = '${body.ID}'`
+          await repos.query(deleteFamily);
+          let valuesFamily: any[] = [] 
+          body.personal_history.family.map((p: any) => {
+            let value = [body.ID, p.person, p.illness]
+            valuesFamily.push(value) 
+          })
+          let insertFamily = `INSERT INTO Family_History (PatientID, Person, Disease) VALUES ?;`
+          await repos.query(insertFamily, [valuesFamily])
+        }
+        let deleteSocial = `DELETE FROM Patient_Social WHERE PatientID = '${body.ID}'`
+        await repos.query(deleteSocial);
+        if (body.personal_history.exercise.status != null) {
+          let dataExercise = {
+            PatientID: body.ID,
+            Habit: 'exercise',
+            Status: body.personal_history.exercise.status,
+            Quantity: body.personal_history.exercise.quantity,
+            Detail: null,
+            Comment: body.personal_history.exercise.comment
+          }
+          let insertExercise = `INSERT INTO Patient_Social SET ?`
+          await repos.query(insertExercise, dataExercise)
+        }
+        if (body.personal_history.alcohol.status != null) {
+          let dataAlcohol = {
+            PatientID: body.ID,
+            Habit: 'alcohol',
+            Status: body.personal_history.alcohol.status,
+            Quantity: body.personal_history.alcohol.quantity,
+            Detail: JSON.stringify(body.personal_history.alcohol.detail),
+            Comment: body.personal_history.alcohol.comment
+          }
+          let insertAlcohol = `INSERT INTO Patient_Social SET ?`
+          await repos.query(insertAlcohol, dataAlcohol)
+        }
+        if (body.personal_history.drugabuse.status != null) {
+          let dataDrugabuse = {
+            PatientID: body.ID,
+            Habit: 'drugabuse',
+            Status: body.personal_history.drugabuse.status,
+            Quantity: body.personal_history.drugabuse.quantity,
+            Detail: JSON.stringify(body.personal_history.drugabuse.detail),
+            Comment: body.personal_history.drugabuse.comment
+          }
+          let insertDrugabuse = `INSERT INTO Patient_Social SET ?`
+          await repos.query(insertDrugabuse, dataDrugabuse)
+        }
+        if (body.personal_history.smoke.status != null) {
+          let dataSmoke = {
+            PatientID: body.ID,
+            Habit: 'smoke',
+            Status: body.personal_history.smoke.status,
+            Quantity: body.personal_history.smoke.quantity,
+            Detail: JSON.stringify(body.personal_history.smoke.detail),
+            Comment: body.personal_history.smoke.comment
+          }
+          let insertSmoke = `INSERT INTO Patient_Social SET ?`
+          await repos.query(insertSmoke, dataSmoke)
+        }
         let dateDob = new Date(body.patient_info.dob)
         let queryNation = `SELECT * FROM CT_Nation Where ID = ${body.patient_info.nationality}`
         let queryReligion = `SELECT * FROM CT_Religion Where ID = ${body.patient_info.religion}`
@@ -598,19 +668,19 @@ class registerRoute {
         let Country = async (id: any) => {
           let queryCountry = `SELECT * FROM CT_Country Where ID = ${id}`
           let country = await repos.query(queryCountry)
-          if (!country.length) return ''
+          if (!country.length) return null
           return country[0].Desc_TH
         }
         let Subdistrict = async (id: any) => {
           let querySubdistrict = `SELECT * FROM CT_CityArea WHERE ID = ${id}`
           let subdistrict = await repos.query(querySubdistrict)
-          if (!subdistrict.length) return ''
+          if (!subdistrict.length) return null
           return subdistrict[0].Desc_TH
         }
         let PreferredLanguage = async (id: any) => {
           let querySubdistrict = `SELECT Desc_EN FROM CT_PreferredLanguage WHERE ID = ${id}`
           let subdistrict = await repos.query(querySubdistrict)
-          if (!subdistrict.length) return ''
+          if (!subdistrict.length) return null
           return subdistrict[0].Desc_EN
         }
         let Nation = await repos.query(queryNation)
@@ -618,40 +688,40 @@ class registerRoute {
         let Gender = await repos.query(queryGender)
         let family = await body.personal_history.family.map((d: any) => {
           let data = {
-            "id_patient_family": "",
-            "id_patient_information": "",
+            "id_patient_family": null,
+            "id_patient_information": null,
             "relation": d.person,
-            "disease": d.illness,
+            "disease": null,
             "start": 0,
             "end": 0,
-            "comment":""
+            "comment": d.illness
           }
           return data
         })
         let social: any = new Array()
         let dataalcohol = await {
-          id_patient_social: "",
-          id_patient_information: "",
+          id_patient_social: null,
+          id_patient_information: null,
           habit: "Alcohol",
-          quality: body.personal_history.alcohol.quantity,
-          detail: JSON.parse(JSON.stringify(body.personal_history.alcohol.detail)),
-          comment: body.personal_history.alcohol.comment
+          quality: null,
+          detail: null,
+          comment: await getComment('alcohol', body.personal_history.alcohol)
         }
         let dataexercise = await {
-          id_patient_social: "",
-          id_patient_information: "",
+          id_patient_social: null,
+          id_patient_information: null,
           habit: "Exercise",
-          quality :body.personal_history.exercise.quantity,
-          detail: "",
-          comment: body.personal_history.exercise.comment
+          quality : null,
+          detail: null,
+          comment: await getComment('exercise', body.personal_history.exercise)
         }
         let datasmoke = await {
-          id_patient_social: "",
-          id_patient_information: "",
+          id_patient_social: null,
+          id_patient_information: null,
           habit:"Smoking",
-          quality: body.personal_history.smoke.quantity,
-          detail: JSON.parse(JSON.stringify(body.personal_history.smoke.detail)),
-          comment: body.personal_history.smoke.comment
+          quality: null,
+          detail: null,
+          comment: await getComment('smoke', body.personal_history.smoke)
         }
         if (body.personal_history.alcohol.status) await social.push(dataalcohol)
         if (body.personal_history.exercise.status) await social.push(dataexercise)
@@ -745,7 +815,7 @@ class registerRoute {
             "date_created":null,
             "date_updated":null,
             "social_list": JSON.parse(JSON.stringify(social)),
-            "family_list": family,
+            "family_list": JSON.parse(JSON.stringify(family)),
             "site": body.site,
             "location": body.location.CTLOC_Desc,
             "Truama":"No",
@@ -755,9 +825,8 @@ class registerRoute {
         let time = new Date();
         const filename = `${body.ID}+${time.getFullYear()}-${("0" + (time.getMonth() + 1)).slice(-2)}-${time.getDate()}+${time.getTime()}.txt`
         const path = '/Process'
-        let sendrpa = await axios.post(`http://10.105.10.50:8700/api/CpoeRegister/registerCpoe`, { path, filename, data: rpa  })
-        
-        console.log(rpa)
+        await axios.post(`http://10.105.10.50:8700/api/CpoeRegister/registerCpoe`, { path, filename, data: rpa  })
+        res.send({message: 'Success'})
       } else {
         let dateDob = new Date(body.general_info.dob)
         let queryNation = `SELECT * FROM CT_Nation Where ID = ${body.general_info.nationality}`
@@ -887,6 +956,9 @@ class registerRoute {
       res.send({message: 'Success'})
     }
   }
+  sendRPA() {
+    return
+  }
 }
 
 const router = Router();
@@ -895,6 +967,6 @@ const route = new registerRoute();
 router.post("/", route.postRegister())
       .post("/search", route.getSearch())
       .post("/signature", route.saveSignature())
-      .post("/update", route.updateDate())
+      .post("/update", route.updateData())
 
 export const register = router;
