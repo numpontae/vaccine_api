@@ -823,7 +823,7 @@ class registerRoute {
           }
         }
         let time = new Date();
-        const filename = `${body.UID}:${time.getFullYear()}-${("0" + (time.getMonth() + 1)).slice(-2)}-${("0" + time.getDate()).slice(-2)}:${time.getTime()}.txt`
+        const filename = `RPA_Regis_${time.getFullYear()}-${("0" + (time.getMonth() + 1)).slice(-2)}-${time.getDate()}_${time.getTime()}.txt`
         const path = '/Process'
         await axios.post(`http://10.105.10.50:8700/api/CpoeRegister/registerCpoe`, { path, filename, data: rpa  })
         res.send({message: 'Success'})
