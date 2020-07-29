@@ -30,7 +30,6 @@ const registerConfig: any = {
   connectionLimit : 10,
   debug: false
 };
-console.log(registerConfig)
 
 app.listen(port, async () => {
   console.log(`server start with port ${port}`);

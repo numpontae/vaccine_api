@@ -537,10 +537,11 @@ class registerRoute {
   }
   saveSignature() {
     return async (req: Request, res: Response) => {
-      let { signatureHash, signatureImage, id, consent } = req.body;
+      let { signatureHash, signatureImage, id, consent, consentText } = req.body;
       let repos = di.get("repos");
       let query = `UPDATE Patient_Info SET Confirm=1, Consent=${consent} WHERE Id=${id};`
-      let insertSignature = `INSERT INTO Signature (PatientID, HashData, Image) VALUES(${id}, '${signatureHash}', '${signatureImage}');`
+      
+      let insertSignature = `INSERT INTO Signature (PatientID, HashSiganture, Signature, Consent) VALUES(${id}, '${signatureHash}', '${signatureImage}', "${consentText}");`
       await repos.query(query)
       await repos.query(insertSignature)
       res.send({message: 'Success'})
