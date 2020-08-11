@@ -9,7 +9,6 @@ const JDBC = require("jdbc");
 
 const app = express();
 const port = 30020;
-const routes = new Routes(app);
 app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
 app.use(bodyParser.json({ limit: "100mb" }));
 app.use((req, res, next) => {
@@ -20,6 +19,7 @@ app.use((req, res, next) => {
   );
   next();
 });
+const routes = new Routes(app);
 routes.setRoutes();
 
 const cache: any = {

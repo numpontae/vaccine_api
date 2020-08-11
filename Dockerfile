@@ -5,7 +5,7 @@ ENV REFRESHED_AT $REFRESHED_AT
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-RUN curl -sL https://deb.nodesource.com/setup_8.x | bash -
+RUN curl -sL https://deb.nodesource.com/setup_12.x | bash -
 RUN apt-get install -qq --no-install-recommends python2.7 make g++ gcc
 RUN apt-get update -qq && apt-get install -qq --no-install-recommends \
   nodejs \
@@ -22,4 +22,4 @@ RUN npm run build
 
 EXPOSE 30010
 
-CMD ["pm2-runtime", "start", "dist/app.js", "--instances", "max"]
+CMD ["pm2-runtime", "start", "dist/app.js", "--instances", "2"]
