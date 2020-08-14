@@ -788,6 +788,8 @@ class screeningRoute {
         const path = '/Process'
         await axios.post(`http://10.105.10.50:8700/api/CpoeRegister/registerCpoe`, { path, filename, data: rpa  })
         res.send({message: 'Success'})
+      } else if (body.type == 1) {
+        
       }
     }
   }

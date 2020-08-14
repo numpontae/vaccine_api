@@ -126,10 +126,8 @@ class registerRoute {
       }
       return result
     } else {
-      let queryAddress = `SELECT * FROM Registration.Patient_Address WHERE PatientID = ${info[0].ID} AND ParentID IS NULL ORDER BY Type`
-      let queryParent = `SELECT p.*, pa.* FROM Registration.Parent p 
-                         LEFT JOIN Registration.Patient_Address pa ON pa.ParentID = p.ID 
-                         WHERE p.PatientID = ${info[0].ID}`
+      let queryAddress = `SELECT * FROM Registration.Patient_Address WHERE PatientID = ${info[0].ID} ORDER BY Type`
+      let queryParent = `SELECT p.* FROM Registration.Parent p WHERE p.PatientID = ${info[0].ID}`
       let queryFinancial = `SELECT * FROM Registration.Patient_Financial WHERE PatientID = ${info[0].ID}`
       let queryFamily = `SELECT * FROM Registration.Family_History WHERE PatientID = ${info[0].ID}`
       let queryPediatric = `SELECT * FROM Registration.Pediatric WHERE PatientID = ${info[0].ID}`
@@ -140,12 +138,14 @@ class registerRoute {
       let pediatric = await repos.query(queryPediatric)
       let payment = []
       let familylist: any = []
+      let filterpermanent = await address.filter((d:any) => d.Type == 0)
+      let filterpersent = await address.filter((d:any) => d.Type == 1)
       if (financial.length) {
         if (financial[0].SelfPay == 1) payment.push('Self pay')
         if (financial[0].CompanyContact == 1) payment.push('Company contract')
         if (financial[0].Insurance == 1) payment.push('Insurance')
       }
-      family.map((d:any) => {
+      await family.map((d:any) => {
         let data = {
           illness: d.Disease,
           person: d.Person
@@ -154,8 +154,8 @@ class registerRoute {
       })
       let result = {
         Info: info[0],
-        Permanent: address[0],
-        Present: address[1],
+        Permanent: filterpermanent[0],
+        Present: filterpersent[0],
         Parent: parent,
         Financial: {
           payment_method: payment,
@@ -391,9 +391,9 @@ class registerRoute {
           body.permanent.country,
           body.permanent.postcode,
           body.permanent.subdistrict,
-          body.permanent.districtid,
+          body.permanent.districtidid,
           body.permanent.address,
-          body.permanent.provinceid,
+          body.permanent.provinceidid,
           null,
           0
         ]
@@ -453,35 +453,32 @@ class registerRoute {
         await repos.query(queryAddress, [dataAddress]);
         await repos.query(queryFinancial, dataFinancial);
         await repos.query(queryPediatric, dataPediatric);
-        for (let d of body.parent_info.parent) {
-          let parentdata = {
-            PatientID: insertInfo.insertId,
-            Title: d.title,
-            Firstname: d.firstname,
-            Middlename: d.middlename,
-            Lastname: d.lastname,
-            Relation: d.relation,
-            PhoneNo: d.phoneno,
-            Email: d.email,
-            ContactEmergency: d.contactemergency,
-            LivePerson: d.livewithperson,
-          }
-          let queryParent = `INSERT INTO Registration.Parent SET ?`
-          let insertParent = await repos.query(queryParent, parentdata);
-          let parentAddress = {
-            PatientID: insertInfo.insertId,
-            ParentID: insertParent.insertId,
-            Country: d.sameAddress ? body.permanent.country : d.country,
-            Postcode: d.sameAddress ? body.permanent.postcode : d.postcode,
-            Subdistrict: d.sameAddress ? body.permanent.subdistrict : d.subdistrict,
-            District: d.sameAddress ? body.permanent.district : d.district,
-            Address: d.sameAddress ? body.permanent.address : d.address,
-            Province: d.sameAddress ? body.permanent.province : d.province,
-            sameAddress: d.sameAddress
-          }
-          let queryParentAddress = `INSERT Patient_Address SET ?`
-          await repos.query(queryParentAddress, parentAddress);
-        }
+        let valuesParent:  any[] = [] 
+        await body.parent_info.parent.map((d: any) => {
+          let parentdata = [
+            insertInfo.insertId,
+            d.title,
+            d.firstname,
+            d.middlename,
+            d.lastname,
+            d.relation,
+            d.phoneno,
+            d.email,
+            d.contactemergency,
+            d.livewithperson,
+            d.sameAddress ? body.permanent.country : d.country,
+            d.sameAddress ? body.permanent.postcode : d.postcode,
+            d.sameAddress ? body.permanent.subdistrict : d.subdistrict,
+            d.sameAddress ? body.permanent.districtid : d.districtid,
+            d.sameAddress ? body.permanent.address : d.address,
+            d.sameAddress ? body.permanent.provinceid : d.provinceid,
+            d.sameAddress
+          ]
+          valuesParent.push(parentdata) 
+        })
+        
+        let queryParent = `INSERT INTO Registration.Parent (PatientID, Title, Firstname, Middlename, Lastname, Relation, PhoneNo, Email, ContactEmergency, LivePerson, Country, Postcode, Subdistrict, District, Address, Province, sameAddress) VALUES ?`
+        await repos.query(queryParent, [valuesParent]);
         if (body.siblings.family.length > 0) {
           let valuesFamily: any[] = [] 
           body.siblings.family.map((p: any) => {
@@ -574,7 +571,7 @@ class registerRoute {
   }
   saveSignature() {
     return async (req: Request, res: Response) => {
-      let { signatureHash, signatureImage, id, consent, consentText, oldpatient } = req.body;
+      let { signatureHash, signatureImage, id, consent, consentText } = req.body;
       let repos = di.get("repos");
       let query = `UPDATE Registration.Patient_Info SET Confirm=1, Consent=${consent} WHERE Id=${id};`
       let insertSignature = `INSERT INTO Registration.Signature (PatientID, HashSiganture, Signature, Consent) VALUES(${id}, '${signatureHash}', '${signatureImage}', "${consentText}");`
@@ -956,10 +953,51 @@ class registerRoute {
         res.send({message: 'Success'})
       } else {
         let dateDob = new Date(body.general_info.dob)
+        let dataInfo = {
+          Title: body.general_info.title,
+          Firstname: body.general_info.firstname,
+          Middlename: body.general_info.middlename,
+          Lastname: body.general_info.lastname,
+          DOB: `${dateDob.getFullYear()}-${("0" + (dateDob.getMonth() + 1)).slice(-2)}-${("0" + dateDob.getDate()).slice(-2)}`,
+          Gender: body.general_info.gender,
+          Nationality: body.general_info.nationality,
+          PhoneNo: body.general_info.phone_no,
+          Email: body.general_info.email,
+          Consent: body.consent,
+          Confirm: 0,
+          Type: body.type,
+          Site: body.site
+        }
+        let queryInfo = `UPDATE Registration.Patient_Info SET ? WHERE ID = '${body.ID}'`
+        let dataPermanent = {
+          Country: body.permanent.country,
+          Postcode: body.permanent.postcode,
+          Subdistrict: body.permanent.subdistrict,
+          District: body.permanent.districtid,
+          Address: body.permanent.address,
+          Province: body.permanent.provinceid,
+          sameAddress: null
+        }
+        let queryPermanent = `UPDATE Registration.Patient_Address SET ? WHERE PatientID = '${body.ID}' And Type = 0`
+        
+        let dataPresent = {
+          Country: body.present.sameAddress ? body.permanent.country : body.present.country,
+          Postcode: body.present.sameAddress ? body.permanent.postcode : body.present.postcode,
+          Subdistrict: body.present.sameAddress ? body.permanent.subdistrict : body.present.subdistrict,
+          District: body.present.sameAddress ? body.permanent.districtid : body.present.districtid,
+          Address: body.present.sameAddress ? body.permanent.address : body.present.address,
+          Province: body.present.sameAddress ? body.permanent.provinceid : body.present.provinceid,
+          sameAddress: body.present.sameAddress
+        }
+        let queryPresent = `UPDATE Registration.Patient_Address SET ? WHERE PatientID = '${body.ID}' And Type = 1`
+
+        await repos.query(queryInfo, dataInfo);
+        await repos.query(queryPermanent, dataPermanent)
+        await repos.query(queryPresent, dataPresent)
+        
         let queryNation = `SELECT * FROM Registration.CT_Nation Where ID = ${body.general_info.nationality}`
         
         let queryGender = `SELECT * FROM Registration.CT_Sex Where ID = ${body.general_info.gender}`
-        
         
         let Country = async (id: any) => {
           let queryCountry = `SELECT * FROM Registration.CT_Country Where ID = ${id}`
