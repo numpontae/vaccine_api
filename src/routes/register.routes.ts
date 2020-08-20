@@ -3,6 +3,7 @@ import { di } from "../di";
 import * as _ from "lodash";
 import CryptoJS from "crypto-js";
 const axios = require('axios');
+import { rpaSetting } from "../config/config";
 
 class registerRoute {
   Capitalize = (s: any) => {
@@ -867,6 +868,8 @@ class registerRoute {
     }
     let rpa = await {
       "data":{
+        "server": rpaSetting.SERVER,
+        "server_type": rpaSetting.SERVER_TYPE,
         "id_patient_information":126,
         "patient_code":"9xkevj",
         "hn": null,
@@ -1047,6 +1050,8 @@ class registerRoute {
        
         let rpa = {
           "data":{
+            "server": rpaSetting.SERVER,
+            "server_type": rpaSetting.SERVER_TYPE,
             "id_patient_information":126,
             "patient_code":"9xkevj",
             "hn":null,

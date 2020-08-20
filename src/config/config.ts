@@ -14,4 +14,8 @@ export const
     USER: env.USER,
     PASSWORD: env.PASSWORD,
     DATABASE_NAME: env.DATABASENAME,
-  };
+  },
+  rpaSetting = {
+    SERVER: env.SERVER,
+    SERVER_TYPE: env.SERVER_TYPE,
+  }

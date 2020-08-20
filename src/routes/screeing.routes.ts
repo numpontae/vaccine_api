@@ -3,6 +3,7 @@ import { di } from "../di";
 import * as _ from "lodash";
 import CryptoJS from "crypto-js";
 const axios = require('axios');
+import { rpaSetting } from "../config/config";
 
 class screeningRoute {
   async getPatientByHN(hn: any) {
@@ -716,6 +717,8 @@ class screeningRoute {
                 
         let rpa = await {
           "data":{
+            "server": rpaSetting.SERVER,
+            "server_type": rpaSetting.SERVER_TYPE,
             "id_patient_information": 0,
             "patient_code":"",
             "hn": body.HN,
