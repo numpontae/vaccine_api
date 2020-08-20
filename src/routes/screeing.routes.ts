@@ -434,6 +434,8 @@ class screeningRoute {
         
         let rpa = await {
           "data":{
+            "server": rpaSetting.SERVER,
+            "server_type": rpaSetting.SERVER_TYPE,
             "id_patient_information": 0,
             "patient_code":"",
             "hn": body.HN,
