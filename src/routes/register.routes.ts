@@ -171,11 +171,13 @@ class registerRoute {
       let queryFinancial = `SELECT * FROM Registration.Patient_Financial WHERE PatientID = ${info[0].ID}`
       let queryFamily = `SELECT * FROM Registration.Family_History WHERE PatientID = ${info[0].ID}`
       let queryPediatric = `SELECT * FROM Registration.Pediatric WHERE PatientID = ${info[0].ID}`
+      let queryConsent = `SELECT * FROM Registration.Consent WHERE PatientID = ${info[0].ID}`
       let address = await repos.query(queryAddress)
       let parent = await repos.query(queryParent)
       let financial = await repos.query(queryFinancial)
       let family = await repos.query(queryFamily)
       let pediatric = await repos.query(queryPediatric)
+      let consent = await repos.query(queryConsent)
       let payment = []
       let familylist: any = []
       let filterpermanent = await address.filter((d:any) => d.Type == 0)
@@ -206,6 +208,7 @@ class registerRoute {
         },
         Pediatric: pediatric[0],
         Family: familylist,
+        Consent: consent
       }
       return result
     } 
@@ -1036,7 +1039,7 @@ class registerRoute {
         await repos.query(queryInfo, dataInfo);
         await repos.query(queryPermanent, dataPermanent)
         await repos.query(queryPresent, dataPresent)
-        
+        this.handleConsent(body.consent_form, body.ID)
         let queryNation = `SELECT * FROM Registration.CT_Nation Where ID = ${body.general_info.nationality}`
         
         let queryGender = `SELECT * FROM Registration.CT_Sex Where ID = ${body.general_info.gender}`

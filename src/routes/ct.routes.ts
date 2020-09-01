@@ -73,9 +73,14 @@ class ctRoute {
       let repos = di.get('repos')
       let query = ''
       if ( type == '1' ) {
-        query = `SELECT * FROM Registration.CT_Zip Where Zip_Code NOT IN ('JAN-64', 'AUG-43', '999999', '') AND Zip_Code = '${zip}'`
+        query = `SELECT ca.*, c.Province_ID FROM Registration.CT_CityArea_1 ca
+                Left Join Registration.CT_City_1 c ON ca.City_ID = c.ID
+                Where ca.Zip_Code <> '0' And ca.Zip_Code = '${zip}'`
       } else {
-        query = `SELECT * FROM Registration.CT_Zip Where Zip_Code NOT IN ('JAN-64', 'AUG-43', '999999', '') AND Zip_Code LIKE '%${zip}%'`
+        query = `SELECT ca.*, c.Province_ID FROM Registration.CT_CityArea_1 ca
+                Left Join Registration.CT_City_1 c ON ca.City_ID = c.ID
+                Where ca.Zip_Code <> '0' And ca.Zip_Code LIKE '%${zip}%'`
+                
       }
       let result = await repos.query(query)
       res.send(result) 
@@ -86,7 +91,7 @@ class ctRoute {
       let { id } = req.query
       let repos = di.get('repos')
       let query = ''
-      query = `SELECT * FROM Registration.CT_Province WHERE Code NOT IN ('999', '900') AND ID = '${id}'`
+      query = `SELECT * FROM Registration.CT_Province_1 WHERE Code NOT IN ('999', '900') AND ID = '${id}'`
       
       let result = await repos.query(query)
       res.send(result) 
@@ -94,16 +99,35 @@ class ctRoute {
   }
   getCityArea() {
     return async (req: Request, res: Response) => {
-      let { zip } = req.query
+      let { zip, lang } = req.query
       let repos = di.get('repos')
       let query = ''
-      query = `SELECT ca.* FROM Registration.CT_Zip z
-              RIGHT JOIN Registration.CT_CityArea ca ON ca.ID = z.Cityarea_ID
-              WHERE ca.Code NOT IN ('999999', '900000') AND z.Zip_Code = '${zip}'
-              GROUP BY ca.ID`
       
+      query = `SELECT ca.* FROM Registration.CT_CityArea_1 ca
+              WHERE ca.Zip_Code NOT IN ('999999', '900000') AND ca.Zip_Code = '${zip}'
+              GROUP BY ca.ID`
       let result = await repos.query(query)
-      res.send(result) 
+      let response: any
+      if (lang == 'th') {
+        response = await result.map((d: any) => {
+          return {
+            ID: d.ID,
+            Zip_Code: d.Zip_Code,
+            Desc: d.Desc_TH,
+            City_ID: d.City_ID
+          }
+        })
+      } else {
+         response = await result.map((d: any) => {
+          return {
+            ID: d.ID,
+            Zip_Code: d.Zip_Code,
+            Desc: d.Desc_EN,
+            City_ID: d.City_ID
+          }
+        })
+      }
+      res.send(response) 
     }
   }
   getRelation() {
@@ -119,7 +143,7 @@ class ctRoute {
       let { id } = req.query
       let repos = di.get('repos')
       let query = ''
-      query = `SELECT c.* FROM Registration.CT_CityArea ca
+      query = `SELECT c.* FROM Registration.CT_CityArea_1 ca
                RIGHT JOIN Registration.CT_City c ON ca.CITY_ID = c.ID
                WHERE ca.ID = '${id}'`
       

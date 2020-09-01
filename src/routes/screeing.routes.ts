@@ -61,7 +61,7 @@ class screeningRoute {
     return async (req: Request, res: Response) => {
       let { signatureHash, signatureImage, id, consent, consentText } = req.body;
       let repos = di.get("repos");
-      let query = `UPDATE Screening.Patient_Info SET Confirm=1, Consent=${consent} WHERE HN='${id}';`
+      let query = `UPDATE Screening.Patient_Info SET Confirm=1 WHERE HN='${id}';`
       let insertSignature = `INSERT INTO Screening.Signature (HN, HashSiganture, Signature, Consent) VALUES('${id}', '${signatureHash}', '${signatureImage}', "${consentText}");`
       await repos.query(query)
       await repos.query(insertSignature)
@@ -137,7 +137,7 @@ class screeningRoute {
           res.send(data)
         }
       } catch (error) {
-        res.send({mssage: error})
+        res.send([])
       }
     }
   }
