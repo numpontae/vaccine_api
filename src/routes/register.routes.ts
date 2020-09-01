@@ -831,10 +831,22 @@ class registerRoute {
       return country[0].Desc_TH
     }
     let Subdistrict = async (id: any) => {
-      let querySubdistrict = `SELECT * FROM Registration.CT_CityArea WHERE ID = ${id}`
+      let querySubdistrict = `SELECT * FROM Registration.CT_CityArea_1 WHERE ID = ${id}`
       let subdistrict = await repos.query(querySubdistrict)
       if (!subdistrict.length) return null
       return subdistrict[0].Desc_TH
+    }
+    let District = async (id: any) => {
+      let queryDistrict = `SELECT * FROM Registration.CT_City_1 WHERE ID = ${id}`
+      let district = await repos.query(queryDistrict)
+      if (!district.length) return ''
+      return district[0].Desc_TH
+    }
+    let Province = async (id: any) => {
+      let queryProvince = `SELECT * FROM Registration.CT_Province_1 WHERE ID = ${id}`
+      let provice = await repos.query(queryProvince)
+      if (!provice.length) return ''
+      return provice[0].Desc_TH
     }
     let PreferredLanguage = async (id: any) => {
       let querySubdistrict = `SELECT Desc_EN FROM Registration.CT_PreferredLanguage WHERE ID = ${id}`
@@ -944,15 +956,15 @@ class registerRoute {
         "office_telephone":body.patient_info.officephone,
         "permanent_address": body.permanent.address,
         "permanent_sub_district": await Subdistrict(body.permanent.subdistrict),
-        "permanent_district": body.permanent.district,
-        "permanent_province": body.permanent.province,
+        "permanent_district": await District(body.permanent.districtid),
+        "permanent_province": await Province(body.permanent.provinceid),
         "permanent_postcode": body.permanent.postcode,
         "permanent_country": await Country(body.permanent.country),
         "same_permanent": body.present.sameAddress ? 1 : 0,
         "present_address":body.present.sameAddress ? body.permanent.address : body.present.address,
         "present_sub_district":body.present.sameAddress ? await Subdistrict(body.permanent.subdistrict) : await Subdistrict(body.present.subdistrict),
-        "present_district":body.present.sameAddress ? body.permanent.district : body.present.district,
-        "present_province":body.present.sameAddress ? body.permanent.province : body.present.province,
+        "present_district":body.present.sameAddress ? await District(body.permanent.districtid) : await District(body.present.districtid),
+        "present_province":body.present.sameAddress ? await Province(body.permanent.provinceid) : await Province(body.present.provinceid),
         "present_postcode":body.present.sameAddress ? body.permanent.postcode : body.present.postcode,
         "present_country":body.present.sameAddress ? await Country(body.permanent.country) : await Country(body.present.country),
         "ec_firstname":body.emergency.first_name,
@@ -1051,10 +1063,22 @@ class registerRoute {
           return country[0].Desc_TH
         }
         let Subdistrict = async (id: any) => {
-          let querySubdistrict = `SELECT * FROM Registration.CT_CityArea WHERE ID = ${id}`
+          let querySubdistrict = `SELECT * FROM Registration.CT_CityArea_1 WHERE ID = ${id}`
           let subdistrict = await repos.query(querySubdistrict)
           if (!subdistrict.length) return ''
           return subdistrict[0].Desc_TH
+        }
+        let District = async (id: any) => {
+          let queryDistrict = `SELECT * FROM Registration.CT_City_1 WHERE ID = ${id}`
+          let district = await repos.query(queryDistrict)
+          if (!district.length) return ''
+          return district[0].Desc_TH
+        }
+        let Province = async (id: any) => {
+          let queryProvince = `SELECT * FROM Registration.CT_Province_1 WHERE ID = ${id}`
+          let provice = await repos.query(queryProvince)
+          if (!provice.length) return ''
+          return provice[0].Desc_TH
         }
         let PreferredLanguage = async (id: any) => {
           let querySubdistrict = `SELECT Desc_EN FROM Registration.CT_PreferredLanguage WHERE ID = ${id}`
@@ -1124,15 +1148,15 @@ class registerRoute {
             "office_telephone": null,
             "permanent_address": body.permanent.address,
             "permanent_sub_district": await Subdistrict(body.permanent.subdistrict),
-            "permanent_district": body.permanent.district,
-            "permanent_province": body.permanent.province,
+            "permanent_district": await District(body.permanent.districtid),
+            "permanent_province": await Province(body.permanent.provinceid),
             "permanent_postcode": body.permanent.postcode,
             "permanent_country": await Country(body.permanent.country),
             "same_permanent": body.present.sameAddress ? 1 : 0,
             "present_address":body.present.sameAddress ? body.permanent.address : body.present.address,
             "present_sub_district":body.present.sameAddress ? await Subdistrict(body.permanent.subdistrict) : await Subdistrict(body.present.subdistrict),
-            "present_district":body.present.sameAddress ? body.permanent.district : body.present.district,
-            "present_province":body.present.sameAddress ? body.permanent.province : body.present.province,
+            "present_district":body.present.sameAddress ? await District(body.permanent.districtid) : await District(body.present.districtid),
+            "present_province":body.present.sameAddress ? await Province(body.permanent.provinceid) : await Province(body.present.provinceid),
             "present_postcode":body.present.sameAddress ? body.permanent.postcode : body.present.postcode,
             "present_country":body.present.sameAddress ? await Country(body.permanent.country) : await Country(body.present.country),
             "ec_firstname": emergency != undefined ? emergency.firstname : null,
