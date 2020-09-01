@@ -6,6 +6,42 @@ const axios = require('axios');
 import { rpaSetting } from "../config/config";
 
 class registerRoute {
+  async handleConsent(data: any, id: any) {
+    let repos = di.get("repos")
+    let query_1 = `REPLACE INTO Registration.Consent (PatientID, Clause, Message, Agree) VALUES(${id}, '1', '${data.consent_1.text}', ${data.consent_1.status})`
+    let query_2_1 = `REPLACE INTO Registration.Consent (PatientID, Clause, Message, Agree) VALUES(${id}, '2_1', '${data.consent_2_1.text}', ${data.consent_2_1.status})`
+    let query_2_2 = `REPLACE INTO Registration.Consent (PatientID, Clause, Message, Agree) VALUES(${id}, '2_2', '${data.consent_2_2.text}', ${data.consent_2_2.status})`
+    let query_2_3 = `REPLACE INTO Registration.Consent (PatientID, Clause, Message, Agree) VALUES(${id}, '2_3', '${data.consent_2_3.text}', ${data.consent_2_3.status})`
+    let query_2_4 = `REPLACE INTO Registration.Consent (PatientID, Clause, Message, Agree) VALUES(${id}, '2_4', '${data.consent_2_4.text}', ${data.consent_2_4.status})`
+    let query_2_5_1 = `REPLACE INTO Registration.Consent (PatientID, Clause, Message, Agree) VALUES(${id}, '2_5_1', '${data.consent_2_5_1.text}', ${data.consent_2_5_1.status})`
+    let query_2_5_2 = `REPLACE INTO Registration.Consent (PatientID, Clause, Message, Agree) VALUES(${id}, '2_5_2', '${data.consent_2_5_2.text}', ${data.consent_2_5_2.status})`
+    let query_2_5_3 = `REPLACE INTO Registration.Consent (PatientID, Clause, Message, Agree) VALUES(${id}, '2_5_3', '${data.consent_2_5_3.text}', ${data.consent_2_5_3.status})`
+    await repos.query(query_1)
+    await repos.query(query_2_1)
+    await repos.query(query_2_2)
+    await repos.query(query_2_3)
+    await repos.query(query_2_4)
+    await repos.query(query_2_5_1)
+    await repos.query(query_2_5_2)
+    await repos.query(query_2_5_3)
+    if (data.other.choice_1.status === true) {
+      let query = `REPLACE INTO Registration.Consent (PatientID, Clause, Message, Agree) VALUES(${id}, 'other_1', '${data.other.choice_1.text}', ${data.other.choice_1.status})`
+      repos.query(query)
+    }
+    if (data.other.choice_2.status === true) {
+      let query = `REPLACE INTO Registration.Consent (PatientID, Clause, Message, Agree) VALUES(${id}, 'other_2', '${data.other.choice_2.text}', ${data.other.choice_2.status})`
+      repos.query(query)
+    }
+    if (data.other.choice_3.status === true) {
+      let query = `REPLACE INTO Registration.Consent (PatientID, Clause, Message, Agree) VALUES(${id}, 'other_3', '${data.other.choice_3.text}', ${data.other.choice_3.status})`
+      repos.query(query)
+    }
+    if (data.other.choice_4.status === true) {
+      let query = `REPLACE INTO Registration.Consent (PatientID, Clause, Message, Agree) VALUES(${id}, 'other_4', '${data.other.choice_4.text}', ${data.other.choice_4.status})`
+      repos.query(query)
+    }
+    return
+  }
   Capitalize = (s: any) => {
     if (typeof s !== "string") return "";
     return s.charAt(0).toUpperCase() + s.slice(1);
@@ -26,12 +62,14 @@ class registerRoute {
       let queryHistory = `SELECT * FROM Registration.Patient_History WHERE PatientID = ${info[0].ID}`
       let queryFamily = `SELECT * FROM Registration.Family_History WHERE PatientID = ${info[0].ID}`
       let querySocial = `SELECT * FROM Registration.Patient_Social WHERE PatientID = ${info[0].ID}`
+      let queryConsent = `SELECT * FROM Registration.Consent WHERE PatientID = ${info[0].ID}`
       let address = await repos.query(queryAddress)
       let emergency = await repos.query(queryEmergency)
       let financial = await repos.query(queryFinancial)
       let history = await repos.query(queryHistory)
       let family = await repos.query(queryFamily)
       let social = await repos.query(querySocial)
+      let consent = await repos.query(queryConsent)
       let dataSocial = social.map((d: any) => {
         let data = {
           Habit: d.Habit,
@@ -123,7 +161,8 @@ class registerRoute {
           CauseMother: history[0].CauseMother,
         },
         Family: familylist,
-        SocialHistory: dataSocial
+        SocialHistory: dataSocial,
+        Consent: consent
       }
       return result
     } else {
@@ -196,7 +235,6 @@ class registerRoute {
           Email: body.patient_info.email,
           Homephone: body.patient_info.homephone,
           Officephone: body.patient_info.officephone,
-          Consent: body.consent,
           Confirm: 0,
           Type: body.type,
           Site: body.site
@@ -366,6 +404,7 @@ class registerRoute {
           let insertSmoke = `INSERT INTO Registration.Patient_Social SET ?`
           await repos.query(insertSmoke, dataSmoke)
         }
+        this.handleConsent(body.consent_form, insertInfo.insertId)
         res.send({message: 'Success'})
       } else if ( body.type == 1 ) {
         let dateDob = new Date(body.general_info.dob)
@@ -379,7 +418,6 @@ class registerRoute {
           Nationality: body.general_info.nationality,
           PhoneNo: body.general_info.phone_no,
           Email: body.general_info.email,
-          Consent: body.consent,
           Confirm: 0,
           Type: body.type,
           Site: body.site
@@ -491,6 +529,7 @@ class registerRoute {
           let insertFamily = `INSERT INTO Registration.Family_History (PatientID, Person, Disease) VALUES ?;`
           if (valuesFamily.length) await repos.query(insertFamily, [valuesFamily])
         }
+        this.handleConsent(body.consent_form, insertInfo.insertId)
         res.send({message: 'Success'})
       }
     };
@@ -574,8 +613,8 @@ class registerRoute {
     return async (req: Request, res: Response) => {
       let { signatureHash, signatureImage, id, consent, consentText } = req.body;
       let repos = di.get("repos");
-      let query = `UPDATE Registration.Patient_Info SET Confirm=1, Consent=${consent} WHERE Id=${id};`
-      let insertSignature = `INSERT INTO Registration.Signature (PatientID, HashSiganture, Signature, Consent) VALUES(${id}, '${signatureHash}', '${signatureImage}', "${consentText}");`
+      let query = `UPDATE Registration.Patient_Info SET Confirm=1 WHERE Id=${id};`
+      let insertSignature = `INSERT INTO Registration.Signature (PatientID, HashSiganture, Signature) VALUES(${id}, '${signatureHash}', '${signatureImage}');`
       await repos.query(query)
       await repos.query(insertSignature)
       res.send({message: 'Success'})
@@ -776,6 +815,7 @@ class registerRoute {
       let insertSmoke = `INSERT INTO Registration.Patient_Social SET ?`
       await repos.query(insertSmoke, dataSmoke)
     }
+    this.handleConsent(body.consent_form, body.ID)
     let queryNation = `SELECT * FROM Registration.CT_Nation Where ID = ${body.patient_info.nationality}`
     let queryReligion = `SELECT * FROM Registration.CT_Religion Where ID = ${body.patient_info.religion}`
     let queryGender = `SELECT * FROM Registration.CT_Sex Where ID = ${body.patient_info.gender}`
@@ -966,7 +1006,6 @@ class registerRoute {
           Nationality: body.general_info.nationality,
           PhoneNo: body.general_info.phone_no,
           Email: body.general_info.email,
-          Consent: body.consent,
           Confirm: 0,
           Type: body.type,
           Site: body.site
