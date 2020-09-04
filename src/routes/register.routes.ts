@@ -616,7 +616,7 @@ class registerRoute {
     return async (req: Request, res: Response) => {
       let { signatureHash, signatureImage, id, consent, consentText } = req.body;
       let repos = di.get("repos");
-      let query = `UPDATE Registration.Patient_Info SET Confirm=1 WHERE Id=${id};`
+      let query = `UPDATE Registration.Patient_Info SET Confirm=1 WHERE ID=${id};`
       let insertSignature = `INSERT INTO Registration.Signature (PatientID, HashSiganture, Signature) VALUES(${id}, '${signatureHash}', '${signatureImage}');`
       await repos.query(query)
       await repos.query(insertSignature)
@@ -627,7 +627,6 @@ class registerRoute {
     let repos = di.get("repos");
     let getComment = (type: string, data: any) => {
       if (type == 'alcohol') {
-        console.log(data.detail)
         return `quantity: ${data.quantity}, duration: ${data.detail.duration}, beverages: ${data.detail.beverages}, comment: ${data.comment}`
       } else if (type == 'exercise') {
         return `quantity: ${data.quantity}, comment: ${data.comment}`
@@ -921,7 +920,7 @@ class registerRoute {
       if (d == 'Separated') return 6
       if (d == 'Unknown') return 7
     }
-    let rpa = await {
+    let rpa = {
       "data":{
         "server": rpaSetting.SERVER,
         "server_type": rpaSetting.SERVER_TYPE,
@@ -975,9 +974,9 @@ class registerRoute {
         "ec_email":body.emergency.email,
         "ec_address_same_patient": body.emergency.sameAddress ? 1 : 0,
         "ec_address":body.emergency.sameAddress ? body.permanent.address : body.emergency.address,
-        "ec_sub_district":body.emergency.sameAddress ? await Subdistrict(body.permanent.subdistrict) : body.emergency.subdistrict,
-        "ec_district":body.emergency.sameAddress ? body.permanent.district : body.emergency.district,
-        "ec_province":body.emergency.sameAddress ? body.permanent.province : body.emergency.province,
+        "ec_sub_district":body.emergency.sameAddress ? await Subdistrict(body.permanent.subdistrict) : await Subdistrict(body.emergency.subdistrict),
+        "ec_district":body.emergency.sameAddress ? await District(body.permanent.districtid) : await District(body.emergency.districtid),
+        "ec_province":body.emergency.sameAddress ? await Province(body.permanent.provinceid) : await Province(body.emergency.provinceid),
         "ec_postcode":body.emergency.sameAddress ? body.permanent.postcode : body.emergency.postcode,
         "ec_country":body.emergency.sameAddress ? await Country(body.permanent.country) : await Country(body.emergency.country),
         "fi_payment_method":body.financial.payment_method,
@@ -999,197 +998,275 @@ class registerRoute {
     return
     
   }
-  updateChild(body: any) {
+  async updateChild(body: any) {
+    let repos = di.get("repos");
+    let dateDob = new Date(body.general_info.dob)
+    let dataInfo = {
+      Title: body.general_info.title,
+      Firstname: body.general_info.firstname,
+      Middlename: body.general_info.middlename,
+      Lastname: body.general_info.lastname,
+      DOB: `${dateDob.getFullYear()}-${("0" + (dateDob.getMonth() + 1)).slice(-2)}-${("0" + dateDob.getDate()).slice(-2)}`,
+      Gender: body.general_info.gender,
+      Nationality: body.general_info.nationality,
+      PhoneNo: body.general_info.phone_no,
+      Email: body.general_info.email,
+      Type: body.type,
+      Site: body.site
+    }
+    let queryInfo = `UPDATE Registration.Patient_Info SET ? WHERE ID = '${body.ID}'`
+    let dataPermanent = {
+      Country: body.permanent.country,
+      Postcode: body.permanent.postcode,
+      Subdistrict: body.permanent.subdistrict,
+      District: body.permanent.districtid,
+      Address: body.permanent.address,
+      Province: body.permanent.provinceid,
+      sameAddress: null
+    }
+    let queryPermanent = `UPDATE Registration.Patient_Address SET ? WHERE PatientID = '${body.ID}' And Type = 0`
+    let dataPresent = {
+      Country: body.present.sameAddress ? body.permanent.country : body.present.country,
+      Postcode: body.present.sameAddress ? body.permanent.postcode : body.present.postcode,
+      Subdistrict: body.present.sameAddress ? body.permanent.subdistrict : body.present.subdistrict,
+      District: body.present.sameAddress ? body.permanent.districtid : body.present.districtid,
+      Address: body.present.sameAddress ? body.permanent.address : body.present.address,
+      Province: body.present.sameAddress ? body.permanent.provinceid : body.present.provinceid,
+      sameAddress: body.present.sameAddress
+    }
+    let queryPresent = `UPDATE Registration.Patient_Address SET ? WHERE PatientID = '${body.ID}' And Type = 1`
+    let dataFinancial = {
+      SelfPay: _.indexOf(body.parent_info.payment_method, 'Self pay') >= 0 ? 1 : 0,
+      CompanyContact: _.indexOf(body.parent_info.payment_method, 'Company contract') >= 0 ? 1 : 0,
+      Insurance: _.indexOf(body.parent_info.payment_method, 'Insurance') >= 0 ? 1 : 0,
+      CompanyDesc: body.parent_info.company,
+      InsuranceDesc: body.parent_info.insurance,
+    }
+    let dataPediatric = {
+      Pob: body.pediatric.pob,
+      BloodGroup: body.pediatric.blood_group,
+      Weight: body.pediatric.weight,
+      Height: body.pediatric.length,
+      head: body.pediatric.head,
+      Delivery: body.pediatric.delivery,
+      DeliveryScore1: body.pediatric.deliveryscore1,
+      DeliveryScore2: body.pediatric.deliveryscore2,
+      Tsh: body.pediatric.tsh,
+      Pku: body.pediatric.pku,
+      Hearing: body.pediatric.hearing,
+      Problems: body.pediatric.problems,
+      ProblemsComment: body.pediatric.c_problems,
+      Delay: body.pediatric.delay,
+      DelayComment: body.pediatric.c_delay,
+      Drug: body.pediatric.drug,
+      DrugComment: body.pediatric.c_drug,
+      Food: body.pediatric.food,
+      FoodComment: body.pediatric.c_food,
+      Other: body.pediatric.other,
+      Othercomment: body.pediatric.c_other,
+      Illness: body.pediatric.illness,
+      Curmed: body.pediatric.curmed,
+      Hospitalization: body.pediatric.hospitalization,
+      HospitalizationComment: body.pediatric.c_hospitalization,
+      Siblings: body.siblings.siblings
+    }
+    let queryFinancial = `UPDATE Registration.Patient_Financial SET ? WHERE PatientID = '${body.ID}'`
+    let queryPediatric = `UPDATE Registration.Pediatric SET ? WHERE PatientID = '${body.ID}'`
 
+    await repos.query(queryInfo, dataInfo);
+    await repos.query(queryPermanent, dataPermanent)
+    await repos.query(queryPresent, dataPresent)
+    await repos.query(queryFinancial, dataFinancial);
+    await repos.query(queryPediatric, dataPediatric);
+    let valuesParent:  any[] = [] 
+    await body.parent_info.parent.map((d: any) => {
+      let parentdata = [
+        body.ID,
+        d.title,
+        d.firstname,
+        d.middlename,
+        d.lastname,
+        d.relation,
+        d.phoneno,
+        d.email,
+        d.contactemergency,
+        d.livewithperson,
+        d.sameAddress ? body.permanent.country : d.country,
+        d.sameAddress ? body.permanent.postcode : d.postcode,
+        d.sameAddress ? body.permanent.subdistrict : d.subdistrict,
+        d.sameAddress ? body.permanent.districtid : d.districtid,
+        d.sameAddress ? body.permanent.address : d.address,
+        d.sameAddress ? body.permanent.provinceid : d.provinceid,
+        d.sameAddress
+      ]
+      valuesParent.push(parentdata) 
+    })
+    let deleteParent = `DELETE FROM Registration.Parent WHERE PatientID = '${body.ID}'`
+    await repos.query(deleteParent);
+    let queryParent = `INSERT INTO Registration.Parent (PatientID, Title, Firstname, Middlename, Lastname, Relation, PhoneNo, Email, ContactEmergency, LivePerson, Country, Postcode, Subdistrict, District, Address, Province, sameAddress) VALUES ?`
+    await repos.query(queryParent, [valuesParent]);
+    if (body.siblings.family.length > 0) {
+      let deleteFamily = `DELETE FROM Registration.Family_History WHERE PatientID = '${body.ID}'`
+      await repos.query(deleteFamily);
+      let valuesFamily: any[] = [] 
+      body.siblings.family.map((p: any) => {
+        if (p.person != null && p.illness != null) {
+          let value = [body.ID, p.person, p.illness]
+          valuesFamily.push(value) 
+        }
+      })
+      let insertFamily = `INSERT INTO Registration.Family_History (PatientID, Person, Disease) VALUES ?;`
+      if (valuesFamily.length) await repos.query(insertFamily, [valuesFamily])
+    }
+    this.handleConsent(body.consent_form, body.ID)
+    let queryNation = `SELECT * FROM Registration.CT_Nation Where ID = ${body.general_info.nationality}`
+    let queryGender = `SELECT * FROM Registration.CT_Sex Where ID = ${body.general_info.gender}`
+    
+    let Country = async (id: any) => {
+      let queryCountry = `SELECT * FROM Registration.CT_Country Where ID = ${id}`
+      let country = await repos.query(queryCountry)
+      if (!country.length) return ''
+      return country[0].Desc_TH
+    }
+    let Subdistrict = async (id: any) => {
+      let querySubdistrict = `SELECT * FROM Registration.CT_CityArea_1 WHERE ID = ${id}`
+      let subdistrict = await repos.query(querySubdistrict)
+      if (!subdistrict.length) return ''
+      return subdistrict[0].Desc_TH
+    }
+    let District = async (id: any) => {
+      let queryDistrict = `SELECT * FROM Registration.CT_City_1 WHERE ID = ${id}`
+      let district = await repos.query(queryDistrict)
+      if (!district.length) return ''
+      return district[0].Desc_TH
+    }
+    let Province = async (id: any) => {
+      let queryProvince = `SELECT * FROM Registration.CT_Province_1 WHERE ID = ${id}`
+      let provice = await repos.query(queryProvince)
+      if (!provice.length) return ''
+      return provice[0].Desc_TH
+    }
+    let PreferredLanguage = async (id: any) => {
+      let querySubdistrict = `SELECT Desc_EN FROM Registration.CT_PreferredLanguage WHERE ID = ${id}`
+      let subdistrict = await repos.query(querySubdistrict)
+      if (!subdistrict.length) return ''
+      return subdistrict[0].Desc_EN
+    }
+    let Nation = await repos.query(queryNation)
+    let Gender = await repos.query(queryGender)
+    let family = await body.siblings.family.map((d: any) => {
+      let data = {
+        "id_patient_family": null,
+        "id_patient_information": null,
+        "relation": d.person,
+        "disease": d.illness,
+        "start": 0,
+        "end": 0,
+        "comment":null
+      }
+      return data
+    })
+    let social: any = new Array()
+    
+    let datadrugabuse = {
+      "id_patient_social": null,
+      "id_patient_information": null,
+      "habit":"Substance Abuse",
+      "quality": null,
+      "detail": null,
+      "comment": body.pediatric.c_drug
+    }
+    
+    if (body.pediatric.drug) social.push(datadrugabuse)
+    let emergency = body.parent_info.parent.find((d: any) => d.contactemergency)
+    let rpa = {
+      "data":{
+        "server": rpaSetting.SERVER,
+        "server_type": rpaSetting.SERVER_TYPE,
+        "id_patient_information":126,
+        "patient_code":"9xkevj",
+        "hn":null,
+        "title_th": body.general_info.title,
+        "firstname_th": body.general_info.firstname,
+        "middlename_th": body.general_info.middlename,
+        "lastname_th": body.general_info.lastname,
+        "title_en":null,
+        "firstname_en":null,
+        "middlename_en":null,
+        "lastname_en":null,
+        "nationality": Nation[0].Desc_EN,
+        "religion": null,
+        "religion_desc": null,
+        "national_id": null,
+        "passport_id": null,
+        "dob":`${dateDob.getFullYear()}-${("0" + (dateDob.getMonth() + 1)).slice(-2)}-${("0" + dateDob.getDate()).slice(-2)}`,
+        "age":null,
+        "gender": body.general_info.gender,
+        "gender_desc_en":Gender[0].Desc_EN,
+        "gender_desc_th":Gender[0].Desc_TH,
+        "marital_status": null,
+        "preferrend_language": null,
+        "occupation": null,
+        "mobile_phone":body.general_info.phone_no,
+        "email":body.general_info.email,
+        "home_telephone": null,
+        "office_telephone": null,
+        "permanent_address": body.permanent.address,
+        "permanent_sub_district": await Subdistrict(body.permanent.subdistrict),
+        "permanent_district": await District(body.permanent.districtid),
+        "permanent_province": await Province(body.permanent.provinceid),
+        "permanent_postcode": body.permanent.postcode,
+        "permanent_country": await Country(body.permanent.country),
+        "same_permanent": body.present.sameAddress ? 1 : 0,
+        "present_address":body.present.sameAddress ? body.permanent.address : body.present.address,
+        "present_sub_district":body.present.sameAddress ? await Subdistrict(body.permanent.subdistrict) : await Subdistrict(body.present.subdistrict),
+        "present_district":body.present.sameAddress ? await District(body.permanent.districtid) : await District(body.present.districtid),
+        "present_province":body.present.sameAddress ? await Province(body.permanent.provinceid) : await Province(body.present.provinceid),
+        "present_postcode":body.present.sameAddress ? body.permanent.postcode : body.present.postcode,
+        "present_country":body.present.sameAddress ? await Country(body.permanent.country) : await Country(body.present.country),
+        "ec_firstname": emergency != undefined ? emergency.firstname : null,
+        "ec_lastname": emergency != undefined ? emergency.lastname : null,
+        "ec_relationship":null,
+        "ec_relationship_other": emergency != undefined ? emergency.relation : null,
+        "ec_telephone": emergency != undefined ? emergency.phoneno : null,
+        "ec_email": emergency != undefined ? emergency.email : null,
+        "ec_address_same_patient": emergency != undefined ? emergency.sameAddress ? 1 : 0 : null,
+        "ec_address":emergency != undefined ? emergency.sameAddress ? body.permanent.address : emergency.address : null,
+        "ec_sub_district":emergency != undefined ? emergency.sameAddress ? await Subdistrict(body.permanent.subdistrict) : await Subdistrict(emergency.subdistrict) : null,
+        "ec_district": emergency != undefined ? emergency.sameAddress ? await District(body.permanent.districtid) : await District(emergency.districtid) : null,
+        "ec_province": emergency != undefined ? emergency.sameAddress ? await Province(body.permanent.provinceid) : await Province(emergency.provinceid) : null,
+        "ec_postcode": emergency != undefined ? emergency.sameAddress ? body.permanent.postcode : emergency.postcode : null,
+        "ec_country": emergency != undefined ? emergency.sameAddress ? await Country(body.permanent.country) : await Country(emergency.country) : null,
+        "fi_payment_method":body.parent_info.payment_method,
+        "fi_company":body.parent_info.company,
+        "date_created":null,
+        "date_updated":null,
+        "social_list":social,
+        "family_list":family,
+        "site": body.site,
+        "location": body.location.CTLOC_Desc,
+        "Truama":"No",
+        "ARI":"No"
+      }
+    }
+    console.log(rpa)
+    let time = new Date();
+    const filename = `${body.ID}+${time.getFullYear()}-${("0" + (time.getMonth() + 1)).slice(-2)}-${time.getDate()}+${time.getTime()}.txt`
+    const path = '/Process'
+    let sendrpa = await axios.post(`http://10.105.10.50:8700/api/CpoeRegister/registerCpoe`, { path, filename, data: rpa })
+    return
   }
   updateData() {
     return async (req: Request, res: Response) => {
       let body = req.body
       let repos = di.get("repos");
       if (body.type == 0) {
-        this.updateAdult(body)
+        await this.updateAdult(body)
         res.send({message: 'Success'})
       } else {
-        let dateDob = new Date(body.general_info.dob)
-        let dataInfo = {
-          Title: body.general_info.title,
-          Firstname: body.general_info.firstname,
-          Middlename: body.general_info.middlename,
-          Lastname: body.general_info.lastname,
-          DOB: `${dateDob.getFullYear()}-${("0" + (dateDob.getMonth() + 1)).slice(-2)}-${("0" + dateDob.getDate()).slice(-2)}`,
-          Gender: body.general_info.gender,
-          Nationality: body.general_info.nationality,
-          PhoneNo: body.general_info.phone_no,
-          Email: body.general_info.email,
-          Confirm: 0,
-          Type: body.type,
-          Site: body.site
-        }
-        let queryInfo = `UPDATE Registration.Patient_Info SET ? WHERE ID = '${body.ID}'`
-        let dataPermanent = {
-          Country: body.permanent.country,
-          Postcode: body.permanent.postcode,
-          Subdistrict: body.permanent.subdistrict,
-          District: body.permanent.districtid,
-          Address: body.permanent.address,
-          Province: body.permanent.provinceid,
-          sameAddress: null
-        }
-        let queryPermanent = `UPDATE Registration.Patient_Address SET ? WHERE PatientID = '${body.ID}' And Type = 0`
-        
-        let dataPresent = {
-          Country: body.present.sameAddress ? body.permanent.country : body.present.country,
-          Postcode: body.present.sameAddress ? body.permanent.postcode : body.present.postcode,
-          Subdistrict: body.present.sameAddress ? body.permanent.subdistrict : body.present.subdistrict,
-          District: body.present.sameAddress ? body.permanent.districtid : body.present.districtid,
-          Address: body.present.sameAddress ? body.permanent.address : body.present.address,
-          Province: body.present.sameAddress ? body.permanent.provinceid : body.present.provinceid,
-          sameAddress: body.present.sameAddress
-        }
-        let queryPresent = `UPDATE Registration.Patient_Address SET ? WHERE PatientID = '${body.ID}' And Type = 1`
-
-        await repos.query(queryInfo, dataInfo);
-        await repos.query(queryPermanent, dataPermanent)
-        await repos.query(queryPresent, dataPresent)
-        this.handleConsent(body.consent_form, body.ID)
-        let queryNation = `SELECT * FROM Registration.CT_Nation Where ID = ${body.general_info.nationality}`
-        
-        let queryGender = `SELECT * FROM Registration.CT_Sex Where ID = ${body.general_info.gender}`
-        
-        let Country = async (id: any) => {
-          let queryCountry = `SELECT * FROM Registration.CT_Country Where ID = ${id}`
-          let country = await repos.query(queryCountry)
-          if (!country.length) return ''
-          return country[0].Desc_TH
-        }
-        let Subdistrict = async (id: any) => {
-          let querySubdistrict = `SELECT * FROM Registration.CT_CityArea_1 WHERE ID = ${id}`
-          let subdistrict = await repos.query(querySubdistrict)
-          if (!subdistrict.length) return ''
-          return subdistrict[0].Desc_TH
-        }
-        let District = async (id: any) => {
-          let queryDistrict = `SELECT * FROM Registration.CT_City_1 WHERE ID = ${id}`
-          let district = await repos.query(queryDistrict)
-          if (!district.length) return ''
-          return district[0].Desc_TH
-        }
-        let Province = async (id: any) => {
-          let queryProvince = `SELECT * FROM Registration.CT_Province_1 WHERE ID = ${id}`
-          let provice = await repos.query(queryProvince)
-          if (!provice.length) return ''
-          return provice[0].Desc_TH
-        }
-        let PreferredLanguage = async (id: any) => {
-          let querySubdistrict = `SELECT Desc_EN FROM Registration.CT_PreferredLanguage WHERE ID = ${id}`
-          let subdistrict = await repos.query(querySubdistrict)
-          if (!subdistrict.length) return ''
-          return subdistrict[0].Desc_EN
-        }
-        let Nation = await repos.query(queryNation)
-        let Gender = await repos.query(queryGender)
-        let family = await body.siblings.family.map((d: any) => {
-          let data = {
-            "id_patient_family": null,
-            "id_patient_information": null,
-            "relation": d.person,
-            "disease": d.illness,
-            "start": 0,
-            "end": 0,
-            "comment":null
-          }
-          return data
-        })
-        let social: any = new Array()
-        
-        let datadrugabuse = {
-          "id_patient_social": null,
-          "id_patient_information": null,
-          "habit":"Substance Abuse",
-          "quality": null,
-          "detail": null,
-          "comment": body.pediatric.c_drug
-        }
-        
-        if (body.pediatric.drug) social.push(datadrugabuse)
-        let emergency = body.parent_info.parent.find((d: any) => d.contactemergency)
-       
-        let rpa = {
-          "data":{
-            "server": rpaSetting.SERVER,
-            "server_type": rpaSetting.SERVER_TYPE,
-            "id_patient_information":126,
-            "patient_code":"9xkevj",
-            "hn":null,
-            "title_th": body.general_info.title,
-            "firstname_th": body.general_info.firstname,
-            "middlename_th": body.general_info.middlename,
-            "lastname_th": body.general_info.lastname,
-            "title_en":null,
-            "firstname_en":null,
-            "middlename_en":null,
-            "lastname_en":null,
-            "nationality": Nation[0].Desc_EN,
-            "religion": null,
-            "religion_desc": null,
-            "national_id": null,
-            "passport_id": null,
-            "dob":`${dateDob.getFullYear()}-${("0" + (dateDob.getMonth() + 1)).slice(-2)}-${("0" + dateDob.getDate()).slice(-2)}`,
-            "age":null,
-            "gender": body.general_info.gender,
-            "gender_desc_en":Gender[0].Desc_EN,
-            "gender_desc_th":Gender[0].Desc_TH,
-            "marital_status": null,
-            "preferrend_language": null,
-            "occupation": null,
-            "mobile_phone":body.general_info.phone_no,
-            "email":body.general_info.email,
-            "home_telephone": null,
-            "office_telephone": null,
-            "permanent_address": body.permanent.address,
-            "permanent_sub_district": await Subdistrict(body.permanent.subdistrict),
-            "permanent_district": await District(body.permanent.districtid),
-            "permanent_province": await Province(body.permanent.provinceid),
-            "permanent_postcode": body.permanent.postcode,
-            "permanent_country": await Country(body.permanent.country),
-            "same_permanent": body.present.sameAddress ? 1 : 0,
-            "present_address":body.present.sameAddress ? body.permanent.address : body.present.address,
-            "present_sub_district":body.present.sameAddress ? await Subdistrict(body.permanent.subdistrict) : await Subdistrict(body.present.subdistrict),
-            "present_district":body.present.sameAddress ? await District(body.permanent.districtid) : await District(body.present.districtid),
-            "present_province":body.present.sameAddress ? await Province(body.permanent.provinceid) : await Province(body.present.provinceid),
-            "present_postcode":body.present.sameAddress ? body.permanent.postcode : body.present.postcode,
-            "present_country":body.present.sameAddress ? await Country(body.permanent.country) : await Country(body.present.country),
-            "ec_firstname": emergency != undefined ? emergency.firstname : null,
-            "ec_lastname": emergency != undefined ? emergency.lastname : null,
-            "ec_relationship":null,
-            "ec_relationship_other": emergency != undefined ? emergency.relation : null,
-            "ec_telephone": emergency != undefined ? emergency.phoneno : null,
-            "ec_email": emergency != undefined ? emergency.email : null,
-            "ec_address_same_patient": emergency != undefined ? emergency.sameAddress ? 1 : 0 : null,
-            "ec_address":emergency != undefined ? emergency.sameAddress ? body.permanent.address : emergency.address : null,
-            "ec_sub_district":emergency != undefined ? emergency.sameAddress ? await Subdistrict(body.permanent.subdistrict) : await Subdistrict(body.emergency.subdistrict) : null,
-            "ec_district": emergency != undefined ? emergency.sameAddress ? body.permanent.district : emergency.district : null,
-            "ec_province": emergency != undefined ? emergency.sameAddress ? body.permanent.province : emergency.province : null,
-            "ec_postcode": emergency != undefined ? emergency.sameAddress ? body.permanent.postcode : emergency.postcode : null,
-            "ec_country": emergency != undefined ? emergency.sameAddress ? await Country(body.permanent.country) : await Country(emergency.country) : null,
-            "fi_payment_method":body.parent_info.payment_method,
-            "fi_company":body.parent_info.company,
-            "date_created":null,
-            "date_updated":null,
-            "social_list":social,
-            "family_list":family,
-            "site": body.site,
-            "location": body.location.CTLOC_Desc,
-            "Truama":"No",
-            "ARI":"No"
-          }
-        }
-        let time = new Date();
-        const filename = `${body.ID}+${time.getFullYear()}-${("0" + (time.getMonth() + 1)).slice(-2)}-${time.getDate()}+${time.getTime()}.txt`
-        const path = '/Process'
-        let sendrpa = await axios.post(`http://10.105.10.50:8700/api/CpoeRegister/registerCpoe`, { path, filename, data: rpa })
+        await this.updateChild(body)
+        res.send({message: 'Success'})
       }
-      res.send({message: 'Success'})
     }
   }
 }
