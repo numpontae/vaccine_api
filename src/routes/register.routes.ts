@@ -827,7 +827,7 @@ class registerRoute {
       let queryCountry = `SELECT * FROM Registration.CT_Country Where ID = ${id}`
       let country = await repos.query(queryCountry)
       if (!country.length) return null
-      return country[0].Desc_TH
+      return country[0].Desc_EN
     }
     let Subdistrict = async (id: any) => {
       let querySubdistrict = `SELECT * FROM Registration.CT_CityArea_1 WHERE ID = ${id}`
@@ -1126,7 +1126,7 @@ class registerRoute {
       let queryCountry = `SELECT * FROM Registration.CT_Country Where ID = ${id}`
       let country = await repos.query(queryCountry)
       if (!country.length) return ''
-      return country[0].Desc_TH
+      return country[0].Desc_EN
     }
     let Subdistrict = async (id: any) => {
       let querySubdistrict = `SELECT * FROM Registration.CT_CityArea_1 WHERE ID = ${id}`
