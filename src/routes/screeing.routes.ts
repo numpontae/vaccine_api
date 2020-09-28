@@ -59,18 +59,31 @@ class screeningRoute {
   }
   saveSignature() {
     return async (req: Request, res: Response) => {
-      let { signatureHash, signatureImage, id, consent, consentText } = req.body;
+      let { signatureHash, signatureImage, id, signType,consent, consentText } = req.body;
       let repos = di.get("repos");
       let query = `UPDATE Screening.Patient_Info SET Confirm=1 WHERE HN='${id}';`
-      let insertSignature = `INSERT INTO Screening.Signature (HN, HashSiganture, Signature, Consent) VALUES('${id}', '${signatureHash}', '${signatureImage}', "${consentText}");`
+      let insertSignature = `INSERT INTO Screening.Signature (HN, HashSiganture, Signature, SignType, Consent) VALUES('${id}', '${signatureHash}', '${signatureImage}', '${signType}', "${consentText}");`
       await repos.query(query)
       await repos.query(insertSignature)
       res.send({message: 'Success'})
     }
   }
+  
+  saveSignatureApprove() {
+    return async (req: Request, res: Response) => {
+      let { signatureHash, signatureImage, id, signType,consent, consentText } = req.body;
+      let repos = di.get("repos");
+      let query = `UPDATE Screening.Patient_Info SET Approve=1 WHERE HN='${id}';`
+      let insertSignature = `INSERT INTO Screening.Signature (HN, HashSiganture, Signature, SignType, Consent) VALUES('${id}', '${signatureHash}', '${signatureImage}', '${signType}', "${consentText}");`
+      await repos.query(query)
+      await repos.query(insertSignature)
+      res.send({message: 'Success'})
+    }
+  }
+  
   getSearch() {
     return async (req: Request, res: Response) => {
-      let {id, firstname, lastname, phone_no, passport, national_id, page} = req.body;
+      let {id, firstname, lastname, phone_no, passport, national_id, dateOfBirth, page} = req.body;
       let repos = di.get("repos");
       try {
         let startNum = (parseInt(page) * 15) - 15
@@ -94,6 +107,10 @@ class screeningRoute {
           if (!_.isEmpty(national_id)) {
             query += ` AND PI.NationalID = '${national_id}'`
           }
+          if (!_.isEmpty(dateOfBirth)) {
+            query += ` AND (PI.DOB = '${dateOfBirth}')`
+          }
+          
           query += ` AND Confirm != 1`
           query += ` ORDER BY ID ASC LIMIT ${startNum},${LimitNum}`
           
@@ -114,6 +131,10 @@ class screeningRoute {
           if (!_.isEmpty(national_id)) {
             queryCount += ` AND PI.NationalID = '${national_id}'`
           }
+          if (!_.isEmpty(dateOfBirth)) {
+            queryCount += ` AND (PI.DOB = '${dateOfBirth}')`
+          }
+          
           queryCount += ` AND Confirm != 1`
           let data = await repos.query(query)
           let count = await repos.query(queryCount)
@@ -807,5 +828,7 @@ router.post("/search", route.getSearch())
       .post("/signature", route.saveSignature())
       .post("/update", route.updateData())
       .post("/screening", route.updateScreening())
+      .post("/signatureApprove", route.saveSignatureApprove())
+      
 
 export const screening = router;

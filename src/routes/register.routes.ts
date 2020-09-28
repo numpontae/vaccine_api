@@ -4,6 +4,8 @@ import * as _ from "lodash";
 import CryptoJS from "crypto-js";
 const axios = require('axios');
 import { rpaSetting } from "../config/config";
+import moment from 'moment-timezone';
+moment.tz.setDefault('Asia/Bangkok');
 
 class registerRoute {
   async handleConsent(data: any, id: any) {
@@ -537,9 +539,50 @@ class registerRoute {
       }
     };
   }
+  getPendingData() {
+    return async (req: Request,res: Response) => {
+      
+      let repos = di.get("repos");
+      try {
+        let startNum = (parseInt("1") * 15) - 15
+        let LimitNum = 15
+        
+        let query = `SELECT PI.*, CTS.Desc_EN Gender_Desc FROM Registration.Patient_Info PI`
+        query += ` LEFT JOIN Registration.CT_Sex CTS ON CTS.Id = PI.Gender`
+        query += ` WHERE Approve != 1`
+        query += ` AND Confirm = 1`
+        // query += ` AND Site IN ('${site}')`
+        query += ` ORDER BY ID ASC LIMIT ${startNum},${LimitNum}`
+          
+        let queryCount = `SELECT COUNT(PI.ID) as count FROM Registration.Patient_Info PI`
+        queryCount += ` WHERE Approve != 1`
+        queryCount += ` AND Confirm = 1`
+
+          let count = await repos.query(queryCount)
+          let data = await repos.query(query)
+          await data.map((d: any) => {
+            let encrypted = CryptoJS.AES.encrypt(d.UID, 'C36bJmRax7');
+            return d.UID = encrypted.toString()
+          })
+          const result = {
+            pagination:{
+              currentPage: parseInt("1"),
+              totalPage: Math.ceil(count[0].count/20),
+              totalResult: count[0].count
+            },
+            result: data
+          }
+          res.send(result)
+        
+      } catch (error) {
+        res.status(404).json([])
+      }
+    }
+  }
   getSearch() {
     return async (req: Request, res: Response) => {
-      let {id, firstname, lastname, phone_no, passport, national_id, site, page} = req.body;
+      let {id, firstname, lastname, phone_no, passport, dateOfBirth, national_id, site, page} = req.body;
+      
       let repos = di.get("repos");
       try {
         let startNum = (parseInt(page) * 15) - 15
@@ -563,6 +606,10 @@ class registerRoute {
           if (!_.isEmpty(national_id)) {
             query += ` AND PI.NationalID = '${national_id}'`
           }
+          if (!_.isEmpty(dateOfBirth)) {
+            query += ` AND (PI.DOB = '${dateOfBirth}')`
+          }
+          
           query += ` AND Confirm != 1`
           query += ` AND Site IN ('${site}')`
           query += ` ORDER BY ID ASC LIMIT ${startNum},${LimitNum}`
@@ -583,7 +630,13 @@ class registerRoute {
           if (!_.isEmpty(national_id)) {
             queryCount += ` AND PI.NationalID = '${national_id}'`
           }
+          
+          if (!_.isEmpty(dateOfBirth)) {
+            queryCount += ` AND (PI.DOB = '${dateOfBirth}')`
+          }
+          
           queryCount += ` AND Confirm != 1`
+          queryCount += ` AND Site IN ('${site}')`
 
           let count = await repos.query(queryCount)
           let data = await repos.query(query)
@@ -614,10 +667,10 @@ class registerRoute {
   }
   saveSignature() {
     return async (req: Request, res: Response) => {
-      let { signatureHash, signatureImage, id, consent, consentText } = req.body;
+      let { signatureHash, signatureImage, id, signType,consent, consentText } = req.body;
       let repos = di.get("repos");
       let query = `UPDATE Registration.Patient_Info SET Confirm=1 WHERE ID=${id};`
-      let insertSignature = `INSERT INTO Registration.Signature (PatientID, HashSiganture, Signature) VALUES(${id}, '${signatureHash}', '${signatureImage}');`
+      let insertSignature = `INSERT INTO Registration.Signature (PatientID, HashSiganture, Signature, SignType) VALUES(${id}, '${signatureHash}', '${signatureImage}', '${signType}');`
       await repos.query(query)
       await repos.query(insertSignature)
       res.send({message: 'Success'})
@@ -1249,7 +1302,7 @@ class registerRoute {
         "ARI":"No"
       }
     }
-    console.log(rpa)
+    
     let time = new Date();
     const filename = `${body.ID}+${time.getFullYear()}-${("0" + (time.getMonth() + 1)).slice(-2)}-${time.getDate()}+${time.getTime()}.txt`
     const path = '/Process'
@@ -1269,6 +1322,17 @@ class registerRoute {
       }
     }
   }
+  saveSignatureApprove() {
+    return async (req: Request, res: Response) => {
+      let { signatureHash, signatureImage, id, signType,consent, consentText } = req.body;
+      let repos = di.get("repos");
+      let query = `UPDATE Registration.Patient_Info SET Approve=1 WHERE ID=${id};`
+      let insertSignature = `INSERT INTO Registration.Signature (PatientID, HashSiganture, Signature, SignType) VALUES(${id}, '${signatureHash}', '${signatureImage}', '${signType}');`
+      await repos.query(query)
+      await repos.query(insertSignature)
+      res.send({message: 'Success'})
+    }
+  }
 }
 
 const router = Router();
@@ -1278,5 +1342,7 @@ router.post("/", route.postRegister())
       .post("/search", route.getSearch())
       .post("/signature", route.saveSignature())
       .post("/update", route.updateData())
+      .post("/getPendingData", route.getPendingData())
+      .post("/signatureApprove", route.saveSignatureApprove())
 
 export const register = router;

@@ -144,7 +144,7 @@ class ctRoute {
       let repos = di.get('repos')
       let query = ''
       query = `SELECT c.* FROM Registration.CT_CityArea_1 ca
-               RIGHT JOIN Registration.CT_City c ON ca.CITY_ID = c.ID
+               RIGHT JOIN Registration.CT_City_1 c ON ca.CITY_ID = c.ID
                WHERE ca.ID = '${id}'`
       
       let result = await repos.query(query)

@@ -50,6 +50,7 @@ class authRoutes {
           repos.reserve((err: any, connObj: any) => {
             if (connObj) {
               let conn = connObj.conn;
+              
               conn.createStatement((err: any, statement: any) => {
                 if (err) {
                   reject(err);
@@ -89,14 +90,18 @@ class authRoutes {
             }
           });
         });
-        if (!result.length) return res.json({status: '400', message: 'username or password invalid' })
+        if (!result.length) {
+          return res.json({status: '400', message: 'username or password invalid' })
+        } 
         const token = `Bearer ` + jwt.generateToken({ username, encrypt }, Secret.SECRET, '1d')
         res.json({status: '200', token, message: 'You are login' })
         } catch (error) {
           if (error.sql !== undefined) {
-            res.status(400).send({ message: error.sqlMessage })
+            return res.json({status: '400', message: error.sqlMessage })
+            // res.status(400).send({ message: error.sqlMessage })
           } else {
-            res.status(400).send(error)
+            return res.json({status: '400', message: error.sqlMessage })
+            // res.status(400).send(error)
           }
         }
     }
