@@ -871,6 +871,329 @@ class registerRoute {
       await repos.query(insertSmoke, dataSmoke)
     }
     this.handleConsent(body.consent_form, body.ID)
+    
+    return
+    
+  }
+  async updateChild(body: any) {
+    let repos = di.get("repos");
+    let dateDob = new Date(body.general_info.dob)
+    let dataInfo = {
+      Title: body.general_info.title,
+      Firstname: body.general_info.firstname,
+      Middlename: body.general_info.middlename,
+      Lastname: body.general_info.lastname,
+      DOB: `${dateDob.getFullYear()}-${("0" + (dateDob.getMonth() + 1)).slice(-2)}-${("0" + dateDob.getDate()).slice(-2)}`,
+      Gender: body.general_info.gender,
+      Nationality: body.general_info.nationality,
+      PhoneNo: body.general_info.phone_no,
+      Email: body.general_info.email,
+      Type: body.type,
+      Site: body.site
+    }
+    let queryInfo = `UPDATE Registration.Patient_Info SET ? WHERE ID = '${body.ID}'`
+    let dataPermanent = {
+      Country: body.permanent.country,
+      Postcode: body.permanent.postcode,
+      Subdistrict: body.permanent.subdistrict,
+      District: body.permanent.districtid,
+      Address: body.permanent.address,
+      Province: body.permanent.provinceid,
+      sameAddress: null
+    }
+    let queryPermanent = `UPDATE Registration.Patient_Address SET ? WHERE PatientID = '${body.ID}' And Type = 0`
+    let dataPresent = {
+      Country: body.present.sameAddress ? body.permanent.country : body.present.country,
+      Postcode: body.present.sameAddress ? body.permanent.postcode : body.present.postcode,
+      Subdistrict: body.present.sameAddress ? body.permanent.subdistrict : body.present.subdistrict,
+      District: body.present.sameAddress ? body.permanent.districtid : body.present.districtid,
+      Address: body.present.sameAddress ? body.permanent.address : body.present.address,
+      Province: body.present.sameAddress ? body.permanent.provinceid : body.present.provinceid,
+      sameAddress: body.present.sameAddress
+    }
+    let queryPresent = `UPDATE Registration.Patient_Address SET ? WHERE PatientID = '${body.ID}' And Type = 1`
+    let dataFinancial = {
+      SelfPay: _.indexOf(body.parent_info.payment_method, 'Self pay') >= 0 ? 1 : 0,
+      CompanyContact: _.indexOf(body.parent_info.payment_method, 'Company contract') >= 0 ? 1 : 0,
+      Insurance: _.indexOf(body.parent_info.payment_method, 'Insurance') >= 0 ? 1 : 0,
+      CompanyDesc: body.parent_info.company,
+      InsuranceDesc: body.parent_info.insurance,
+    }
+    let dataPediatric = {
+      Pob: body.pediatric.pob,
+      BloodGroup: body.pediatric.blood_group,
+      Weight: body.pediatric.weight,
+      Height: body.pediatric.length,
+      head: body.pediatric.head,
+      Delivery: body.pediatric.delivery,
+      DeliveryScore1: body.pediatric.deliveryscore1,
+      DeliveryScore2: body.pediatric.deliveryscore2,
+      Tsh: body.pediatric.tsh,
+      Pku: body.pediatric.pku,
+      Hearing: body.pediatric.hearing,
+      Problems: body.pediatric.problems,
+      ProblemsComment: body.pediatric.c_problems,
+      Delay: body.pediatric.delay,
+      DelayComment: body.pediatric.c_delay,
+      Drug: body.pediatric.drug,
+      DrugComment: body.pediatric.c_drug,
+      Food: body.pediatric.food,
+      FoodComment: body.pediatric.c_food,
+      Other: body.pediatric.other,
+      Othercomment: body.pediatric.c_other,
+      Illness: body.pediatric.illness,
+      Curmed: body.pediatric.curmed,
+      Hospitalization: body.pediatric.hospitalization,
+      HospitalizationComment: body.pediatric.c_hospitalization,
+      Siblings: body.siblings.siblings
+    }
+    let queryFinancial = `UPDATE Registration.Patient_Financial SET ? WHERE PatientID = '${body.ID}'`
+    let queryPediatric = `UPDATE Registration.Pediatric SET ? WHERE PatientID = '${body.ID}'`
+
+    await repos.query(queryInfo, dataInfo);
+    await repos.query(queryPermanent, dataPermanent)
+    await repos.query(queryPresent, dataPresent)
+    await repos.query(queryFinancial, dataFinancial);
+    await repos.query(queryPediatric, dataPediatric);
+    let valuesParent:  any[] = [] 
+    await body.parent_info.parent.map((d: any) => {
+      let parentdata = [
+        body.ID,
+        d.title,
+        d.firstname,
+        d.middlename,
+        d.lastname,
+        d.relation,
+        d.phoneno,
+        d.email,
+        d.contactemergency,
+        d.livewithperson,
+        d.sameAddress ? body.permanent.country : d.country,
+        d.sameAddress ? body.permanent.postcode : d.postcode,
+        d.sameAddress ? body.permanent.subdistrict : d.subdistrict,
+        d.sameAddress ? body.permanent.districtid : d.districtid,
+        d.sameAddress ? body.permanent.address : d.address,
+        d.sameAddress ? body.permanent.provinceid : d.provinceid,
+        d.sameAddress
+      ]
+      valuesParent.push(parentdata) 
+    })
+    let deleteParent = `DELETE FROM Registration.Parent WHERE PatientID = '${body.ID}'`
+    await repos.query(deleteParent);
+    let queryParent = `INSERT INTO Registration.Parent (PatientID, Title, Firstname, Middlename, Lastname, Relation, PhoneNo, Email, ContactEmergency, LivePerson, Country, Postcode, Subdistrict, District, Address, Province, sameAddress) VALUES ?`
+    await repos.query(queryParent, [valuesParent]);
+    if (body.siblings.family.length > 0) {
+      let deleteFamily = `DELETE FROM Registration.Family_History WHERE PatientID = '${body.ID}'`
+      await repos.query(deleteFamily);
+      let valuesFamily: any[] = [] 
+      body.siblings.family.map((p: any) => {
+        if (p.person != null && p.illness != null) {
+          let value = [body.ID, p.person, p.illness]
+          valuesFamily.push(value) 
+        }
+      })
+      let insertFamily = `INSERT INTO Registration.Family_History (PatientID, Person, Disease) VALUES ?;`
+      if (valuesFamily.length) await repos.query(insertFamily, [valuesFamily])
+    }
+    this.handleConsent(body.consent_form, body.ID)
+    
+    return
+  }
+  async approveAdult(body: any) {
+    let repos = di.get("repos");
+    let getComment = (type: string, data: any) => {
+      if (type == 'alcohol') {
+        return `quantity: ${data.quantity}, duration: ${data.detail.duration}, beverages: ${data.detail.beverages}, comment: ${data.comment}`
+      } else if (type == 'exercise') {
+        return `quantity: ${data.quantity}, comment: ${data.comment}`
+      } else if (type == 'smoke') {
+        return `quantity: ${data.quantity}, duration: ${data.detail.duration}, comment: ${data.comment}`
+      }
+    }
+    let dateDob = new Date(body.patient_info.dob)
+    let dataInfo = {
+      Title: body.patient_info.title,
+      Firstname: body.patient_info.firstname,
+      Middlename: body.patient_info.middlename,
+      Lastname: body.patient_info.lastname,
+      DOB: `${dateDob.getFullYear()}-${("0" + (dateDob.getMonth() + 1)).slice(-2)}-${("0" + dateDob.getDate()).slice(-2)}`,
+      Gender: body.patient_info.gender,
+      Nationality: body.patient_info.nationality,
+      Religion: body.patient_info.religion,
+      PreferredLanguage: body.patient_info.preferredlanguage,
+      Expatriate: body.patient_info.expatriate,
+      MaritalStatus: body.patient_info.marital_status,
+      NationalID: body.patient_info.national_id,
+      Passport: body.patient_info.passport,
+      Occupation: body.patient_info.occupation,
+      PhoneNo: body.patient_info.phone_no,
+      Email: body.patient_info.email,
+      Homephone: body.patient_info.homephone,
+      Officephone: body.patient_info.officephone
+    }
+    let queryInfo = `UPDATE Registration.Patient_Info SET ? WHERE ID = '${body.ID}'`
+    
+    let dataPermanent = {
+      Country: body.permanent.country,
+      Postcode: body.permanent.postcode,
+      Subdistrict: body.permanent.subdistrict,
+      District: body.permanent.districtid,
+      Address: body.permanent.address,
+      Province: body.permanent.provinceid,
+      sameAddress: null
+    }
+    let queryPermanent = `UPDATE Registration.Patient_Address SET ? WHERE PatientID = '${body.ID}' And Type = 0`
+    
+    let dataPresent = {
+      Country: body.present.sameAddress ? body.permanent.country : body.present.country,
+      Postcode: body.present.sameAddress ? body.permanent.postcode : body.present.postcode,
+      Subdistrict: body.present.sameAddress ? body.permanent.subdistrict : body.present.subdistrict,
+      District: body.present.sameAddress ? body.permanent.districtid : body.present.districtid,
+      Address: body.present.sameAddress ? body.permanent.address : body.present.address,
+      Province: body.present.sameAddress ? body.permanent.provinceid : body.present.provinceid,
+      sameAddress: body.present.sameAddress
+    }
+    let queryPresent = `UPDATE Registration.Patient_Address SET ? WHERE PatientID = '${body.ID}' And Type = 1`
+
+    let dataEmergency = {
+      Firstname: body.emergency.first_name,
+      Lastname: body.emergency.last_name,
+      Relation: body.emergency.relation,
+      Email: body.emergency.email,
+      PhoneNo: body.emergency.phone_no,
+      Country: body.emergency.sameAddress ? body.permanent.country : body.emergency.country,
+      Postcode: body.emergency.sameAddress ? body.permanent.postcode : body.emergency.postcode,
+      Subdistrict: body.emergency.sameAddress ? body.permanent.subdistrict : body.emergency.subdistrict,
+      District: body.emergency.sameAddress ? body.permanent.districtid : body.emergency.districtid,
+      Address: body.emergency.sameAddress ? body.permanent.address : body.emergency.address,
+      Province: body.emergency.sameAddress ? body.permanent.provinceid : body.emergency.provinceid,
+      sameAddress: body.emergency.sameAddress
+    }
+    let queryEmergency = `UPDATE Registration.Patient_Emergency SET ? WHERE PatientID = '${body.ID}'`
+
+    let financialDob = new Date(body.financial.dob)
+    let dataFinancial = {
+      SelfPay: _.indexOf(body.financial.payment_method, 'Self pay') >= 0 ? 1 : 0,
+      CompanyContact: _.indexOf(body.financial.payment_method, 'Company contract') >= 0 ? 1 : 0,
+      Insurance: _.indexOf(body.financial.payment_method, 'Insurance') >= 0 ? 1 : 0,
+      CompanyDesc: body.financial.company,
+      InsuranceDesc: body.financial.insurance,
+      PaymentAs: body.financial.payment_as,
+      Title: body.financial.title,
+      Firstname: body.financial.firstname,
+      Lastname: body.financial.lastname,
+      DOB: `${financialDob.getFullYear()}-${("0" + (financialDob.getMonth() + 1)).slice(-2)}-${("0" + financialDob.getDate()).slice(-2)}`,
+      Aforemention: body.financial.aforemention,
+    }
+    let queryFinancial = `UPDATE Registration.Patient_Financial SET ? WHERE PatientID = '${body.ID}'`
+    let dataHistory = {
+      MaritalStatus: body.personal_history.marital_status,
+      Children: body.personal_history.children,
+      Diseases: JSON.stringify(body.personal_history.diseases),
+      Medication: body.personal_history.medication,
+      CommentMedication: body.personal_history.c_medication,
+      Hospitalization: body.personal_history.hospitalization,
+      CommentHospitalization: body.personal_history.c_hospitalization,
+      Physical: body.personal_history.physical,
+      CommentPhysical: body.personal_history.c_physical,
+      Exercise: body.personal_history.exercise.status,
+      Pregnant: body.personal_history.pregnant,
+      CommentPregnant: body.personal_history.c_pregnant,
+      Giver: body.personal_history.giver,
+      CommentGiver: body.personal_history.c_giver,
+      AbsenceFromWork: _.indexOf(body.personal_history.medical_certificate, 'absence') >= 0 ? 1 : 0,
+      Reimbursement: _.indexOf(body.personal_history.medical_certificate, 'reimbursement') >= 0 ? 1 : 0,
+      GovernmentReimbursement: _.indexOf(body.personal_history.doctor_certificate, 'government_reimbursement') >= 0 ? 1 : 0,
+      StateEnterprise: _.indexOf(body.personal_history.doctor_certificate, 'state_enterprise') >= 0 ? 1 : 0,
+      Authorize: body.personal_history.authorize,
+      CommentAuthorize: body.personal_history.c_authorize,
+      Spiritual: body.personal_history.spiritual,
+      CommentSpiritual: body.personal_history.c_spiritual,
+      Allergies: body.personal_history.allergies,
+      CommentAllergies: body.personal_history.c_allergies,
+      Alcohol: body.personal_history.alcohol.status,
+      DrugAbuse: body.personal_history.drugabuse.status,
+      Smoke: body.personal_history.smoke.status,
+      FatherAlive: body.personal_history.father.alive,
+      FatherAge: body.personal_history.father.age,
+      CauseFather: body.personal_history.father.cause,
+      MotherAlive: body.personal_history.mother.alive,
+      MotherAge: body.personal_history.mother.age,
+      CauseMother: body.personal_history.mother.cause,
+    }
+    let queryHistory = `UPDATE Registration.Patient_History SET ? Where PatientID = '${body.ID}'`
+
+    await repos.query(queryInfo, dataInfo);
+    await repos.query(queryPermanent, dataPermanent)
+    await repos.query(queryPresent, dataPresent)
+    await repos.query(queryEmergency, dataEmergency)
+    await repos.query(queryFinancial, dataFinancial);
+    await repos.query(queryHistory, dataHistory);
+
+    if (body.personal_history.family.length > 0) {
+      let deleteFamily = `DELETE FROM Registration.Family_History WHERE PatientID = '${body.ID}'`
+      await repos.query(deleteFamily);
+      let valuesFamily: any[] = [] 
+      body.personal_history.family.map((p: any) => {
+        if (p.person != null && p.illness != null) {
+          let value = [body.ID, p.person, p.illness]
+          valuesFamily.push(value) 
+        }
+      })
+      let insertFamily = `INSERT INTO Registration.Family_History (PatientID, Person, Disease) VALUES ?;`
+      if (valuesFamily.length) await repos.query(insertFamily, [valuesFamily])
+    }
+    let deleteSocial = `DELETE FROM Registration.Patient_Social WHERE PatientID = '${body.ID}'`
+    await repos.query(deleteSocial);
+    if (body.personal_history.exercise.status != null) {
+      let dataExercise = {
+        PatientID: body.ID,
+        Habit: 'exercise',
+        Status: body.personal_history.exercise.status,
+        Quantity: body.personal_history.exercise.quantity,
+        Detail: null,
+        Comment: body.personal_history.exercise.comment
+      }
+      let insertExercise = `INSERT INTO Registration.Patient_Social SET ?`
+      await repos.query(insertExercise, dataExercise)
+    }
+    if (body.personal_history.alcohol.status != null) {
+      let dataAlcohol = {
+        PatientID: body.ID,
+        Habit: 'alcohol',
+        Status: body.personal_history.alcohol.status,
+        Quantity: body.personal_history.alcohol.quantity,
+        Detail: JSON.stringify(body.personal_history.alcohol.detail),
+        Comment: body.personal_history.alcohol.comment
+      }
+      let insertAlcohol = `INSERT INTO Registration.Patient_Social SET ?`
+      await repos.query(insertAlcohol, dataAlcohol)
+    }
+    if (body.personal_history.drugabuse.status != null) {
+      let dataDrugabuse = {
+        PatientID: body.ID,
+        Habit: 'drugabuse',
+        Status: body.personal_history.drugabuse.status,
+        Quantity: body.personal_history.drugabuse.quantity,
+        Detail: JSON.stringify(body.personal_history.drugabuse.detail),
+        Comment: body.personal_history.drugabuse.comment
+      }
+      let insertDrugabuse = `INSERT INTO Registration.Patient_Social SET ?`
+      await repos.query(insertDrugabuse, dataDrugabuse)
+    }
+    if (body.personal_history.smoke.status != null) {
+      let dataSmoke = {
+        PatientID: body.ID,
+        Habit: 'smoke',
+        Status: body.personal_history.smoke.status,
+        Quantity: body.personal_history.smoke.quantity,
+        Detail: JSON.stringify(body.personal_history.smoke.detail),
+        Comment: body.personal_history.smoke.comment
+      }
+      let insertSmoke = `INSERT INTO Registration.Patient_Social SET ?`
+      await repos.query(insertSmoke, dataSmoke)
+    }
+    this.handleConsent(body.consent_form, body.ID)
     let queryNation = `SELECT * FROM Registration.CT_Nation Where ID = ${body.patient_info.nationality}`
     let queryReligion = `SELECT * FROM Registration.CT_Religion Where ID = ${body.patient_info.religion}`
     let queryGender = `SELECT * FROM Registration.CT_Sex Where ID = ${body.patient_info.gender}`
@@ -1051,7 +1374,7 @@ class registerRoute {
     return
     
   }
-  async updateChild(body: any) {
+  async approveChild(body: any) {
     let repos = di.get("repos");
     let dateDob = new Date(body.general_info.dob)
     let dataInfo = {
@@ -1322,6 +1645,19 @@ class registerRoute {
       }
     }
   }
+  approveData() {
+    return async (req: Request, res: Response) => {
+      let body = req.body
+      let repos = di.get("repos");
+      if (body.type == 0) {
+        await this.approveAdult(body)
+        res.send({message: 'Success'})
+      } else {
+        await this.approveChild(body)
+        res.send({message: 'Success'})
+      }
+    }
+  }
   saveSignatureApprove() {
     return async (req: Request, res: Response) => {
       let { signatureHash, signatureImage, id, signType,consent, consentText } = req.body;
@@ -1343,6 +1679,7 @@ router.post("/", route.postRegister())
       .post("/signature", route.saveSignature())
       .post("/update", route.updateData())
       .post("/getPendingData", route.getPendingData())
+      .post("/approve", route.approveData())
       .post("/signatureApprove", route.saveSignatureApprove())
 
 export const register = router;

@@ -364,6 +364,213 @@ class screeningRoute {
           let insertSmoke = `INSERT INTO Screening.Patient_Social SET ?`
           await repos.query(insertSmoke, dataSmoke)
         }
+        
+        res.send({message: 'Success'})
+      }
+    }
+  }
+  approveData() {
+    return async (req: Request, res: Response) => {
+      let body = req.body
+      let repos = di.get("repos");
+      let getComment = (type: string, data: any) => {
+        if (type == 'alcohol') {
+          console.log(data.detail)
+          return `quantity: ${data.quantity}, duration: ${data.detail.duration}, beverages: ${data.detail.beverages}, comment: ${data.comment}`
+        } else if (type == 'exercise') {
+          return `quantity: ${data.quantity}, comment: ${data.comment}`
+        } else if (type == 'smoke') {
+          return `quantity: ${data.quantity}, duration: ${data.detail.duration}, comment: ${data.comment}`
+        }
+      }
+      if (body.type == 0) {
+        let dateDob = new Date(body.patient_info.dob)
+        let dataInfo = {
+          Title: body.patient_info.title,
+          Firstname: body.patient_info.firstname,
+          Middlename: body.patient_info.middlename,
+          Lastname: body.patient_info.lastname,
+          DOB: `${dateDob.getFullYear()}-${("0" + (dateDob.getMonth() + 1)).slice(-2)}-${("0" + dateDob.getDate()).slice(-2)}`,
+          Gender: body.patient_info.gender,
+          Nationality: body.patient_info.nationality,
+          Religion: body.patient_info.religion,
+          PreferredLanguage: body.patient_info.preferredlanguage,
+          Expatriate: body.patient_info.expatriate,
+          MaritalStatus: body.patient_info.marital_status,
+          NationalID: body.patient_info.national_id,
+          Passport: body.patient_info.passport,
+          Occupation: body.patient_info.occupation,
+          PhoneNo: body.patient_info.phone_no,
+          Email: body.patient_info.email,
+          Homephone: body.patient_info.homephone,
+          Officephone: body.patient_info.officephone
+        }
+        let queryInfo = `UPDATE Screening.Patient_Info SET ? WHERE HN = '${body.HN}'`
+        await repos.query(queryInfo, dataInfo);
+        let dataPermanent = {
+          HN: body.HN,
+          Country: body.permanent.country,
+          Postcode: body.permanent.postcode,
+          Subdistrict: body.permanent.subdistrict,
+          District: body.permanent.districtid,
+          Address: body.permanent.address,
+          Province: body.permanent.provinceid,
+          Type: 0,
+          sameAddress: null
+        }
+        let queryPermanent = `REPLACE INTO Screening.Patient_Address SET ?`
+        
+        let dataPresent = {
+          HN: body.HN,
+          Country: body.present.sameAddress ? body.permanent.country : body.present.country,
+          Postcode: body.present.sameAddress ? body.permanent.postcode : body.present.postcode,
+          Subdistrict: body.present.sameAddress ? body.permanent.subdistrict : body.present.subdistrict,
+          District: body.present.sameAddress ? body.permanent.districtid : body.present.districtid,
+          Address: body.present.sameAddress ? body.permanent.address : body.present.address,
+          Province: body.present.sameAddress ? body.permanent.provinceid : body.present.provinceid,
+          Type: 1,
+          sameAddress: body.present.sameAddress
+        }
+        let queryPresent = `REPLACE INTO Screening.Patient_Address SET ?`
+        let dataEmergency = {
+          HN: body.HN,
+          Firstname: body.emergency.first_name,
+          Lastname: body.emergency.last_name,
+          Relation: body.emergency.relation,
+          Email: body.emergency.email,
+          PhoneNo: body.emergency.phone_no,
+          Country: body.emergency.sameAddress ? body.permanent.country : body.emergency.country,
+          Postcode: body.emergency.sameAddress ? body.permanent.postcode : body.emergency.postcode,
+          Subdistrict: body.emergency.sameAddress ? body.permanent.subdistrict : body.emergency.subdistrict,
+          District: body.emergency.sameAddress ? body.permanent.districtid : body.emergency.districtid,
+          Address: body.emergency.sameAddress ? body.permanent.address : body.emergency.address,
+          Province: body.emergency.sameAddress ? body.permanent.provinceid : body.emergency.provinceid,
+          sameAddress: body.emergency.sameAddress
+        }
+        let queryEmergency = `REPLACE INTO Screening.Patient_Emergency SET ?`
+
+        let financialDob = new Date(body.financial.dob)
+        let dataFinancial = {
+          HN: body.HN,
+          SelfPay: _.indexOf(body.financial.payment_method, 'Self pay') >= 0 ? 1 : 0,
+          CompanyContact: _.indexOf(body.financial.payment_method, 'Company contract') >= 0 ? 1 : 0,
+          Insurance: _.indexOf(body.financial.payment_method, 'Insurance') >= 0 ? 1 : 0,
+          CompanyDesc: body.financial.company,
+          InsuranceDesc: body.financial.insurance,
+          PaymentAs: body.financial.payment_as,
+          Title: body.financial.title,
+          Firstname: body.financial.firstname,
+          Lastname: body.financial.lastname,
+          DOB: `${financialDob.getFullYear()}-${("0" + (financialDob.getMonth() + 1)).slice(-2)}-${("0" + financialDob.getDate()).slice(-2)}`,
+          Aforemention: body.financial.aforemention,
+        }
+        let queryFinancial = `INSERT INTO Screening.Patient_Financial SET ?`
+
+        let dataHistory = {
+          HN: body.HN,
+          MaritalStatus: body.personal_history.marital_status,
+          Children: body.personal_history.children,
+          Diseases: JSON.stringify(body.personal_history.diseases),
+          Medication: body.personal_history.medication,
+          CommentMedication: body.personal_history.c_medication,
+          Hospitalization: body.personal_history.hospitalization,
+          CommentHospitalization: body.personal_history.c_hospitalization,
+          Physical: body.personal_history.physical,
+          CommentPhysical: body.personal_history.c_physical,
+          Exercise: body.personal_history.exercise.status,
+          Pregnant: body.personal_history.pregnant,
+          CommentPregnant: body.personal_history.c_pregnant,
+          Giver: body.personal_history.giver,
+          CommentGiver: body.personal_history.c_giver,
+          AbsenceFromWork: _.indexOf(body.personal_history.medical_certificate, 'absence') >= 0 ? 1 : 0,
+          Reimbursement: _.indexOf(body.personal_history.medical_certificate, 'reimbursement') >= 0 ? 1 : 0,
+          GovernmentReimbursement: _.indexOf(body.personal_history.doctor_certificate, 'government_reimbursement') >= 0 ? 1 : 0,
+          StateEnterprise: _.indexOf(body.personal_history.doctor_certificate, 'state_enterprise') >= 0 ? 1 : 0,
+          Authorize: body.personal_history.authorize,
+          CommentAuthorize: body.personal_history.c_authorize,
+          Spiritual: body.personal_history.spiritual,
+          CommentSpiritual: body.personal_history.c_spiritual,
+          Allergies: body.personal_history.allergies,
+          CommentAllergies: body.personal_history.c_allergies,
+          Alcohol: body.personal_history.alcohol.status,
+          DrugAbuse: body.personal_history.drugabuse.status,
+          Smoke: body.personal_history.smoke.status,
+          FatherAlive: body.personal_history.father.alive,
+          FatherAge: body.personal_history.father.age,
+          CauseFather: body.personal_history.father.cause,
+          MotherAlive: body.personal_history.mother.alive,
+          MotherAge: body.personal_history.mother.age,
+          CauseMother: body.personal_history.mother.cause,
+        }
+        let queryHistory = `INSERT Screening.Patient_History SET ?`
+        await repos.query(queryEmergency, dataEmergency)
+        await repos.query(queryPermanent, dataPermanent)
+        await repos.query(queryPresent, dataPresent)
+        await repos.query(queryFinancial, dataFinancial);
+        await repos.query(queryHistory, dataHistory);
+        if (body.personal_history.family.length > 0) {
+          let deleteFamily = `DELETE FROM Screening.Family_History WHERE HN = '${body.HN}'`
+          await repos.query(deleteFamily);
+          let valuesFamily: any[] = [] 
+          body.personal_history.family.map((p: any) => {
+            if (p.person != null && p.illness != null) {
+              let value = [body.HN, p.person, p.illness]
+              valuesFamily.push(value) 
+            }
+          })
+          let insertFamily = `INSERT INTO Screening.Family_History (HN, Person, Disease) VALUES ?;`
+          if (valuesFamily.length) await repos.query(insertFamily, [valuesFamily])
+        }
+        let deleteSocial = `DELETE FROM Screening.Patient_Social WHERE HN = '${body.HN}'`
+        await repos.query(deleteSocial);
+        if (body.personal_history.exercise.status != null) {
+          let dataExercise = {
+            HN: body.HN,
+            Habit: 'exercise',
+            Status: body.personal_history.exercise.status,
+            Quantity: body.personal_history.exercise.quantity,
+            Detail: null,
+            Comment: body.personal_history.exercise.comment
+          }
+          let insertExercise = `INSERT INTO Screening.Patient_Social SET ?`
+          await repos.query(insertExercise, dataExercise)
+        }
+        if (body.personal_history.alcohol.status != null) {
+          let dataAlcohol = {
+            HN: body.HN,
+            Habit: 'alcohol',
+            Status: body.personal_history.alcohol.status,
+            Quantity: body.personal_history.alcohol.quantity,
+            Detail: JSON.stringify(body.personal_history.alcohol.detail),
+            Comment: body.personal_history.alcohol.comment
+          }
+          let insertAlcohol = `INSERT INTO Screening.Patient_Social SET ?`
+          await repos.query(insertAlcohol, dataAlcohol)
+        }
+        if (body.personal_history.drugabuse.status != null) {
+          let dataDrugabuse = {
+            HN: body.HN,
+            Habit: 'drugabuse',
+            Status: body.personal_history.drugabuse.status,
+            Quantity: body.personal_history.drugabuse.quantity,
+            Detail: JSON.stringify(body.personal_history.drugabuse.detail),
+            Comment: body.personal_history.drugabuse.comment
+          }
+          let insertDrugabuse = `INSERT INTO Screening.Patient_Social SET ?`
+          await repos.query(insertDrugabuse, dataDrugabuse)
+        }
+        if (body.personal_history.smoke.status != null) {
+          let dataSmoke = {
+            HN: body.HN,
+            Habit: 'smoke',
+            Status: body.personal_history.smoke.status,
+            Quantity: body.personal_history.smoke.quantity,
+            Detail: JSON.stringify(body.personal_history.smoke.detail),
+            Comment: body.personal_history.smoke.comment
+          }
+          let insertSmoke = `INSERT INTO Screening.Patient_Social SET ?`
+          await repos.query(insertSmoke, dataSmoke)
+        }
         let queryNation = `SELECT * FROM Registration.CT_Nation Where ID = ${body.patient_info.nationality}`
         let queryReligion = `SELECT * FROM Registration.CT_Religion Where ID = ${body.patient_info.religion}`
         let queryGender = `SELECT * FROM Registration.CT_Sex Where ID = ${body.patient_info.gender}`
@@ -827,6 +1034,7 @@ const route = new screeningRoute();
 router.post("/search", route.getSearch())
       .post("/signature", route.saveSignature())
       .post("/update", route.updateData())
+      .post("/approve", route.approveData())
       .post("/screening", route.updateScreening())
       .post("/signatureApprove", route.saveSignatureApprove())
       
