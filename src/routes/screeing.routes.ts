@@ -369,6 +369,48 @@ class screeningRoute {
       }
     }
   }
+  
+  getPendingData() {
+    return async (req: Request,res: Response) => {
+      
+      let repos = di.get("repos");
+      try {
+        let startNum = (parseInt("1") * 15) - 15
+        let LimitNum = 15
+        
+        let query = `SELECT PI.*, CTS.Desc_EN Gender_Desc FROM Screening.Patient_Info PI`
+        query += ` LEFT JOIN Registration.CT_Sex CTS ON CTS.Id = PI.Gender`
+        query += ` WHERE Approve != 1`
+        query += ` AND Confirm = 1`
+        // query += ` AND Site IN ('${site}')`
+        query += ` ORDER BY ID ASC LIMIT ${startNum},${LimitNum}`
+          
+        let queryCount = `SELECT COUNT(PI.ID) as count FROM Screening.Patient_Info PI`
+        queryCount += ` WHERE Approve != 1`
+        queryCount += ` AND Confirm = 1`
+
+          let count = await repos.query(queryCount)
+          let data = await repos.query(query)
+          await data.map((d: any) => {
+            let encrypted = CryptoJS.AES.encrypt(d.UID, 'C36bJmRax7');
+            return d.UID = encrypted.toString()
+          })
+          const result = {
+            pagination:{
+              currentPage: parseInt("1"),
+              totalPage: Math.ceil(count[0].count/20),
+              totalResult: count[0].count
+            },
+            result: data
+          }
+          res.send(result)
+        
+      } catch (error) {
+        res.status(404).json([])
+      }
+    }
+  }
+  
   approveData() {
     return async (req: Request, res: Response) => {
       let body = req.body
@@ -1034,6 +1076,7 @@ const route = new screeningRoute();
 router.post("/search", route.getSearch())
       .post("/signature", route.saveSignature())
       .post("/update", route.updateData())
+      .post("/getPendingData", route.getPendingData())
       .post("/approve", route.approveData())
       .post("/screening", route.updateScreening())
       .post("/signatureApprove", route.saveSignatureApprove())
