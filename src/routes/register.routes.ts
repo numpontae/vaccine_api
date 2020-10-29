@@ -1406,7 +1406,10 @@ class registerRoute {
         "site": body.site,
         "location": body.location.CTLOC_Desc,
         "Truama":"No",
-        "ARI":"No"
+        "ARI":"No",
+        "location_register": "1-Medical Record Department",
+        "access_profile": "Registration Staff"
+        
       }
     }
     let time = new Date();
@@ -1664,7 +1667,9 @@ class registerRoute {
         "site": body.site,
         "location": body.location.CTLOC_Desc,
         "Truama":"No",
-        "ARI":"No"
+        "ARI":"No", 
+        "location_register": "1-Medical Record Department",
+        "access_profile": "Registration Staff"
       }
     }
     

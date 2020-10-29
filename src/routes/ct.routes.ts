@@ -21,6 +21,7 @@ class ctRoute {
   }
   getNationality() {
     return async (req: Request, res: Response) => {
+      let { language } = req.query
       let repos = di.get('repos')
       let query = `SELECT * FROM Registration.CT_Nation ORDER BY CASE WHEN Desc_EN = 'THAI' THEN '1' ELSE Desc_EN END ASC`
       let result = await repos.query(query)
@@ -28,8 +29,7 @@ class ctRoute {
         return {
           "ID": d.ID,
           "Code": d.Code,
-          "Desc_EN": this.Capitalize(d.Desc_EN.toLowerCase()),
-          "Desc_TH": d.Desc_TH
+          "Desc": language == 'th' ? d.Desc_TH : d.Desc_EN,
         }
       })
       res.send(response) 
@@ -45,10 +45,17 @@ class ctRoute {
   }
   getReligion() {
     return async (req: Request, res: Response) => {
+      let { language } = req.query
       let repos = di.get('repos')
       let query = `SELECT * FROM Registration.CT_Religion WHERE ID <> 9 ORDER BY CASE WHEN Desc_EN = 'Buddhism' THEN '1' ELSE Desc_EN END ASC`
       let result = await repos.query(query)
-      res.send(result) 
+      let response = result.map((d:any ) => {
+        return {
+          "ID": d.ID,
+          "Desc": language == 'th' ? d.Desc_TH : d.Desc_EN,
+        }
+      })
+      res.send(response) 
     }
   }
   getPreferredLanguage() {
@@ -61,10 +68,18 @@ class ctRoute {
   }
   getCountry() {
     return async (req: Request, res: Response) => {
+      let { language } = req.query
       let repos = di.get('repos')
       let query = `SELECT * FROM Registration.CT_Country Where Active = 'Y'`
       let result = await repos.query(query)
-      res.send(result) 
+      let response = result.map((d:any ) => {
+        return {
+          "ID": d.ID,
+          "Code": d.Code,
+          "Desc": language == 'th' ? d.Desc_TH : d.Desc_EN,
+        }
+      })
+      res.send(response) 
     }
   }
   getZip() {

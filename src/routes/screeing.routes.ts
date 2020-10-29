@@ -813,7 +813,9 @@ class screeningRoute {
             "site": body.site,
             "location": null,
             "Truama":"No",
-            "ARI":"No"
+            "ARI":"No",
+            "location_register": "1-Medical Record Department",
+            "access_profile": "Registration Staff"
           }
         }
         let time = new Date();
@@ -1098,7 +1100,9 @@ class screeningRoute {
             "site": body.site,
             "location":  null,
             "Truama":"No",
-            "ARI":"No"
+            "ARI":"No",
+            "location_register": "1-Medical Record Department",
+            "access_profile": "Registration Staff"
           }
         }
         let time = new Date();
