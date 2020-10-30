@@ -1260,7 +1260,7 @@ class registerRoute {
       return district[0].Desc_TH
     }
     let Province = async (id: any) => {
-      let queryProvince = `SELECT * FROM Registration.CT_Province_1 WHERE ID = ${id}`
+      let queryProvince = `SELECT * FROM Registration.CT_Province WHERE ID = ${id}`
       let provice = await repos.query(queryProvince)
       if (!provice.length) return ''
       return provice[0].Desc_TH
@@ -1562,7 +1562,7 @@ class registerRoute {
       return district[0].Desc_TH
     }
     let Province = async (id: any) => {
-      let queryProvince = `SELECT * FROM Registration.CT_Province_1 WHERE ID = ${id}`
+      let queryProvince = `SELECT * FROM Registration.CT_Province WHERE ID = ${id}`
       let provice = await repos.query(queryProvince)
       if (!provice.length) return ''
       return provice[0].Desc_TH
