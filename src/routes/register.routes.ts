@@ -242,7 +242,8 @@ class registerRoute {
           Officephone: body.patient_info.officephone,
           Confirm: 0,
           Type: body.type,
-          Site: body.site
+          Site: body.site,
+          DefaultLanguage: body.defaultlanguage
         }
         let queryInfo = `INSERT INTO Registration.Patient_Info SET ?`
         let insertInfo = await repos.query(queryInfo, dataInfo);
@@ -425,7 +426,8 @@ class registerRoute {
           Email: body.general_info.email,
           Confirm: 0,
           Type: body.type,
-          Site: body.site
+          Site: body.site,
+          DefaultLanguage: body.defaultlanguage
         }
         let queryInfo = `INSERT INTO Registration.Patient_Info SET ?`
         let insertInfo = await repos.query(queryInfo, dataInfo);
@@ -1260,7 +1262,7 @@ class registerRoute {
       return district[0].Desc_TH
     }
     let Province = async (id: any) => {
-      let queryProvince = `SELECT * FROM Registration.CT_Province WHERE ID = ${id}`
+      let queryProvince = `SELECT * FROM Registration.CT_Province_1 WHERE ID = ${id}`
       let provice = await repos.query(queryProvince)
       if (!provice.length) return ''
       return provice[0].Desc_TH
@@ -1562,7 +1564,7 @@ class registerRoute {
       return district[0].Desc_TH
     }
     let Province = async (id: any) => {
-      let queryProvince = `SELECT * FROM Registration.CT_Province WHERE ID = ${id}`
+      let queryProvince = `SELECT * FROM Registration.CT_Province_1 WHERE ID = ${id}`
       let provice = await repos.query(queryProvince)
       if (!provice.length) return ''
       return provice[0].Desc_TH
