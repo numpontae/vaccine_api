@@ -724,7 +724,8 @@ class registerRoute {
     let repos = di.get("repos");
     let getComment = (type: string, data: any) => {
       if (type == 'alcohol') {
-        return `quantity: ${data.quantity}, duration: ${data.detail.duration}, beverages: ${data.detail.beverages}, comment: ${data.comment}`
+        // return `quantity: ${data.quantity}, duration: ${data.detail.duration}, beverages: ${data.detail.beverages}, comment: ${data.comment}`
+        return `quantity: "Whisky 1 shot/Beer 1 can/Whisky 180 ml/day", duration: "1 Weeks", beverages: ${data.detail.beverages}, comment: ${data.comment}`
       } else if (type == 'exercise') {
         return `quantity: ${data.quantity}, comment: ${data.comment}`
       } else if (type == 'smoke') {
