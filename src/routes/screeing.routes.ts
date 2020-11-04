@@ -112,7 +112,7 @@ class screeningRoute {
           }
           
           query += ` AND Confirm != 1`
-          query += ` ORDER BY ID ASC LIMIT ${startNum},${LimitNum}`
+          query += ` ORDER BY ID DESC LIMIT ${startNum},${LimitNum}`
           
           let queryCount = `SELECT COUNT(PI.ID) as count FROM Screening.Patient_Info PI`
           queryCount += ` WHERE 1 = 1`
@@ -383,7 +383,7 @@ class screeningRoute {
         query += ` WHERE Approve != 1`
         query += ` AND Confirm = 1`
         // query += ` AND Site IN ('${site}')`
-        query += ` ORDER BY ID ASC LIMIT ${startNum},${LimitNum}`
+        query += ` ORDER BY ID DESC LIMIT ${startNum},${LimitNum}`
           
         let queryCount = `SELECT COUNT(PI.ID) as count FROM Screening.Patient_Info PI`
         queryCount += ` WHERE Approve != 1`
@@ -425,7 +425,7 @@ class screeningRoute {
         query += ` AND Confirm = 1`
         query += ` AND DownloadPDF != 1`
         // query += ` AND Site IN ('${site}')`
-        query += ` ORDER BY ID ASC LIMIT ${startNum},${LimitNum}`
+        query += ` ORDER BY ID DESC LIMIT ${startNum},${LimitNum}`
           
         let queryCount = `SELECT COUNT(PI.ID) as count FROM Screening.Patient_Info PI`
         queryCount += ` WHERE Approve = 1`

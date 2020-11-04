@@ -77,6 +77,8 @@ class registerRoute {
           Habit: d.Habit,
           Status: d.Status,
           Quantity: d.Quantity,
+          DurationQuantity: d.DurationQuantity,
+          DurationUnit: d.DurationUnit,
           Detail: JSON.parse(d.Detail),
           Comment: d.Comment
         }
@@ -554,7 +556,7 @@ class registerRoute {
         query += ` WHERE Approve != 1`
         query += ` AND Confirm = 1`
         // query += ` AND Site IN ('${site}')`
-        query += ` ORDER BY ID ASC LIMIT ${startNum},${LimitNum}`
+        query += ` ORDER BY ID DESC LIMIT ${startNum},${LimitNum}`
           
         let queryCount = `SELECT COUNT(PI.ID) as count FROM Registration.Patient_Info PI`
         queryCount += ` WHERE Approve != 1`
@@ -595,7 +597,7 @@ class registerRoute {
         query += ` AND Confirm = 1`
         query += ` AND DownloadPDF != 1`
         // query += ` AND Site IN ('${site}')`
-        query += ` ORDER BY ID ASC LIMIT ${startNum},${LimitNum}`
+        query += ` ORDER BY ID DESC LIMIT ${startNum},${LimitNum}`
           
         let queryCount = `SELECT COUNT(PI.ID) as count FROM Registration.Patient_Info PI`
         queryCount += ` WHERE Approve = 1`
@@ -656,7 +658,7 @@ class registerRoute {
           
           query += ` AND Confirm != 1`
           query += ` AND Site IN ('${site}')`
-          query += ` ORDER BY ID ASC LIMIT ${startNum},${LimitNum}`
+          query += ` ORDER BY ID DESC LIMIT ${startNum},${LimitNum}`
           let queryCount = `SELECT COUNT(PI.ID) as count FROM Registration.Patient_Info PI`
           queryCount += ` WHERE 1 = 1`
           if (!_.isEmpty(firstname)) {
@@ -852,9 +854,10 @@ class registerRoute {
     await repos.query(queryFinancial, dataFinancial);
     await repos.query(queryHistory, dataHistory);
 
-    if (body.personal_history.family.length > 0) {
-      let deleteFamily = `DELETE FROM Registration.Family_History WHERE PatientID = '${body.ID}'`
+    let deleteFamily = `DELETE FROM Registration.Family_History WHERE PatientID = '${body.ID}'`
       await repos.query(deleteFamily);
+    if (body.personal_history.family.length > 0) {
+      
       let valuesFamily: any[] = [] 
       body.personal_history.family.map((p: any) => {
         if (p.person != null && p.illness != null) {
@@ -885,6 +888,8 @@ class registerRoute {
         Habit: 'alcohol',
         Status: body.personal_history.alcohol.status,
         Quantity: body.personal_history.alcohol.quantity,
+        DurationQuantity:body.personal_history.alcohol.duration.quantity,
+        DurationUnit:body.personal_history.alcohol.duration.unit,
         Detail: JSON.stringify(body.personal_history.alcohol.detail),
         Comment: body.personal_history.alcohol.comment
       }
@@ -909,6 +914,8 @@ class registerRoute {
         Habit: 'smoke',
         Status: body.personal_history.smoke.status,
         Quantity: body.personal_history.smoke.quantity,
+        DurationQuantity:body.personal_history.smoke.duration.quantity,
+        DurationUnit:body.personal_history.smoke.duration.unit,
         Detail: JSON.stringify(body.personal_history.smoke.detail),
         Comment: body.personal_history.smoke.comment
       }
@@ -1048,7 +1055,7 @@ class registerRoute {
     let repos = di.get("repos");
     let getComment = (type: string, data: any) => {
       if (type == 'alcohol') {
-        return `quantity: ${data.quantity}, duration: ${data.detail.duration}, beverages: ${data.detail.beverages}, comment: ${data.comment}`
+        return `quantity: ${data.quantity}, duration: ${data.duration}, beverages: ${data.detail.beverages}, comment: ${data.comment}`
       } else if (type == 'exercise') {
         return `quantity: ${data.quantity}, comment: ${data.comment}`
       } else if (type == 'smoke') {
@@ -1208,6 +1215,8 @@ class registerRoute {
         Habit: 'alcohol',
         Status: body.personal_history.alcohol.status,
         Quantity: body.personal_history.alcohol.quantity,
+        DurationQuantity:body.personal_history.alcohol.duration.quantity,
+        DurationUnit:body.personal_history.alcohol.duration.unit,
         Detail: JSON.stringify(body.personal_history.alcohol.detail),
         Comment: body.personal_history.alcohol.comment
       }
@@ -1232,6 +1241,8 @@ class registerRoute {
         Habit: 'smoke',
         Status: body.personal_history.smoke.status,
         Quantity: body.personal_history.smoke.quantity,
+        DurationQuantity:body.personal_history.smoke.duration.quantity,
+        DurationUnit:body.personal_history.smoke.duration.unit,
         Detail: JSON.stringify(body.personal_history.smoke.detail),
         Comment: body.personal_history.smoke.comment
       }
@@ -1309,9 +1320,11 @@ class registerRoute {
       id_patient_social: null,
       id_patient_information: null,
       habit: "Alcohol",
-      quality: null,
+      quality: body.personal_history.alcohol.quantity,
+      duration: body.personal_history.alcohol.duration.quantity + " " + body.personal_history.alcohol.duration.unit,
       detail: null,
-      comment: await getComment('alcohol', body.personal_history.alcohol)
+      comment: body.personal_history.alcohol.comment
+      //comment: await getComment('alcohol', body.personal_history.alcohol)
     }
     let dataexercise = await {
       id_patient_social: null,
@@ -1319,15 +1332,19 @@ class registerRoute {
       habit: "Exercise",
       quality : null,
       detail: null,
-      comment: await getComment('exercise', body.personal_history.exercise)
+      //comment: await getComment('exercise', body.personal_history.exercise)
     }
     let datasmoke = await {
       id_patient_social: null,
       id_patient_information: null,
       habit:"Smoking",
-      quality: null,
+      quality: body.personal_history.smoke.quantity,
+      duration: body.personal_history.smoke.duration.quantity + " " + body.personal_history.smoke.duration.unit,
       detail: null,
-      comment: await getComment('smoke', body.personal_history.smoke)
+      comment: body.personal_history.smoke.comment
+      // quality: null,
+      // detail: null,
+      // comment: await getComment('smoke', body.personal_history.smoke)
     }
     if (body.personal_history.alcohol.status) await social.push(dataalcohol)
     if (body.personal_history.exercise.status) await social.push(dataexercise)
