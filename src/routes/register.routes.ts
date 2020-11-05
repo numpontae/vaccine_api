@@ -223,6 +223,7 @@ class registerRoute {
       let repos = di.get("repos");
       if ( body.type == 0 ) {
         let dateDob = new Date(body.patient_info.dob)
+        dateDob.setHours(dateDob.getHours() + 7 );
         let dataInfo = {
           Title: body.patient_info.title,
           Firstname: body.patient_info.firstname,
@@ -1366,9 +1367,9 @@ class registerRoute {
         "patient_code":"9xkevj",
         "hn": null,
         "title_th": await Title(body.patient_info.title),
-        "firstname_th": body.patient_info.firstname,
+        "firstname_th": body.patient_info.firstname.toUpperCase(),
         "middlename_th": body.patient_info.middlename,
-        "lastname_th": body.patient_info.lastname,
+        "lastname_th": body.patient_info.lastname.toUpperCase(),
         "title_en":null,
         "firstname_en":null,
         "middlename_en":null,
@@ -1404,8 +1405,8 @@ class registerRoute {
         "present_province":body.present.sameAddress ? await Province(body.permanent.provinceid) : await Province(body.present.provinceid),
         "present_postcode":body.present.sameAddress ? body.permanent.postcode : body.present.postcode,
         "present_country":body.present.sameAddress ? await Country(body.permanent.country) : await Country(body.present.country),
-        "ec_firstname":body.emergency.first_name,
-        "ec_lastname":body.emergency.last_name,
+        "ec_firstname":body.emergency.first_name.toUpperCase(),
+        "ec_lastname":body.emergency.last_name.toUpperCase(),
         "ec_relationship": await Relation(body.emergency.relation),
         "ec_relationship_other": body.emergency.relation,
         "ec_telephone":body.emergency.phone_no,
@@ -1444,9 +1445,9 @@ class registerRoute {
     let dateDob = new Date(body.general_info.dob)
     let dataInfo = {
       Title: body.general_info.title,
-      Firstname: body.general_info.firstname,
+      Firstname: body.general_info.firstname.toUpperCase(),
       Middlename: body.general_info.middlename,
-      Lastname: body.general_info.lastname,
+      Lastname: body.general_info.lastname.toUpperCase(),
       DOB: `${dateDob.getFullYear()}-${("0" + (dateDob.getMonth() + 1)).slice(-2)}-${("0" + dateDob.getDate()).slice(-2)}`,
       Gender: body.general_info.gender,
       Nationality: body.general_info.nationality,
@@ -1524,9 +1525,9 @@ class registerRoute {
       let parentdata = [
         body.ID,
         d.title,
-        d.firstname,
+        d.firstname.toUpperCase(),
         d.middlename,
-        d.lastname,
+        d.lastname.toUpperCase(),
         d.relation,
         d.phoneno,
         d.email,
@@ -1628,9 +1629,9 @@ class registerRoute {
         "patient_code":"9xkevj",
         "hn":null,
         "title_th": body.general_info.title,
-        "firstname_th": body.general_info.firstname,
+        "firstname_th": body.general_info.firstname.toUpperCase(),
         "middlename_th": body.general_info.middlename,
-        "lastname_th": body.general_info.lastname,
+        "lastname_th": body.general_info.lastname.toUpperCase(),
         "title_en":null,
         "firstname_en":null,
         "middlename_en":null,
