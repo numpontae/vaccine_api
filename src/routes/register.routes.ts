@@ -294,6 +294,7 @@ class registerRoute {
           sameAddress: body.emergency.sameAddress
         }
         let financialDob = new Date(body.financial.dob)
+        financialDob.setHours(financialDob.getHours() + 7 );
         let dataFinancial = {
           PatientID: insertInfo.insertId,
           SelfPay: _.indexOf(body.financial.payment_method, 'Self pay') >= 0 ? 1 : 0,
@@ -417,6 +418,7 @@ class registerRoute {
         res.send({message: 'Success'})
       } else if ( body.type == 1 ) {
         let dateDob = new Date(body.general_info.dob)
+        dateDob.setHours(dateDob.getHours() + 7 );
         let dataInfo = {
           Title: body.general_info.title,
           Firstname: body.general_info.firstname,
@@ -736,6 +738,7 @@ class registerRoute {
       }
     }
     let dateDob = new Date(body.patient_info.dob)
+    dateDob.setHours(dateDob.getHours() + 7 );
     let dataInfo = {
       Title: body.patient_info.title,
       Firstname: body.patient_info.firstname,
@@ -797,6 +800,7 @@ class registerRoute {
     let queryEmergency = `UPDATE Registration.Patient_Emergency SET ? WHERE PatientID = '${body.ID}'`
 
     let financialDob = new Date(body.financial.dob)
+    financialDob.setHours(financialDob.getHours() + 7 );
     let dataFinancial = {
       SelfPay: _.indexOf(body.financial.payment_method, 'Self pay') >= 0 ? 1 : 0,
       CompanyContact: _.indexOf(body.financial.payment_method, 'Company contract') >= 0 ? 1 : 0,
@@ -931,6 +935,7 @@ class registerRoute {
   async updateChild(body: any) {
     let repos = di.get("repos");
     let dateDob = new Date(body.general_info.dob)
+    dateDob.setHours(dateDob.getHours() + 7 );
     let dataInfo = {
       Title: body.general_info.title,
       Firstname: body.general_info.firstname,
@@ -1035,9 +1040,12 @@ class registerRoute {
     await repos.query(deleteParent);
     let queryParent = `INSERT INTO Registration.Parent (PatientID, Title, Firstname, Middlename, Lastname, Relation, PhoneNo, Email, ContactEmergency, LivePerson, Country, Postcode, Subdistrict, District, Address, Province, sameAddress) VALUES ?`
     await repos.query(queryParent, [valuesParent]);
-    if (body.siblings.family.length > 0) {
-      let deleteFamily = `DELETE FROM Registration.Family_History WHERE PatientID = '${body.ID}'`
+    
+    let deleteFamily = `DELETE FROM Registration.Family_History WHERE PatientID = '${body.ID}'`
       await repos.query(deleteFamily);
+      
+    if (body.siblings.family.length > 0) {
+      
       let valuesFamily: any[] = [] 
       body.siblings.family.map((p: any) => {
         if (p.person != null && p.illness != null) {
@@ -1064,6 +1072,7 @@ class registerRoute {
       }
     }
     let dateDob = new Date(body.patient_info.dob)
+    dateDob.setHours(dateDob.getHours() + 7 );
     let dataInfo = {
       Title: body.patient_info.title,
       Firstname: body.patient_info.firstname,
@@ -1125,6 +1134,7 @@ class registerRoute {
     let queryEmergency = `UPDATE Registration.Patient_Emergency SET ? WHERE PatientID = '${body.ID}'`
 
     let financialDob = new Date(body.financial.dob)
+    financialDob.setHours(financialDob.getHours() + 7 );
     let dataFinancial = {
       SelfPay: _.indexOf(body.financial.payment_method, 'Self pay') >= 0 ? 1 : 0,
       CompanyContact: _.indexOf(body.financial.payment_method, 'Company contract') >= 0 ? 1 : 0,
@@ -1443,6 +1453,7 @@ class registerRoute {
   async approveChild(body: any) {
     let repos = di.get("repos");
     let dateDob = new Date(body.general_info.dob)
+    dateDob.setHours(dateDob.getHours() + 7 );
     let dataInfo = {
       Title: body.general_info.title,
       Firstname: body.general_info.firstname.toUpperCase(),

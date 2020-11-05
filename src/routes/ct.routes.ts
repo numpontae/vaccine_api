@@ -153,6 +153,22 @@ class ctRoute {
       res.send(result) 
     }
   }
+  getHistoryRelation() {
+    return async (req: Request, res: Response) => {
+      let repos = di.get('repos')
+      let query = `SELECT * FROM Registration.CT_Relation WHERE ActiveFamilyHistory = 1`
+      let result = await repos.query(query)
+      res.send(result) 
+    }
+  }
+  getHistoryDisease() {
+    return async (req: Request, res: Response) => {
+      let repos = di.get('repos')
+      let query = `SELECT * FROM Registration.CT_Diseases WHERE ActiveFamilyHistory = 1`
+      let result = await repos.query(query)
+      res.send(result) 
+    }
+  }
   getCityByIdArea() {
     return async (req: Request, res: Response) => {
       let { id } = req.query
@@ -212,5 +228,7 @@ router
   .get("/citybyidarea", route.getCityByIdArea())
   .get("/location", route.getLocationByIdHospital())
   .get("/relation", route.getRelation())
+  .get("/historyrelation", route.getHistoryRelation())
+  .get("/historydisease", route.getHistoryDisease())
 
 export const ct = router
