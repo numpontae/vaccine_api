@@ -252,26 +252,26 @@ class registerRoute {
         let insertInfo = await repos.query(queryInfo, dataInfo);
         // -- //
         let dataAddress: any = new Array()
-        let permanentAddress = [
+        let presentAddress = [
           insertInfo.insertId,
-          body.permanent.country,
-          body.permanent.postcode,
-          body.permanent.subdistrict,
-          body.permanent.districtid,
-          body.permanent.address,
-          body.permanent.provinceid,
+          body.present.country,
+          body.present.postcode,
+          body.present.subdistrict,
+          body.present.districtid,
+          body.present.address,
+          body.present.provinceid,
           null,
           0
         ]
-        let presentAddress = [
+        let permanentAddress = [
           insertInfo.insertId,
-          body.present.sameAddress ? body.permanent.country : body.present.country,
-          body.present.sameAddress ? body.permanent.postcode : body.present.postcode,
-          body.present.sameAddress ? body.permanent.subdistrict : body.present.subdistrict,
-          body.present.sameAddress ? body.permanent.districtid : body.present.districtid,
-          body.present.sameAddress ? body.permanent.address : body.present.address,
-          body.present.sameAddress ? body.permanent.provinceid : body.present.provinceid,
-          body.present.sameAddress,
+          body.permanent.sameAddress ? body.present.country : body.permanent.country,
+          body.permanent.sameAddress ? body.present.postcode : body.permanent.postcode,
+          body.permanent.sameAddress ? body.present.subdistrict : body.permanent.subdistrict,
+          body.permanent.sameAddress ? body.present.districtid : body.permanent.districtid,
+          body.permanent.sameAddress ? body.present.address : body.permanent.address,
+          body.permanent.sameAddress ? body.present.provinceid : body.permanent.provinceid,
+          body.permanent.sameAddress,
           1
         ]
         
@@ -761,27 +761,27 @@ class registerRoute {
     }
     let queryInfo = `UPDATE Registration.Patient_Info SET ? WHERE ID = '${body.ID}'`
     
-    let dataPermanent = {
-      Country: body.permanent.country,
-      Postcode: body.permanent.postcode,
-      Subdistrict: body.permanent.subdistrict,
-      District: body.permanent.districtid,
-      Address: body.permanent.address,
-      Province: body.permanent.provinceid,
+    let dataPresent = {
+      Country: body.persent.country,
+      Postcode: body.persent.postcode,
+      Subdistrict: body.persent.subdistrict,
+      District: body.persent.districtid,
+      Address: body.persent.address,
+      Province: body.persent.provinceid,
       sameAddress: null
     }
-    let queryPermanent = `UPDATE Registration.Patient_Address SET ? WHERE PatientID = '${body.ID}' And Type = 0`
+    let queryPresent = `UPDATE Registration.Patient_Address SET ? WHERE PatientID = '${body.ID}' And Type = 0`
     
-    let dataPresent = {
-      Country: body.present.sameAddress ? body.permanent.country : body.present.country,
-      Postcode: body.present.sameAddress ? body.permanent.postcode : body.present.postcode,
-      Subdistrict: body.present.sameAddress ? body.permanent.subdistrict : body.present.subdistrict,
-      District: body.present.sameAddress ? body.permanent.districtid : body.present.districtid,
-      Address: body.present.sameAddress ? body.permanent.address : body.present.address,
-      Province: body.present.sameAddress ? body.permanent.provinceid : body.present.provinceid,
-      sameAddress: body.present.sameAddress
+    let dataPermanent = {
+      Country: body.permanent.sameAddress ? body.persent.country : body.permanent.country,
+      Postcode: body.permanent.sameAddress ? body.persent.postcode : body.permanent.postcode,
+      Subdistrict: body.permanent.sameAddress ? body.persent.subdistrict : body.permanent.subdistrict,
+      District: body.permanent.sameAddress ? body.persent.districtid : body.permanent.districtid,
+      Address: body.permanent.sameAddress ? body.persent.address : body.permanent.address,
+      Province: body.permanent.sameAddress ? body.persent.provinceid : body.permanent.provinceid,
+      sameAddress: body.permanent.sameAddress
     }
-    let queryPresent = `UPDATE Registration.Patient_Address SET ? WHERE PatientID = '${body.ID}' And Type = 1`
+    let queryPermanent = `UPDATE Registration.Patient_Address SET ? WHERE PatientID = '${body.ID}' And Type = 1`
 
     let dataEmergency = {
       Firstname: body.emergency.first_name,
@@ -789,12 +789,12 @@ class registerRoute {
       Relation: body.emergency.relation,
       Email: body.emergency.email,
       PhoneNo: body.emergency.phone_no,
-      Country: body.emergency.sameAddress ? body.permanent.country : body.emergency.country,
-      Postcode: body.emergency.sameAddress ? body.permanent.postcode : body.emergency.postcode,
-      Subdistrict: body.emergency.sameAddress ? body.permanent.subdistrict : body.emergency.subdistrict,
-      District: body.emergency.sameAddress ? body.permanent.districtid : body.emergency.districtid,
-      Address: body.emergency.sameAddress ? body.permanent.address : body.emergency.address,
-      Province: body.emergency.sameAddress ? body.permanent.provinceid : body.emergency.provinceid,
+      Country: body.emergency.sameAddress ? body.persent.country : body.emergency.country,
+      Postcode: body.emergency.sameAddress ? body.persent.postcode : body.emergency.postcode,
+      Subdistrict: body.emergency.sameAddress ? body.persent.subdistrict : body.emergency.subdistrict,
+      District: body.emergency.sameAddress ? body.persent.districtid : body.emergency.districtid,
+      Address: body.emergency.sameAddress ? body.persent.address : body.emergency.address,
+      Province: body.emergency.sameAddress ? body.persent.provinceid : body.emergency.provinceid,
       sameAddress: body.emergency.sameAddress
     }
     let queryEmergency = `UPDATE Registration.Patient_Emergency SET ? WHERE PatientID = '${body.ID}'`
@@ -1095,27 +1095,27 @@ class registerRoute {
     }
     let queryInfo = `UPDATE Registration.Patient_Info SET ? WHERE ID = '${body.ID}'`
     
-    let dataPermanent = {
-      Country: body.permanent.country,
-      Postcode: body.permanent.postcode,
-      Subdistrict: body.permanent.subdistrict,
-      District: body.permanent.districtid,
-      Address: body.permanent.address,
-      Province: body.permanent.provinceid,
+    let dataPresent = {
+      Country: body.persent.country,
+      Postcode: body.persent.postcode,
+      Subdistrict: body.persent.subdistrict,
+      District: body.persent.districtid,
+      Address: body.persent.address,
+      Province: body.persent.provinceid,
       sameAddress: null
     }
-    let queryPermanent = `UPDATE Registration.Patient_Address SET ? WHERE PatientID = '${body.ID}' And Type = 0`
+    let queryPresent = `UPDATE Registration.Patient_Address SET ? WHERE PatientID = '${body.ID}' And Type = 0`
     
-    let dataPresent = {
-      Country: body.present.sameAddress ? body.permanent.country : body.present.country,
-      Postcode: body.present.sameAddress ? body.permanent.postcode : body.present.postcode,
-      Subdistrict: body.present.sameAddress ? body.permanent.subdistrict : body.present.subdistrict,
-      District: body.present.sameAddress ? body.permanent.districtid : body.present.districtid,
-      Address: body.present.sameAddress ? body.permanent.address : body.present.address,
-      Province: body.present.sameAddress ? body.permanent.provinceid : body.present.provinceid,
-      sameAddress: body.present.sameAddress
+    let dataPermanent = {
+      Country: body.permanent.sameAddress ? body.persent.country : body.permanent.country,
+      Postcode: body.permanent.sameAddress ? body.persent.postcode : body.permanent.postcode,
+      Subdistrict: body.permanent.sameAddress ? body.persent.subdistrict : body.permanent.subdistrict,
+      District: body.permanent.sameAddress ? body.persent.districtid : body.permanent.districtid,
+      Address: body.permanent.sameAddress ? body.persent.address : body.permanent.address,
+      Province: body.permanent.sameAddress ? body.persent.provinceid : body.permanent.provinceid,
+      sameAddress: body.permanent.sameAddress
     }
-    let queryPresent = `UPDATE Registration.Patient_Address SET ? WHERE PatientID = '${body.ID}' And Type = 1`
+    let queryPermanent = `UPDATE Registration.Patient_Address SET ? WHERE PatientID = '${body.ID}' And Type = 1`
 
     let dataEmergency = {
       Firstname: body.emergency.first_name,
