@@ -100,8 +100,8 @@ class registerRoute {
       })
       let result = {
         Info: info[0],
-        Permanent: address[0],
-        Present: address[1],
+        Present: address[0],
+        Permanent: address[1],
         Emergency: {
           Firstname: emergency[0].Firstname,
           Lastname: emergency[0].Lastname,
@@ -184,8 +184,8 @@ class registerRoute {
       let consent = await repos.query(queryConsent)
       let payment = []
       let familylist: any = []
-      let filterpermanent = await address.filter((d:any) => d.Type == 0)
-      let filterpersent = await address.filter((d:any) => d.Type == 1)
+      let filterpersent = await address.filter((d:any) => d.Type == 0)
+      let filterpermanent = await address.filter((d:any) => d.Type == 1)
       if (financial.length) {
         if (financial[0].SelfPay == 1) payment.push('Self pay')
         if (financial[0].CompanyContact == 1) payment.push('Company contract')
