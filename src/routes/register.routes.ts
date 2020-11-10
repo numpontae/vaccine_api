@@ -184,7 +184,7 @@ class registerRoute {
       let consent = await repos.query(queryConsent)
       let payment = []
       let familylist: any = []
-      let filterpersent = await address.filter((d:any) => d.Type == 0)
+      let filterpresent = await address.filter((d:any) => d.Type == 0)
       let filterpermanent = await address.filter((d:any) => d.Type == 1)
       if (financial.length) {
         if (financial[0].SelfPay == 1) payment.push('Self pay')
@@ -201,7 +201,7 @@ class registerRoute {
       let result = {
         Info: info[0],
         Permanent: filterpermanent[0],
-        Present: filterpersent[0],
+        Present: filterpresent[0],
         Parent: parent,
         Financial: {
           payment_method: payment,
@@ -384,6 +384,8 @@ class registerRoute {
             Habit: 'alcohol',
             Status: body.personal_history.alcohol.status,
             Quantity: body.personal_history.alcohol.quantity,
+            DurationQuantity: body.personal_history.alcohol.duration.quantity,
+            DurationUnit: body.personal_history.alcohol.duration.unit,
             Detail: JSON.stringify(body.personal_history.alcohol.detail),
             Comment: body.personal_history.alcohol.comment
           }
@@ -408,6 +410,8 @@ class registerRoute {
             Habit: 'smoke',
             Status: body.personal_history.smoke.status,
             Quantity: body.personal_history.smoke.quantity,
+            DurationQuantity: body.personal_history.smoke.duration.quantity,
+            DurationUnit: body.personal_history.smoke.duration.unit,
             Detail: JSON.stringify(body.personal_history.smoke.detail),
             Comment: body.personal_history.smoke.comment
           }
@@ -415,7 +419,14 @@ class registerRoute {
           await repos.query(insertSmoke, dataSmoke)
         }
         this.handleConsent(body.consent_form, insertInfo.insertId)
-        res.send({message: 'Success'})
+        
+        const result = {
+          patientId: insertInfo.insertId,
+          message: 'Success'
+        }
+        res.send(result)
+        
+        // sendres.send({message: 'Success', patientId: insertInfo.insertId})
       } else if ( body.type == 1 ) {
         let dateDob = new Date(body.general_info.dob)
         dateDob.setHours(dateDob.getHours() + 7 );
@@ -710,6 +721,7 @@ class registerRoute {
           
         }
       } catch (error) {
+        console.log(error);
         res.status(404).json([])
       }
     }
@@ -762,23 +774,23 @@ class registerRoute {
     let queryInfo = `UPDATE Registration.Patient_Info SET ? WHERE ID = '${body.ID}'`
     
     let dataPresent = {
-      Country: body.persent.country,
-      Postcode: body.persent.postcode,
-      Subdistrict: body.persent.subdistrict,
-      District: body.persent.districtid,
-      Address: body.persent.address,
-      Province: body.persent.provinceid,
+      Country: body.present.country,
+      Postcode: body.present.postcode,
+      Subdistrict: body.present.subdistrict,
+      District: body.present.districtid,
+      Address: body.present.address,
+      Province: body.present.provinceid,
       sameAddress: null
     }
     let queryPresent = `UPDATE Registration.Patient_Address SET ? WHERE PatientID = '${body.ID}' And Type = 0`
     
     let dataPermanent = {
-      Country: body.permanent.sameAddress ? body.persent.country : body.permanent.country,
-      Postcode: body.permanent.sameAddress ? body.persent.postcode : body.permanent.postcode,
-      Subdistrict: body.permanent.sameAddress ? body.persent.subdistrict : body.permanent.subdistrict,
-      District: body.permanent.sameAddress ? body.persent.districtid : body.permanent.districtid,
-      Address: body.permanent.sameAddress ? body.persent.address : body.permanent.address,
-      Province: body.permanent.sameAddress ? body.persent.provinceid : body.permanent.provinceid,
+      Country: body.permanent.sameAddress ? body.present.country : body.permanent.country,
+      Postcode: body.permanent.sameAddress ? body.present.postcode : body.permanent.postcode,
+      Subdistrict: body.permanent.sameAddress ? body.present.subdistrict : body.permanent.subdistrict,
+      District: body.permanent.sameAddress ? body.present.districtid : body.permanent.districtid,
+      Address: body.permanent.sameAddress ? body.present.address : body.permanent.address,
+      Province: body.permanent.sameAddress ? body.present.provinceid : body.permanent.provinceid,
       sameAddress: body.permanent.sameAddress
     }
     let queryPermanent = `UPDATE Registration.Patient_Address SET ? WHERE PatientID = '${body.ID}' And Type = 1`
@@ -789,12 +801,12 @@ class registerRoute {
       Relation: body.emergency.relation,
       Email: body.emergency.email,
       PhoneNo: body.emergency.phone_no,
-      Country: body.emergency.sameAddress ? body.persent.country : body.emergency.country,
-      Postcode: body.emergency.sameAddress ? body.persent.postcode : body.emergency.postcode,
-      Subdistrict: body.emergency.sameAddress ? body.persent.subdistrict : body.emergency.subdistrict,
-      District: body.emergency.sameAddress ? body.persent.districtid : body.emergency.districtid,
-      Address: body.emergency.sameAddress ? body.persent.address : body.emergency.address,
-      Province: body.emergency.sameAddress ? body.persent.provinceid : body.emergency.provinceid,
+      Country: body.emergency.sameAddress ? body.present.country : body.emergency.country,
+      Postcode: body.emergency.sameAddress ? body.present.postcode : body.emergency.postcode,
+      Subdistrict: body.emergency.sameAddress ? body.present.subdistrict : body.emergency.subdistrict,
+      District: body.emergency.sameAddress ? body.present.districtid : body.emergency.districtid,
+      Address: body.emergency.sameAddress ? body.present.address : body.emergency.address,
+      Province: body.emergency.sameAddress ? body.present.provinceid : body.emergency.provinceid,
       sameAddress: body.emergency.sameAddress
     }
     let queryEmergency = `UPDATE Registration.Patient_Emergency SET ? WHERE PatientID = '${body.ID}'`
@@ -1096,39 +1108,38 @@ class registerRoute {
     let queryInfo = `UPDATE Registration.Patient_Info SET ? WHERE ID = '${body.ID}'`
     
     let dataPresent = {
-      Country: body.persent.country,
-      Postcode: body.persent.postcode,
-      Subdistrict: body.persent.subdistrict,
-      District: body.persent.districtid,
-      Address: body.persent.address,
-      Province: body.persent.provinceid,
+      Country: body.present.country,
+      Postcode: body.present.postcode,
+      Subdistrict: body.present.subdistrict,
+      District: body.present.districtid,
+      Address: body.present.address,
+      Province: body.present.provinceid,
       sameAddress: null
     }
     let queryPresent = `UPDATE Registration.Patient_Address SET ? WHERE PatientID = '${body.ID}' And Type = 0`
     
     let dataPermanent = {
-      Country: body.permanent.sameAddress ? body.persent.country : body.permanent.country,
-      Postcode: body.permanent.sameAddress ? body.persent.postcode : body.permanent.postcode,
-      Subdistrict: body.permanent.sameAddress ? body.persent.subdistrict : body.permanent.subdistrict,
-      District: body.permanent.sameAddress ? body.persent.districtid : body.permanent.districtid,
-      Address: body.permanent.sameAddress ? body.persent.address : body.permanent.address,
-      Province: body.permanent.sameAddress ? body.persent.provinceid : body.permanent.provinceid,
+      Country: body.permanent.sameAddress ? body.present.country : body.permanent.country,
+      Postcode: body.permanent.sameAddress ? body.present.postcode : body.permanent.postcode,
+      Subdistrict: body.permanent.sameAddress ? body.present.subdistrict : body.permanent.subdistrict,
+      District: body.permanent.sameAddress ? body.present.districtid : body.permanent.districtid,
+      Address: body.permanent.sameAddress ? body.present.address : body.permanent.address,
+      Province: body.permanent.sameAddress ? body.present.provinceid : body.permanent.provinceid,
       sameAddress: body.permanent.sameAddress
     }
     let queryPermanent = `UPDATE Registration.Patient_Address SET ? WHERE PatientID = '${body.ID}' And Type = 1`
-
     let dataEmergency = {
       Firstname: body.emergency.first_name,
       Lastname: body.emergency.last_name,
       Relation: body.emergency.relation,
       Email: body.emergency.email,
       PhoneNo: body.emergency.phone_no,
-      Country: body.emergency.sameAddress ? body.permanent.country : body.emergency.country,
-      Postcode: body.emergency.sameAddress ? body.permanent.postcode : body.emergency.postcode,
-      Subdistrict: body.emergency.sameAddress ? body.permanent.subdistrict : body.emergency.subdistrict,
-      District: body.emergency.sameAddress ? body.permanent.districtid : body.emergency.districtid,
-      Address: body.emergency.sameAddress ? body.permanent.address : body.emergency.address,
-      Province: body.emergency.sameAddress ? body.permanent.provinceid : body.emergency.provinceid,
+      Country: body.emergency.sameAddress ? body.present.country : body.emergency.country,
+      Postcode: body.emergency.sameAddress ? body.present.postcode : body.emergency.postcode,
+      Subdistrict: body.emergency.sameAddress ? body.present.subdistrict : body.emergency.subdistrict,
+      District: body.emergency.sameAddress ? body.present.districtid : body.emergency.districtid,
+      Address: body.emergency.sameAddress ? body.present.address : body.emergency.address,
+      Province: body.emergency.sameAddress ? body.present.provinceid : body.emergency.provinceid,
       sameAddress: body.emergency.sameAddress
     }
     let queryEmergency = `UPDATE Registration.Patient_Emergency SET ? WHERE PatientID = '${body.ID}'`
@@ -1234,18 +1245,18 @@ class registerRoute {
       let insertAlcohol = `INSERT INTO Registration.Patient_Social SET ?`
       await repos.query(insertAlcohol, dataAlcohol)
     }
-    if (body.personal_history.drugabuse.status != null) {
-      let dataDrugabuse = {
-        PatientID: body.ID,
-        Habit: 'drugabuse',
-        Status: body.personal_history.drugabuse.status,
-        Quantity: body.personal_history.drugabuse.quantity,
-        Detail: JSON.stringify(body.personal_history.drugabuse.detail),
-        Comment: body.personal_history.drugabuse.comment
-      }
-      let insertDrugabuse = `INSERT INTO Registration.Patient_Social SET ?`
-      await repos.query(insertDrugabuse, dataDrugabuse)
-    }
+    // if (body.personal_history.drugabuse.status != null) {
+    //   let dataDrugabuse = {
+    //     PatientID: body.ID,
+    //     Habit: 'drugabuse',
+    //     Status: body.personal_history.drugabuse.status,
+    //     Quantity: body.personal_history.drugabuse.quantity,
+    //     Detail: JSON.stringify(body.personal_history.drugabuse.detail),
+    //     Comment: body.personal_history.drugabuse.comment
+    //   }
+    //   let insertDrugabuse = `INSERT INTO Registration.Patient_Social SET ?`
+    //   await repos.query(insertDrugabuse, dataDrugabuse)
+    // }
     if (body.personal_history.smoke.status != null) {
       let dataSmoke = {
         PatientID: body.ID,
@@ -1265,13 +1276,13 @@ class registerRoute {
     let queryReligion = `SELECT * FROM Registration.CT_Religion Where ID = ${body.patient_info.religion}`
     let queryGender = `SELECT * FROM Registration.CT_Sex Where ID = ${body.patient_info.gender}`
     
-    
     let Country = async (id: any) => {
       let queryCountry = `SELECT * FROM Registration.CT_Country Where ID = ${id}`
       let country = await repos.query(queryCountry)
       if (!country.length) return null
       return country[0].Desc_EN
     }
+    
     let Subdistrict = async (id: any) => {
       let querySubdistrict = `SELECT * FROM Registration.CT_CityArea_1 WHERE ID = ${id}`
       let subdistrict = await repos.query(querySubdistrict)
@@ -1331,9 +1342,10 @@ class registerRoute {
       id_patient_social: null,
       id_patient_information: null,
       habit: "Alcohol",
-      quality: body.personal_history.alcohol.quantity,
-      duration: body.personal_history.alcohol.duration.quantity + " " + body.personal_history.alcohol.duration.unit,
-      detail: null,
+      quality: body.personal_history.alcohol.status ? body.personal_history.alcohol.quantity : "None",
+      duration: body.personal_history.alcohol.duration.quantity ? body.personal_history.alcohol.duration.quantity + "-" 
+      + body.personal_history.alcohol.duration.unit : null,
+      //detail: null,
       comment: body.personal_history.alcohol.comment
       //comment: await getComment('alcohol', body.personal_history.alcohol)
     }
@@ -1341,25 +1353,33 @@ class registerRoute {
       id_patient_social: null,
       id_patient_information: null,
       habit: "Exercise",
-      quality : null,
-      detail: null,
+      quality : body.personal_history.exercise.status ? body.personal_history.exercise.quantity : "None",
+      duration: null,
+      //detail: null,
+      comment: body.personal_history.exercise.comment
       //comment: await getComment('exercise', body.personal_history.exercise)
     }
     let datasmoke = await {
       id_patient_social: null,
       id_patient_information: null,
       habit:"Smoking",
-      quality: body.personal_history.smoke.quantity,
-      duration: body.personal_history.smoke.duration.quantity + " " + body.personal_history.smoke.duration.unit,
-      detail: null,
+      quality: body.personal_history.smoke.status ? body.personal_history.smoke.quantity : "None",
+      duration: body.personal_history.smoke.duration.quantity ? body.personal_history.smoke.duration.quantity + "-" 
+      + body.personal_history.smoke.duration.unit : null,
+      //detail: null,
       comment: body.personal_history.smoke.comment
       // quality: null,
       // detail: null,
       // comment: await getComment('smoke', body.personal_history.smoke)
     }
-    if (body.personal_history.alcohol.status) await social.push(dataalcohol)
-    if (body.personal_history.exercise.status) await social.push(dataexercise)
-    if (body.personal_history.smoke.status) await social.push(datasmoke) 
+    
+    await social.push(dataalcohol)
+    await social.push(dataexercise)
+    await social.push(datasmoke)
+    
+    // if (body.personal_history.alcohol.status) await social.push(dataalcohol)
+    // if (body.personal_history.exercise.status) await social.push(dataexercise)
+    // if (body.personal_history.smoke.status) await social.push(datasmoke) 
     let checkstatus = (d: any) => {
       if (d == 'Single') return 1
       if (d == 'Married') return 2
@@ -1402,19 +1422,19 @@ class registerRoute {
         "email":body.patient_info.email,
         "home_telephone":body.patient_info.homephone,
         "office_telephone":body.patient_info.officephone,
-        "permanent_address": body.permanent.address,
-        "permanent_sub_district": await Subdistrict(body.permanent.subdistrict),
-        "permanent_district": await District(body.permanent.districtid),
-        "permanent_province": await Province(body.permanent.provinceid),
-        "permanent_postcode": body.permanent.postcode,
-        "permanent_country": await Country(body.permanent.country),
+        "permanent_address": body.present.address,
+        "permanent_sub_district": await Subdistrict(body.present.subdistrict),
+        "permanent_district": await District(body.present.districtid),
+        "permanent_province": await Province(body.present.provinceid),
+        "permanent_postcode": body.present.postcode,
+        "permanent_country": await Country(body.present.country),
         "same_permanent": body.present.sameAddress ? 1 : 0,
         "present_address":body.present.sameAddress ? body.permanent.address : body.present.address,
         "present_sub_district":body.present.sameAddress ? await Subdistrict(body.permanent.subdistrict) : await Subdistrict(body.present.subdistrict),
-        "present_district":body.present.sameAddress ? await District(body.permanent.districtid) : await District(body.present.districtid),
-        "present_province":body.present.sameAddress ? await Province(body.permanent.provinceid) : await Province(body.present.provinceid),
-        "present_postcode":body.present.sameAddress ? body.permanent.postcode : body.present.postcode,
-        "present_country":body.present.sameAddress ? await Country(body.permanent.country) : await Country(body.present.country),
+        "present_district":body.permanent.sameAddress ? await District(body.present.districtid) : await District(body.permanent.districtid),
+        "present_province":body.permanent.sameAddress ? await Province(body.present.provinceid) : await Province(body.permanent.provinceid),
+        "present_postcode":body.permanent.sameAddress ? body.present.postcode : body.permanent.postcode,
+        "present_country":body.permanent.sameAddress ? await Country(body.present.country) : await Country(body.permanent.country),
         "ec_firstname":body.emergency.first_name.toUpperCase(),
         "ec_lastname":body.emergency.last_name.toUpperCase(),
         "ec_relationship": await Relation(body.emergency.relation),
@@ -1605,6 +1625,12 @@ class registerRoute {
       if (!subdistrict.length) return ''
       return subdistrict[0].Desc_EN
     }
+    let Title = async (id: any) => {
+      let queryTitle = `SELECT * FROM Registration.CT_Title Where ID = ${id}`
+      let title = await repos.query(queryTitle)
+      if (!title.length) return null
+      return title[0].Desc
+    }
     let Nation = await repos.query(queryNation)
     let Gender = await repos.query(queryGender)
     let family = await body.siblings.family.map((d: any) => {
@@ -1639,7 +1665,7 @@ class registerRoute {
         "id_patient_information":126,
         "patient_code":"9xkevj",
         "hn":null,
-        "title_th": body.general_info.title,
+        "title_th": await Title(body.general_info.title),
         "firstname_th": body.general_info.firstname.toUpperCase(),
         "middlename_th": body.general_info.middlename,
         "lastname_th": body.general_info.lastname.toUpperCase(),
@@ -1648,17 +1674,19 @@ class registerRoute {
         "middlename_en":null,
         "lastname_en":null,
         "nationality": Nation[0].Desc_EN,
-        "religion": null,
-        "religion_desc": null,
+        "religion": 4,
+        "religion_desc": "พุทธ",
+        "religion_desc_en": "Buddhism",
         "national_id": null,
         "passport_id": null,
-        "dob":`${dateDob.getFullYear()}-${("0" + (dateDob.getMonth() + 1)).slice(-2)}-${("0" + dateDob.getDate()).slice(-2)}`,
+        //"dob":`${dateDob.getFullYear()}-${("0" + (dateDob.getMonth() + 1)).slice(-2)}-${("0" + dateDob.getDate()).slice(-2)}`,
+        "dob": dateDob,
         "age":null,
         "gender": body.general_info.gender,
         "gender_desc_en":Gender[0].Desc_EN,
         "gender_desc_th":Gender[0].Desc_TH,
         "marital_status": null,
-        "preferrend_language": null,
+        "preferrend_language": "English",
         "occupation": null,
         "mobile_phone":body.general_info.phone_no,
         "email":body.general_info.email,
