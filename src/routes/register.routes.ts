@@ -1439,7 +1439,7 @@ class registerRoute {
         "ec_lastname":body.emergency.last_name.toUpperCase(),
         "ec_relationship": await Relation(body.emergency.relation),
         "ec_relationship_other": body.emergency.relation,
-        "ec_telephone":body.emergency.phone_no,
+        "ec_telephone": (body.emergency.phone_no && body.emergency.phone_no.length == 10) ? body.emergency.phone_no : ".",
         "ec_email":body.emergency.email,
         "ec_address_same_patient": body.emergency.sameAddress ? 1 : 0,
         "ec_address":body.emergency.sameAddress ? body.permanent.address : body.emergency.address,
