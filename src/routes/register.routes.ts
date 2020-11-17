@@ -1777,6 +1777,7 @@ class registerRoute {
       res.send({message: 'Success'})
     }
   }
+  
 }
 
 const router = Router();
@@ -1790,5 +1791,6 @@ router.post("/", route.postRegister())
       .post("/approve", route.approveData())
       .post("/signatureApprove", route.saveSignatureApprove())
       .post("/getApprovedData", route.getApprovedData())
+      
 
 export const register = router;

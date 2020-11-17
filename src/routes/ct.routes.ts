@@ -9,11 +9,14 @@ class ctRoute {
   }
   getTitle() {
     return async (req: Request, res: Response) => {
-      let { language } = req.query
+      
+      let { language, id } = req.query
+
       let repos = di.get('repos')
       let query = `SELECT * FROM Registration.CT_Title`
       if (language == 'th') query += ` Where Code IN ('00008', '00010', '00116', '00117', '00118')`
       if (language == 'en') query += ` Where Code IN ('00008e', '00116e', '00010E', '00118e')`
+      if (id && id !== 'undefined' && id != null) query += ` And ID = ${id}`
       let result = await repos.query(query)
       await result.map((d: any) => d.Desc = this.Capitalize(d.Desc.toLowerCase()))
       res.send(result) 
@@ -21,9 +24,11 @@ class ctRoute {
   }
   getNationality() {
     return async (req: Request, res: Response) => {
-      let { language } = req.query
+      let { language, id } = req.query
       let repos = di.get('repos')
-      let query = `SELECT * FROM Registration.CT_Nation ORDER BY CASE WHEN Desc_EN = 'THAI' THEN '1' ELSE Desc_EN END ASC`
+      let query = `SELECT * FROM Registration.CT_Nation `
+      if (id && id !== 'undefined' && id != null) query += ` Where ID = ${id}`
+      query += ` ORDER BY CASE WHEN Desc_EN = 'THAI' THEN '1' ELSE Desc_EN END ASC`
       let result = await repos.query(query)
       let response = result.map((d:any ) => {
         return {
@@ -37,17 +42,21 @@ class ctRoute {
   }
   getGender() {
     return async (req: Request, res: Response) => {
+      let { id } = req.query
       let repos = di.get('repos')
       let query = `SELECT * FROM Registration.CT_Sex`
+      if (id && id !== 'undefined' && id != null) query += ` Where ID = ${id}`
       let result = await repos.query(query)
       res.send(result) 
     }
   }
   getReligion() {
     return async (req: Request, res: Response) => {
-      let { language } = req.query
+      let { language, id } = req.query
       let repos = di.get('repos')
-      let query = `SELECT * FROM Registration.CT_Religion WHERE ID <> 9 ORDER BY CASE WHEN Desc_EN = 'Buddhism' THEN '1' ELSE Desc_EN END ASC`
+      let query = `SELECT * FROM Registration.CT_Religion WHERE ID <> 9 `
+      if (id && id !== 'undefined' && id != null) query += ` And ID = ${id}`
+      query += ` ORDER BY CASE WHEN Desc_EN = 'Buddhism' THEN '1' ELSE Desc_EN END ASC`
       let result = await repos.query(query)
       let response = result.map((d:any ) => {
         return {
@@ -68,9 +77,10 @@ class ctRoute {
   }
   getCountry() {
     return async (req: Request, res: Response) => {
-      let { language } = req.query
+      let { language, id } = req.query
       let repos = di.get('repos')
       let query = `SELECT * FROM Registration.CT_Country Where Active = 'Y'`
+      if (id && id !== 'undefined' && id != null) query += ` And ID = ${id}`
       let result = await repos.query(query)
       let response = result.map((d:any ) => {
         return {
@@ -114,13 +124,15 @@ class ctRoute {
   }
   getCityArea() {
     return async (req: Request, res: Response) => {
-      let { zip, lang } = req.query
+      let { zip, lang, id } = req.query
       let repos = di.get('repos')
       let query = ''
       
       query = `SELECT ca.* FROM Registration.CT_CityArea_1 ca
-              WHERE ca.Zip_Code NOT IN ('999999', '900000') AND ca.Zip_Code = '${zip}'
-              GROUP BY ca.ID`
+              WHERE ca.Zip_Code NOT IN ('999999', '900000') AND ca.Zip_Code = '${zip}'`
+      
+      if (id && id !== 'undefined' && id != null) query += ` AND ca.ID = ${id}`     
+      query += ` GROUP BY ca.ID`
       let result = await repos.query(query)
       let response: any
       if (lang == 'th') {
@@ -147,31 +159,53 @@ class ctRoute {
   }
   getRelation() {
     return async (req: Request, res: Response) => {
+      let { id } = req.query
       let repos = di.get('repos')
+      
       let query = `SELECT * FROM Registration.CT_Relation`
+      if (id && id !== 'undefined' && id != null) query += ` Where ID = ${id}`
       let result = await repos.query(query)
       res.send(result) 
     }
   }
   getHistoryRelation() {
     return async (req: Request, res: Response) => {
+      let { id } = req.query
       let repos = di.get('repos')
       let query = `SELECT * FROM Registration.CT_Relation WHERE ActiveFamilyHistory = 1`
+      if (id && id !== 'undefined' && id != null) query += ` And ID = ${id}`
       let result = await repos.query(query)
       res.send(result) 
     }
   }
   getHistoryDisease() {
     return async (req: Request, res: Response) => {
+      let { language } = req.query
       let repos = di.get('repos')
-      let query = `SELECT * FROM Registration.CT_Diseases WHERE ActiveFamilyHistory = 1`
+      let query = `SELECT * FROM Registration.CT_Diseases WHERE ActiveFamilyHistory = 1 `
       let result = await repos.query(query)
-      res.send(result) 
+      let response: any
+      if (language == 'th') {
+        response = await result.map((d: any) => {
+          return {
+            ID: d.ID,
+            Desc: d.DescTH,
+          }
+        })
+      } else {
+         response = await result.map((d: any) => {
+          return {
+            ID: d.ID,
+            Desc: d.DescEN,
+          }
+        })
+      }
+      res.send(response) 
     }
   }
   getCityByIdArea() {
     return async (req: Request, res: Response) => {
-      let { id } = req.query
+      let {  id } = req.query
       let repos = di.get('repos')
       let query = ''
       query = `SELECT c.* FROM Registration.CT_CityArea_1 ca
@@ -209,6 +243,17 @@ class ctRoute {
       res.send(result) 
     }
   }
+  getSignature() {
+    return async (req: Request, res: Response) => {
+      let { id, type } = req.query
+      let repos = di.get('repos')
+      
+      let query = `SELECT * FROM Registration.Signature Where PatientID = ${id} And SignType = '${type}' Order By ID Desc`
+      let result = await repos.query(query)
+      result[0].Createdate.setHours(result[0].Createdate.getHours() + 7);
+      res.send(result) 
+    }
+  }
 }
 
 const router = Router()
@@ -230,5 +275,6 @@ router
   .get("/relation", route.getRelation())
   .get("/historyrelation", route.getHistoryRelation())
   .get("/historydisease", route.getHistoryDisease())
+  .get("/getsignature", route.getSignature())
 
 export const ct = router
