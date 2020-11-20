@@ -540,13 +540,27 @@ class registerRoute {
         })
         
         let queryParent = `INSERT INTO Registration.Parent (PatientID, Title, Firstname, Middlename, Lastname, Relation, PhoneNo, Email, ContactEmergency, LivePerson, Country, Postcode, Subdistrict, District, Address, Province, sameAddress) VALUES ?`
+        
+        let queryCheckDisease = `SELECT * FROM Registration.CT_Diseases WHERE DescEN = '' AND DescTH = ''`
+        
+        
+        
+        
+        
         await repos.query(queryParent, [valuesParent]);
         if (body.siblings.family.length > 0) {
           let valuesFamily: any[] = [] 
-          body.siblings.family.map((p: any) => {
+          body.siblings.family.map((p: any) => { 
             if (p.person != null && p.illness != null) {
-              let value = [insertInfo.insertId, p.person, p.illness]
-              valuesFamily.push(value) 
+              let queryCheckDisease = `SELECT * FROM Registration.CT_Diseases WHERE DescEN = '${p.illness}' OR DescTH = '${p.illness}' `
+              let queryCheckFamily = `SELECT * FROM Registration.CT_Relation WHERE DescText like '%${p.illness}'% `
+              let dataPerson = repos.query(queryCheckDisease)
+              let dataIllness = repos.query(queryCheckFamily)
+              if(dataPerson && dataIllness)
+              {
+                let value = [insertInfo.insertId, dataPerson[0].DescText, p.illness]
+                valuesFamily.push(value) 
+              }
             }
           })
           let insertFamily = `INSERT INTO Registration.Family_History (PatientID, Person, Disease) VALUES ?;`
@@ -1439,7 +1453,7 @@ class registerRoute {
         "ec_lastname":body.emergency.last_name.toUpperCase(),
         "ec_relationship": await Relation(body.emergency.relation),
         "ec_relationship_other": body.emergency.relation,
-        "ec_telephone": (body.emergency.phone_no && body.emergency.phone_no.length == 10) ? body.emergency.phone_no : ".",
+        "ec_telephone": body.emergency.phone_no,
         "e_home_telephone":body.emergency.phone_no,
         "ec_email":body.emergency.email,
         "ec_address_same_patient": body.emergency.sameAddress ? 1 : 0,
