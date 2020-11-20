@@ -363,7 +363,7 @@ class registerRoute {
               let queryCheckFamily = `SELECT * FROM Registration.CT_Relation WHERE DescText like '%${p.illness}'% `
               let dataPerson = repos.query(queryCheckDisease)
               let dataIllness = repos.query(queryCheckFamily)
-              if(dataPerson && dataIllness)
+              if(dataPerson.length > 0 && dataIllness.length > 0)
               {
                 let value = [insertInfo.insertId, dataPerson[0].DescText, p.illness]
                 valuesFamily.push(value) 
@@ -563,7 +563,7 @@ class registerRoute {
               let queryCheckFamily = `SELECT * FROM Registration.CT_Relation WHERE DescText like '%${p.illness}'% `
               let dataPerson = repos.query(queryCheckDisease)
               let dataIllness = repos.query(queryCheckFamily)
-              if(dataPerson && dataIllness)
+              if(dataPerson.length > 0 && dataIllness.length > 0)
               {
                 let value = [insertInfo.insertId, dataPerson[0].DescText, p.illness]
                 valuesFamily.push(value) 
