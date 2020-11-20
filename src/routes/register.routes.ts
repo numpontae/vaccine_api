@@ -363,6 +363,10 @@ class registerRoute {
               let queryCheckFamily = `SELECT * FROM Registration.CT_Relation WHERE DescText like '%${p.person}%' `
               let dataPerson = await repos.query(queryCheckFamily)
               let dataIllness = await repos.query(queryCheckDisease)
+              console.log(queryCheckDisease)
+              console.log(queryCheckFamily)
+              console.log(dataPerson)
+              console.log(dataIllness)
               if(dataPerson.length > 0 && dataIllness.length > 0)
               {
                 let value = [insertInfo.insertId, dataPerson[0].DescText, p.illness]
@@ -370,6 +374,7 @@ class registerRoute {
               }
             }
           })
+          console.log(valuesFamily);
           let insertFamily = `INSERT INTO Registration.Family_History (PatientID, Person, Disease) VALUES ?;`
           if (valuesFamily.length) await repos.query(insertFamily, [valuesFamily])
         }
@@ -560,9 +565,13 @@ class registerRoute {
           body.siblings.family.map(async(p: any) => { 
             if (p.person != null && p.illness != null) {
               let queryCheckDisease = `SELECT * FROM Registration.CT_Diseases WHERE DescEN = '${p.illness}' OR DescTH = '${p.illness}' `
-              let queryCheckFamily = `SELECT * FROM Registration.CT_Relation WHERE DescText like '%${p.illness}%' `
+              let queryCheckFamily = `SELECT * FROM Registration.CT_Relation WHERE DescText like '%${p.person}%' `
               let dataPerson = await repos.query(queryCheckFamily)
               let dataIllness = await repos.query(queryCheckDisease)
+              console.log(queryCheckDisease)
+              console.log(queryCheckFamily)
+              console.log(dataPerson)
+              console.log(dataIllness)
               if(dataPerson.length > 0 && dataIllness.length > 0)
               {
                 let value = [insertInfo.insertId, dataPerson[0].DescText, p.illness]
@@ -570,6 +579,7 @@ class registerRoute {
               }
             }
           })
+          console.log(valuesFamily);
           let insertFamily = `INSERT INTO Registration.Family_History (PatientID, Person, Disease) VALUES ?;`
           if (valuesFamily.length) await repos.query(insertFamily, [valuesFamily])
         }
