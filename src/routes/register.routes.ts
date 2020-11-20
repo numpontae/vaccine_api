@@ -360,9 +360,7 @@ class registerRoute {
           body.personal_history.family.map((p: any) => {
             if (p.person != null && p.illness != null) {
               let queryCheckDisease = `SELECT * FROM Registration.CT_Diseases WHERE DescEN = '${p.illness}' OR DescTH = '${p.illness}' `
-              let queryCheckFamily = `SELECT * FROM Registration.CT_Relation WHERE DescText like '%${p.person}'% `
-              console.log(queryCheckDisease);
-              console.log(queryCheckFamily);
+              let queryCheckFamily = `SELECT * FROM Registration.CT_Relation WHERE DescText like '%${p.person}%' `
               let dataPerson = repos.query(queryCheckFamily)
               let dataIllness = repos.query(queryCheckDisease)
               if(dataPerson.length > 0 && dataIllness.length > 0)
@@ -562,9 +560,9 @@ class registerRoute {
           body.siblings.family.map((p: any) => { 
             if (p.person != null && p.illness != null) {
               let queryCheckDisease = `SELECT * FROM Registration.CT_Diseases WHERE DescEN = '${p.illness}' OR DescTH = '${p.illness}' `
-              let queryCheckFamily = `SELECT * FROM Registration.CT_Relation WHERE DescText like '%${p.illness}'% `
-              let dataPerson = repos.query(queryCheckDisease)
-              let dataIllness = repos.query(queryCheckFamily)
+              let queryCheckFamily = `SELECT * FROM Registration.CT_Relation WHERE DescText like '%${p.illness}%' `
+              let dataPerson = repos.query(queryCheckFamily)
+              let dataIllness = repos.query(queryCheckDisease)
               if(dataPerson.length > 0 && dataIllness.length > 0)
               {
                 let value = [insertInfo.insertId, dataPerson[0].DescText, p.illness]
