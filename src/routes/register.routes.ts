@@ -372,6 +372,9 @@ class registerRoute {
               if(dataPerson.length > 0 && dataIllness.length > 0)
               {
                 console.log("0");
+                console.log(insertInfo.insertId);
+                console.log(dataPerson[0].DescText);
+                console.log(p.illness);
                 let value = [insertInfo.insertId, dataPerson[0].DescText, p.illness]
                 valuesFamily.push(value) 
               }
