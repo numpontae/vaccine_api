@@ -357,12 +357,12 @@ class registerRoute {
         await repos.query(queryHistory, dataHistory);
         if (body.personal_history.family.length > 0) {
           let valuesFamily: any[] = [] 
-          body.personal_history.family.map((p: any) => {
+          body.personal_history.family.map(async (p: any) => {
             if (p.person != null && p.illness != null) {
-              let queryCheckDisease = `SELECT * FROM Registration.CT_Diseases WHERE DescEN = '${p.illness}' OR DescTH = '${p.illness}' `
-              let queryCheckFamily = `SELECT * FROM Registration.CT_Relation WHERE DescText like '%${p.person}%' `
-              let dataPerson =  repos.query(queryCheckFamily)
-              let dataIllness =  repos.query(queryCheckDisease)
+              let queryCheckDisease = `SELECT * FROM Registration.CT_Diseases WHERE DescEN = '${p.illness}' OR DescTH = '${p.illness}' And ActiveFamilyHistory = 1 `
+              let queryCheckFamily = `SELECT * FROM Registration.CT_Relation WHERE DescText like '%${p.person}%' And ActiveFamilyHistory = 1 `
+              let dataPerson = await  repos.query(queryCheckFamily)
+              let dataIllness = await  repos.query(queryCheckDisease)
               console.log(queryCheckDisease)
               console.log(queryCheckFamily)
               console.log(dataPerson)
@@ -379,10 +379,11 @@ class registerRoute {
                 valuesFamily.push(value) 
               }
             }
+            console.log(valuesFamily);
+            let insertFamily = `INSERT INTO Registration.Family_History (PatientID, Person, Disease) VALUES ?;`
+            if (valuesFamily.length) await repos.query(insertFamily, [valuesFamily])
           })
-          console.log(valuesFamily);
-          let insertFamily = `INSERT INTO Registration.Family_History (PatientID, Person, Disease) VALUES ?;`
-          if (valuesFamily.length) await repos.query(insertFamily, [valuesFamily])
+          
         }
         if (body.personal_history.exercise.status != null) {
           let dataExercise = {
