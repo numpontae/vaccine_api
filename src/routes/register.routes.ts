@@ -357,12 +357,12 @@ class registerRoute {
         await repos.query(queryHistory, dataHistory);
         if (body.personal_history.family.length > 0) {
           let valuesFamily: any[] = [] 
-          body.personal_history.family.map((p: any) => {
+          body.personal_history.family.map(async(p: any) => {
             if (p.person != null && p.illness != null) {
               let queryCheckDisease = `SELECT * FROM Registration.CT_Diseases WHERE DescEN = '${p.illness}' OR DescTH = '${p.illness}' `
               let queryCheckFamily = `SELECT * FROM Registration.CT_Relation WHERE DescText like '%${p.person}%' `
-              let dataPerson = repos.query(queryCheckFamily)
-              let dataIllness = repos.query(queryCheckDisease)
+              let dataPerson = await repos.query(queryCheckFamily)
+              let dataIllness = await repos.query(queryCheckDisease)
               if(dataPerson.length > 0 && dataIllness.length > 0)
               {
                 let value = [insertInfo.insertId, dataPerson[0].DescText, p.illness]
@@ -557,12 +557,12 @@ class registerRoute {
         await repos.query(queryParent, [valuesParent]);
         if (body.siblings.family.length > 0) {
           let valuesFamily: any[] = [] 
-          body.siblings.family.map((p: any) => { 
+          body.siblings.family.map(async(p: any) => { 
             if (p.person != null && p.illness != null) {
               let queryCheckDisease = `SELECT * FROM Registration.CT_Diseases WHERE DescEN = '${p.illness}' OR DescTH = '${p.illness}' `
               let queryCheckFamily = `SELECT * FROM Registration.CT_Relation WHERE DescText like '%${p.illness}%' `
-              let dataPerson = repos.query(queryCheckFamily)
-              let dataIllness = repos.query(queryCheckDisease)
+              let dataPerson = await repos.query(queryCheckFamily)
+              let dataIllness = await repos.query(queryCheckDisease)
               if(dataPerson.length > 0 && dataIllness.length > 0)
               {
                 let value = [insertInfo.insertId, dataPerson[0].DescText, p.illness]
