@@ -359,8 +359,15 @@ class registerRoute {
           let valuesFamily: any[] = [] 
           body.personal_history.family.map((p: any) => {
             if (p.person != null && p.illness != null) {
-              let value = [insertInfo.insertId, p.person, p.illness]
-              valuesFamily.push(value) 
+              let queryCheckDisease = `SELECT * FROM Registration.CT_Diseases WHERE DescEN = '${p.illness}' OR DescTH = '${p.illness}' `
+              let queryCheckFamily = `SELECT * FROM Registration.CT_Relation WHERE DescText like '%${p.illness}'% `
+              let dataPerson = repos.query(queryCheckDisease)
+              let dataIllness = repos.query(queryCheckFamily)
+              if(dataPerson && dataIllness)
+              {
+                let value = [insertInfo.insertId, dataPerson[0].DescText, p.illness]
+                valuesFamily.push(value) 
+              }
             }
           })
           let insertFamily = `INSERT INTO Registration.Family_History (PatientID, Person, Disease) VALUES ?;`
