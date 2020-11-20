@@ -363,23 +363,13 @@ class registerRoute {
               let queryCheckFamily = `SELECT * FROM Registration.CT_Relation WHERE DescText like '%${p.person}%' And ActiveFamilyHistory = 1 `
               let dataPerson = await  repos.query(queryCheckFamily)
               let dataIllness = await  repos.query(queryCheckDisease)
-              console.log(queryCheckDisease)
-              console.log(queryCheckFamily)
-              console.log(dataPerson)
-              console.log(dataIllness)
-              console.log(dataPerson.length);
-              console.log(dataIllness.length);
               if(dataPerson.length > 0 && dataIllness.length > 0)
               {
-                console.log("0");
-                console.log(insertInfo.insertId);
-                console.log(dataPerson[0].DescText);
-                console.log(p.illness);
+
                 let value = [insertInfo.insertId, dataPerson[0].DescText, p.illness]
                 valuesFamily.push(value) 
               }
             }
-            console.log(valuesFamily);
             let insertFamily = `INSERT INTO Registration.Family_History (PatientID, Person, Disease) VALUES ?;`
             if (valuesFamily.length) await repos.query(insertFamily, [valuesFamily])
           })
@@ -567,28 +557,25 @@ class registerRoute {
         
         
         await repos.query(queryParent, [valuesParent]);
-        if (body.siblings.family.length > 0) {
+        if (body.personal_history.family.length > 0) {
           let valuesFamily: any[] = [] 
-          body.siblings.family.map(async(p: any) => { 
+          body.personal_history.family.map(async (p: any) => {
             if (p.person != null && p.illness != null) {
-              let queryCheckDisease = `SELECT * FROM Registration.CT_Diseases WHERE DescEN = '${p.illness}' OR DescTH = '${p.illness}' `
-              let queryCheckFamily = `SELECT * FROM Registration.CT_Relation WHERE DescText like '%${p.person}%' `
-              let dataPerson = await repos.query(queryCheckFamily)
-              let dataIllness = await repos.query(queryCheckDisease)
-              console.log(queryCheckDisease)
-              console.log(queryCheckFamily)
-              console.log(dataPerson)
-              console.log(dataIllness)
+              let queryCheckDisease = `SELECT * FROM Registration.CT_Diseases WHERE DescEN = '${p.illness}' OR DescTH = '${p.illness}' And ActiveFamilyHistory = 1 `
+              let queryCheckFamily = `SELECT * FROM Registration.CT_Relation WHERE DescText like '%${p.person}%' And ActiveFamilyHistory = 1 `
+              let dataPerson = await  repos.query(queryCheckFamily)
+              let dataIllness = await  repos.query(queryCheckDisease)
               if(dataPerson.length > 0 && dataIllness.length > 0)
               {
+
                 let value = [insertInfo.insertId, dataPerson[0].DescText, p.illness]
                 valuesFamily.push(value) 
               }
             }
+            let insertFamily = `INSERT INTO Registration.Family_History (PatientID, Person, Disease) VALUES ?;`
+            if (valuesFamily.length) await repos.query(insertFamily, [valuesFamily])
           })
-          console.log(valuesFamily);
-          let insertFamily = `INSERT INTO Registration.Family_History (PatientID, Person, Disease) VALUES ?;`
-          if (valuesFamily.length) await repos.query(insertFamily, [valuesFamily])
+          
         }
         this.handleConsent(body.consent_form, insertInfo.insertId)
         res.send({message: 'Success'})
@@ -1283,18 +1270,20 @@ class registerRoute {
       let insertAlcohol = `INSERT INTO Registration.Patient_Social SET ?`
       await repos.query(insertAlcohol, dataAlcohol)
     }
-    // if (body.personal_history.drugabuse.status != null) {
-    //   let dataDrugabuse = {
-    //     PatientID: body.ID,
-    //     Habit: 'drugabuse',
-    //     Status: body.personal_history.drugabuse.status,
-    //     Quantity: body.personal_history.drugabuse.quantity,
-    //     Detail: JSON.stringify(body.personal_history.drugabuse.detail),
-    //     Comment: body.personal_history.drugabuse.comment
-    //   }
-    //   let insertDrugabuse = `INSERT INTO Registration.Patient_Social SET ?`
-    //   await repos.query(insertDrugabuse, dataDrugabuse)
-    // }
+    if (body.personal_history.drugabuse.status != null) {
+      let dataDrugabuse = {
+        PatientID: body.ID,
+        Habit: 'drugabuse',
+        Status: body.personal_history.drugabuse.status,
+        Quantity: null,
+        DurationQuantity: null,
+        DurationUnit: null,
+        Detail: JSON.stringify(body.personal_history.drugabuse.detail),
+        Comment: body.personal_history.drugabuse.comment
+      }
+      let insertDrugabuse = `INSERT INTO Registration.Patient_Social SET ?`
+      await repos.query(insertDrugabuse, dataDrugabuse)
+    }
     if (body.personal_history.smoke.status != null) {
       let dataSmoke = {
         PatientID: body.ID,
@@ -1411,10 +1400,23 @@ class registerRoute {
       // comment: await getComment('smoke', body.personal_history.smoke)
     }
     
+    let datadrugabuse = await {
+      id_patient_social: null,
+      id_patient_information: null,
+      habit:"Drug abuse",
+      quality: body.personal_history.drugabuse.status ? "Current" : "None",
+      duration: null,
+      //detail: null,
+      comment: body.personal_history.smoke.comment
+      // quality: null,
+      // detail: null,
+      // comment: await getComment('smoke', body.personal_history.smoke)
+    }
+    
     await social.push(dataalcohol)
     await social.push(dataexercise)
     await social.push(datasmoke)
-    
+    await social.push(datadrugabuse)
     // if (body.personal_history.alcohol.status) await social.push(dataalcohol)
     // if (body.personal_history.exercise.status) await social.push(dataexercise)
     // if (body.personal_history.smoke.status) await social.push(datasmoke) 
