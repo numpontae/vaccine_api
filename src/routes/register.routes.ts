@@ -1350,14 +1350,13 @@ class registerRoute {
     let Religion = await repos.query(queryReligion)
     let Gender = await repos.query(queryGender)
     
-    
     let family = await Promise.all(body.personal_history.family.map(async (item: any): Promise<any> => {
-      let queryRelation = `SELECT * FROM Registration.CT_Relation Where ID = ${item.person}`
-      let relation = await repos.query(queryRelation)
+      //let queryRelation = `SELECT * FROM Registration.CT_Relation Where ID = ${item.person}`
+      //let relation = await repos.query(queryRelation)
       return {
         "id_patient_family": null,
         "id_patient_information": null,
-        "relation": relation[0].Desc,
+        "relation": item.person,
         "disease": null,
         "start": 0,
         "end": 0,
