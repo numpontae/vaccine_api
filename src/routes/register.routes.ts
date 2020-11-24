@@ -1671,6 +1671,12 @@ class registerRoute {
       if (!title.length) return null
       return title[0].Desc
     }
+    let Relation = async (id: any) => {
+      let queryRelation = `SELECT * FROM Registration.CT_Relation Where ID = ${id}`
+      let relation = await repos.query(queryRelation)
+      if (!relation.length) return null
+      return relation[0].Code
+    }
     let Nation = await repos.query(queryNation)
     let Gender = await repos.query(queryGender)
     let family = await body.siblings.family.map((d: any) => {
@@ -1747,7 +1753,7 @@ class registerRoute {
         "present_country":body.present.sameAddress ? await Country(body.permanent.country) : await Country(body.present.country),
         "ec_firstname": emergency != undefined ? emergency.firstname : null,
         "ec_lastname": emergency != undefined ? emergency.lastname : null,
-        "ec_relationship":null,
+        "ec_relationship":await Relation(emergency.relation),
         "ec_relationship_other": emergency != undefined ? emergency.relation : null,
         "ec_telephone": emergency != undefined ? emergency.phoneno : null,
         "ec_email": emergency != undefined ? emergency.email : null,
