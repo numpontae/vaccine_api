@@ -200,8 +200,8 @@ class registerRoute {
       })
       let result = {
         Info: info[0],
-        Permanent: filterpermanent[0],
-        Present: filterpresent[0],
+        Present: filterpermanent[0],
+        Permanent: filterpresent[0],
         Parent: parent,
         Financial: {
           payment_method: payment,
@@ -285,12 +285,12 @@ class registerRoute {
           Relation: body.emergency.relation,
           Email: body.emergency.email,
           PhoneNo: body.emergency.phone_no,
-          Country: body.emergency.sameAddress ? body.permanent.country : body.emergency.country,
-          Postcode: body.emergency.sameAddress ? body.permanent.postcode : body.emergency.postcode,
-          Subdistrict: body.emergency.sameAddress ? body.permanent.subdistrict : body.emergency.subdistrict,
-          District: body.emergency.sameAddress ? body.permanent.districtid : body.emergency.districtid,
-          Address: body.emergency.sameAddress ? body.permanent.address : body.emergency.address,
-          Province: body.emergency.sameAddress ? body.permanent.provinceid : body.emergency.provinceid,
+          Country: body.emergency.sameAddress ? body.present.country : body.emergency.country,
+          Postcode: body.emergency.sameAddress ? body.present.postcode : body.emergency.postcode,
+          Subdistrict: body.emergency.sameAddress ? body.present.subdistrict : body.emergency.subdistrict,
+          District: body.emergency.sameAddress ? body.present.districtid : body.emergency.districtid,
+          Address: body.emergency.sameAddress ? body.present.address : body.emergency.address,
+          Province: body.emergency.sameAddress ? body.present.provinceid : body.emergency.provinceid,
           sameAddress: body.emergency.sameAddress
         }
         let financialDob = new Date(body.financial.dob)
@@ -447,6 +447,7 @@ class registerRoute {
           DOB: `${dateDob.getFullYear()}-${("0" + (dateDob.getMonth() + 1)).slice(-2)}-${("0" + dateDob.getDate()).slice(-2)}`,
           Gender: body.general_info.gender,
           Nationality: body.general_info.nationality,
+          Religion: body.general_info.religion,
           PhoneNo: body.general_info.phone_no,
           Email: body.general_info.email,
           Confirm: 0,
@@ -457,30 +458,30 @@ class registerRoute {
         let queryInfo = `INSERT INTO Registration.Patient_Info SET ?`
         let insertInfo = await repos.query(queryInfo, dataInfo);
         let dataAddress: any = new Array()
-        let permanentAddress = [
+        let presentAddress = [
           insertInfo.insertId,
-          body.permanent.country,
-          body.permanent.postcode,
-          body.permanent.subdistrict,
-          body.permanent.districtidid,
-          body.permanent.address,
-          body.permanent.provinceidid,
+          body.present.country,
+          body.present.postcode,
+          body.present.subdistrict,
+          body.present.districtidid,
+          body.present.address,
+          body.present.provinceidid,
           null,
           0
         ]
-        let presentAddress = [
+        let permanentAddress = [
           insertInfo.insertId,
-          body.present.sameAddress ? body.permanent.country : body.present.country,
-          body.present.sameAddress ? body.permanent.postcode : body.present.postcode,
-          body.present.sameAddress ? body.permanent.subdistrict : body.present.subdistrict,
-          body.present.sameAddress ? body.permanent.districtid : body.present.districtid,
-          body.present.sameAddress ? body.permanent.address : body.present.address,
-          body.present.sameAddress ? body.permanent.provinceid : body.present.provinceid,
-          body.present.sameAddress,
+          body.permanent.sameAddress ? body.present.country : body.permanent.country,
+          body.permanent.sameAddress ? body.present.postcode : body.permanent.postcode,
+          body.permanent.sameAddress ? body.present.subdistrict : body.permanent.subdistrict,
+          body.permanent.sameAddress ? body.present.districtid : body.permanent.districtid,
+          body.permanent.sameAddress ? body.present.address : body.permanent.address,
+          body.permanent.sameAddress ? body.present.provinceid : body.permanent.provinceid,
+          body.permanent.sameAddress,
           1
         ]
-        dataAddress.push(permanentAddress)
         dataAddress.push(presentAddress)
+        dataAddress.push(permanentAddress)
         let dataFinancial = {
           PatientID: insertInfo.insertId,
           SelfPay: _.indexOf(body.parent_info.payment_method, 'Self pay') >= 0 ? 1 : 0,
@@ -986,6 +987,16 @@ class registerRoute {
       Type: body.type,
       Site: body.site
     }
+    let dataPresent = {
+      Country: body.present.sameAddress ? body.permanent.country : body.present.country,
+      Postcode: body.present.sameAddress ? body.permanent.postcode : body.present.postcode,
+      Subdistrict: body.present.sameAddress ? body.permanent.subdistrict : body.present.subdistrict,
+      District: body.present.sameAddress ? body.permanent.districtid : body.present.districtid,
+      Address: body.present.sameAddress ? body.permanent.address : body.present.address,
+      Province: body.present.sameAddress ? body.permanent.provinceid : body.present.provinceid,
+      sameAddress: body.present.sameAddress
+    }
+    let queryPresent = `UPDATE Registration.Patient_Address SET ? WHERE PatientID = '${body.ID}' And Type = 0`
     let queryInfo = `UPDATE Registration.Patient_Info SET ? WHERE ID = '${body.ID}'`
     let dataPermanent = {
       Country: body.permanent.country,
@@ -996,17 +1007,7 @@ class registerRoute {
       Province: body.permanent.provinceid,
       sameAddress: null
     }
-    let queryPermanent = `UPDATE Registration.Patient_Address SET ? WHERE PatientID = '${body.ID}' And Type = 0`
-    let dataPresent = {
-      Country: body.present.sameAddress ? body.permanent.country : body.present.country,
-      Postcode: body.present.sameAddress ? body.permanent.postcode : body.present.postcode,
-      Subdistrict: body.present.sameAddress ? body.permanent.subdistrict : body.present.subdistrict,
-      District: body.present.sameAddress ? body.permanent.districtid : body.present.districtid,
-      Address: body.present.sameAddress ? body.permanent.address : body.present.address,
-      Province: body.present.sameAddress ? body.permanent.provinceid : body.present.provinceid,
-      sameAddress: body.present.sameAddress
-    }
-    let queryPresent = `UPDATE Registration.Patient_Address SET ? WHERE PatientID = '${body.ID}' And Type = 1`
+    let queryPermanent = `UPDATE Registration.Patient_Address SET ? WHERE PatientID = '${body.ID}' And Type = 1`
     let dataFinancial = {
       SelfPay: _.indexOf(body.parent_info.payment_method, 'Self pay') >= 0 ? 1 : 0,
       CompanyContact: _.indexOf(body.parent_info.payment_method, 'Company contract') >= 0 ? 1 : 0,
@@ -1467,9 +1468,9 @@ class registerRoute {
         "permanent_province": await Province(body.present.provinceid),
         "permanent_postcode": body.present.postcode,
         "permanent_country": await Country(body.present.country),
-        "same_permanent": body.present.sameAddress ? 1 : 0,
-        "present_address":body.present.sameAddress ? body.permanent.address : body.present.address,
-        "present_sub_district":body.present.sameAddress ? await Subdistrict(body.permanent.subdistrict) : await Subdistrict(body.present.subdistrict),
+        "same_permanent": body.permanent.sameAddress ? 1 : 0,
+        "present_address":body.permanent.sameAddress ? body.present.address : body.permanent.address,
+        "present_sub_district":body.permanent.sameAddress ? await Subdistrict(body.present.subdistrict) : await Subdistrict(body.permanent.subdistrict),
         "present_district":body.permanent.sameAddress ? await District(body.present.districtid) : await District(body.permanent.districtid),
         "present_province":body.permanent.sameAddress ? await Province(body.present.provinceid) : await Province(body.permanent.provinceid),
         "present_postcode":body.permanent.sameAddress ? body.present.postcode : body.permanent.postcode,
@@ -1528,16 +1529,6 @@ class registerRoute {
       Site: body.site
     }
     let queryInfo = `UPDATE Registration.Patient_Info SET ? WHERE ID = '${body.ID}'`
-    let dataPermanent = {
-      Country: body.permanent.country,
-      Postcode: body.permanent.postcode,
-      Subdistrict: body.permanent.subdistrict,
-      District: body.permanent.districtid,
-      Address: body.permanent.address,
-      Province: body.permanent.provinceid,
-      sameAddress: null
-    }
-    let queryPermanent = `UPDATE Registration.Patient_Address SET ? WHERE PatientID = '${body.ID}' And Type = 0`
     let dataPresent = {
       Country: body.present.sameAddress ? body.permanent.country : body.present.country,
       Postcode: body.present.sameAddress ? body.permanent.postcode : body.present.postcode,
@@ -1547,7 +1538,17 @@ class registerRoute {
       Province: body.present.sameAddress ? body.permanent.provinceid : body.present.provinceid,
       sameAddress: body.present.sameAddress
     }
-    let queryPresent = `UPDATE Registration.Patient_Address SET ? WHERE PatientID = '${body.ID}' And Type = 1`
+    let queryPresent = `UPDATE Registration.Patient_Address SET ? WHERE PatientID = '${body.ID}' And Type = 0`
+    let dataPermanent = {
+      Country: body.permanent.country,
+      Postcode: body.permanent.postcode,
+      Subdistrict: body.permanent.subdistrict,
+      District: body.permanent.districtid,
+      Address: body.permanent.address,
+      Province: body.permanent.provinceid,
+      sameAddress: null
+    }
+    let queryPermanent = `UPDATE Registration.Patient_Address SET ? WHERE PatientID = '${body.ID}' And Type = 1`
     let dataFinancial = {
       SelfPay: _.indexOf(body.parent_info.payment_method, 'Self pay') >= 0 ? 1 : 0,
       CompanyContact: _.indexOf(body.parent_info.payment_method, 'Company contract') >= 0 ? 1 : 0,
@@ -1634,6 +1635,7 @@ class registerRoute {
     this.handleConsent(body.consent_form, body.ID)
     let queryNation = `SELECT * FROM Registration.CT_Nation Where ID = ${body.general_info.nationality}`
     let queryGender = `SELECT * FROM Registration.CT_Sex Where ID = ${body.general_info.gender}`
+    let queryReligion = `SELECT * FROM Registration.CT_Religion Where ID = ${body.general_info.religion}`
     
     let Country = async (id: any) => {
       let queryCountry = `SELECT * FROM Registration.CT_Country Where ID = ${id}`
@@ -1679,6 +1681,7 @@ class registerRoute {
     }
     let Nation = await repos.query(queryNation)
     let Gender = await repos.query(queryGender)
+    let Religion = await repos.query(queryReligion)
     let family = await body.siblings.family.map((d: any) => {
       let data = {
         "id_patient_family": null,
@@ -1721,8 +1724,8 @@ class registerRoute {
         "lastname_en":null,
         "nationality": Nation[0].Desc_EN,
         "religion": 4,
-        "religion_desc": "พุทธ",
-        "religion_desc_en": "Buddhism",
+        "religion_desc": Religion[0].Desc_TH,
+        "religion_desc_en": Religion[0].Desc_EN,
         "national_id": null,
         "passport_id": null,
         //"dob":`${dateDob.getFullYear()}-${("0" + (dateDob.getMonth() + 1)).slice(-2)}-${("0" + dateDob.getDate()).slice(-2)}`,
@@ -1732,25 +1735,25 @@ class registerRoute {
         "gender_desc_en":Gender[0].Desc_EN,
         "gender_desc_th":Gender[0].Desc_TH,
         "marital_status": null,
-        "preferrend_language": "English",
+        "preferrend_language": await PreferredLanguage(body.general_info.preferredlanguage),
         "occupation": null,
         "mobile_phone":body.general_info.phone_no,
         "email":body.general_info.email,
         "home_telephone": null,
         "office_telephone": null,
-        "permanent_address": body.permanent.address,
-        "permanent_sub_district": await Subdistrict(body.permanent.subdistrict),
-        "permanent_district": await District(body.permanent.districtid),
-        "permanent_province": await Province(body.permanent.provinceid),
-        "permanent_postcode": body.permanent.postcode,
-        "permanent_country": await Country(body.permanent.country),
-        "same_permanent": body.present.sameAddress ? 1 : 0,
-        "present_address":body.present.sameAddress ? body.permanent.address : body.present.address,
-        "present_sub_district":body.present.sameAddress ? await Subdistrict(body.permanent.subdistrict) : await Subdistrict(body.present.subdistrict),
-        "present_district":body.present.sameAddress ? await District(body.permanent.districtid) : await District(body.present.districtid),
-        "present_province":body.present.sameAddress ? await Province(body.permanent.provinceid) : await Province(body.present.provinceid),
-        "present_postcode":body.present.sameAddress ? body.permanent.postcode : body.present.postcode,
-        "present_country":body.present.sameAddress ? await Country(body.permanent.country) : await Country(body.present.country),
+        "permanent_address": body.present.address,
+        "permanent_sub_district": await Subdistrict(body.present.subdistrict),
+        "permanent_district": await District(body.present.districtid),
+        "permanent_province": await Province(body.present.provinceid),
+        "permanent_postcode": body.present.postcode,
+        "permanent_country": await Country(body.present.country),
+        "same_permanent": body.permanent.sameAddress ? 1 : 0,
+        "present_address":body.permanent.sameAddress ? body.present.address : body.permanent.address,
+        "present_sub_district":body.permanent.sameAddress ? await Subdistrict(body.present.subdistrict) : await Subdistrict(body.permanent.subdistrict),
+        "present_district":body.permanent.sameAddress ? await District(body.present.districtid) : await District(body.permanent.districtid),
+        "present_province":body.permanent.sameAddress ? await Province(body.present.provinceid) : await Province(body.permanent.provinceid),
+        "present_postcode":body.permanent.sameAddress ? body.present.postcode : body.present.postcode,
+        "present_country":body.permanent.sameAddress ? await Country(body.present.country) : await Country(body.permanent.country),
         "ec_firstname": emergency != undefined ? emergency.firstname : null,
         "ec_lastname": emergency != undefined ? emergency.lastname : null,
         "ec_relationship":await Relation(emergency.relation),
