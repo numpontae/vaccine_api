@@ -557,9 +557,9 @@ class registerRoute {
         
         
         await repos.query(queryParent, [valuesParent]);
-        if (body.personal_history.family.length > 0) {
+        if (body.siblings.family.length > 0) {
           let valuesFamily: any[] = [] 
-          body.personal_history.family.map(async (p: any) => {
+          body.siblings.family.map(async (p: any) => {
             if (p.person != null && p.illness != null) {
               let queryCheckDisease = `SELECT * FROM Registration.CT_Diseases WHERE DescEN = '${p.illness}' OR DescTH = '${p.illness}' And ActiveFamilyHistory = 1 `
               let queryCheckFamily = `SELECT * FROM Registration.CT_Relation WHERE DescText like '%${p.person}%' And ActiveFamilyHistory = 1 `
