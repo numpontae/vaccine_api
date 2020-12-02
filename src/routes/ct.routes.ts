@@ -97,14 +97,22 @@ class ctRoute {
       let { zip, type } = req.query
       let repos = di.get('repos')
       let query = ''
+      // if ( type == '1' ) {
+      //   query = `SELECT ca.*, c.Province_ID FROM Registration.CT_CityArea_1 ca
+      //           Left Join Registration.CT_City_1 c ON ca.City_ID = c.ID
+      //           Where ca.Zip_Code <> '0' And ca.Zip_Code = '${zip}'`
+      // } else {
+      //   query = `SELECT ca.*, c.Province_ID FROM Registration.CT_CityArea_1 ca
+      //           Left Join Registration.CT_City_1 c ON ca.City_ID = c.ID
+      //           Where ca.Zip_Code <> '0' And ca.Zip_Code LIKE '%${zip}%'`
+                
+      // }
       if ( type == '1' ) {
-        query = `SELECT ca.*, c.Province_ID FROM Registration.CT_CityArea_1 ca
-                Left Join Registration.CT_City_1 c ON ca.City_ID = c.ID
-                Where ca.Zip_Code <> '0' And ca.Zip_Code = '${zip}'`
+        query = `SELECT * FROM Registration.CT_Zip_1 
+                Where Zip_Code = '${zip}'`
       } else {
-        query = `SELECT ca.*, c.Province_ID FROM Registration.CT_CityArea_1 ca
-                Left Join Registration.CT_City_1 c ON ca.City_ID = c.ID
-                Where ca.Zip_Code <> '0' And ca.Zip_Code LIKE '%${zip}%'`
+        query = `SELECT * FROM Registration.CT_Zip_1 
+                Where Zip_Code LIKE '%${zip}%'`
                 
       }
       let result = await repos.query(query)

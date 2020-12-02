@@ -6,6 +6,40 @@ const axios = require('axios');
 import { rpaSetting } from "../config/config";
 import moment from 'moment-timezone';
 moment.tz.setDefault('Asia/Bangkok');
+var pdfMake = require("pdfmake/build/pdfmake");
+var pdfFonts = require("pdfmake/build/vfs_fonts");
+import { ct } from "./ct.routes";
+
+// var htmlToPdfMake = require("html-to-pdfmake");
+pdfMake.vfs = pdfFonts.pdfMake.vfs;
+
+pdfMake.fonts = {
+  THSarabunNew: {
+    normal: 'THSarabunNew.ttf',
+    bold: 'THSarabunNew Bold.ttf',
+    italics: 'THSarabunNew Italic.ttf',
+    bolditalics: 'THSarabunNew BoldItalic.ttf'
+  },
+  AngsanaNew: {
+    normal: 'angsa.ttf',
+    bold: 'angsab.ttf',
+    italics: 'angsai.ttf',
+    bolditalics: 'angsananewbolditalic.ttf'
+  },
+  // THSarabunNew: {
+  //   normal: 'https://fonts.gstatic.com/s/sarabun/v8/DtVhJx26TKEr37c9YHZ5iXwJ1gk.woff2',
+  //   bold: 'https://fonts.gstatic.com/s/sarabun/v8/DtVmJx26TKEr37c9YLJvik8s6zDX.woff2',
+  //   italics: 'THSarabunNew Italic.ttf',
+  //   bolditalics: 'THSarabunNew BoldItalic.ttf'
+  // },
+  Roboto: {
+    normal: 'Roboto-Regular.ttf',
+    bold: 'Roboto-Medium.ttf',
+    italics: 'Roboto-Italic.ttf',
+    bolditalics: 'Roboto-MediumItalic.ttf'
+  }
+}
+
 
 class registerRoute {
   async handleConsent(data: any, id: any) {
@@ -200,8 +234,8 @@ class registerRoute {
       })
       let result = {
         Info: info[0],
-        Present: filterpermanent[0],
-        Permanent: filterpresent[0],
+        Present: filterpresent[0],
+        Permanent: filterpermanent[0],
         Parent: parent,
         Financial: {
           payment_method: payment,
@@ -214,6 +248,7 @@ class registerRoute {
         Family: familylist,
         Consent: consent
       }
+      console.log(result);
       return result
     } 
   }
@@ -665,6 +700,39 @@ class registerRoute {
       }
     }
   }
+  
+  // addPrintJob() {
+  //   return async (req: Request,res: Response) => {
+  //     let {buff} = req.body;
+      
+      
+  //      var ipp = require('ipp');
+
+  //       var data = Buffer.from(buff);
+  //       console.log(data);
+  //       var printer = ipp.Printer("http://10.104.101.24:631/printers");
+  //       var msg = {
+  //         "operation-attributes-tag": {
+  //           "requesting-user-name": "Preregistraion-Print-Services",
+  //           "job-name": "whatever.pdf",
+  //           "document-format": "application/pdf"
+  //         }
+        
+  //         , data: data
+  //       };
+  //       // printer.execute("Print-Job", msg, function(err: any, res: any){
+  //       //   if (err)
+  //       //   {
+  //       //     console.log(err);
+  //       //   }
+  //       // });
+  //     //});
+  //     res.send({message: 'Success'})
+  //   }
+  // }
+  
+  
+  
   getSearch() {
     return async (req: Request, res: Response) => {
       let {id, firstname, lastname, phone_no, passport, dateOfBirth, national_id, site, page} = req.body;
@@ -1839,6 +1907,7 @@ router.post("/", route.postRegister())
       .post("/approve", route.approveData())
       .post("/signatureApprove", route.saveSignatureApprove())
       .post("/getApprovedData", route.getApprovedData())
+      //.post("/print", route.addPrintJob())
       
 
 export const register = router;
