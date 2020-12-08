@@ -97,22 +97,14 @@ class ctRoute {
       let { zip, type } = req.query
       let repos = di.get('repos')
       let query = ''
-      // if ( type == '1' ) {
-      //   query = `SELECT ca.*, c.Province_ID FROM Registration.CT_CityArea_1 ca
-      //           Left Join Registration.CT_City_1 c ON ca.City_ID = c.ID
-      //           Where ca.Zip_Code <> '0' And ca.Zip_Code = '${zip}'`
-      // } else {
-      //   query = `SELECT ca.*, c.Province_ID FROM Registration.CT_CityArea_1 ca
-      //           Left Join Registration.CT_City_1 c ON ca.City_ID = c.ID
-      //           Where ca.Zip_Code <> '0' And ca.Zip_Code LIKE '%${zip}%'`
-                
-      // }
       if ( type == '1' ) {
-        query = `SELECT * FROM Registration.CT_Zip_1 
-                Where Zip_Code = '${zip}'`
+        query = `SELECT ca.*, c.Province_ID FROM Registration.CT_CityArea_1 ca
+                Left Join Registration.CT_City_1 c ON ca.City_ID = c.ID
+                Where ca.Zip_Code <> '0' And ca.Zip_Code = '${zip}'`
       } else {
-        query = `SELECT * FROM Registration.CT_Zip_1 
-                Where Zip_Code LIKE '%${zip}%'`
+        query = `SELECT ca.*, c.Province_ID FROM Registration.CT_CityArea_1 ca
+                Left Join Registration.CT_City_1 c ON ca.City_ID = c.ID
+                Where ca.Zip_Code <> '0' And ca.Zip_Code LIKE '%${zip}%'`
                 
       }
       let result = await repos.query(query)
@@ -136,7 +128,8 @@ class ctRoute {
       let repos = di.get('repos')
       let query = ''
       
-      query = `SELECT ca.* FROM Registration.CT_CityArea_1 ca
+      query = `SELECT ca.* FROM Registration.CT_CityArea_1 ca 
+                
               WHERE ca.Zip_Code NOT IN ('999999', '900000') AND ca.Zip_Code = '${zip}'`
       
       if (id && id !== 'undefined' && id != null) query += ` AND ca.ID = ${id}`     
@@ -256,9 +249,10 @@ class ctRoute {
       let { id, type } = req.query
       let repos = di.get('repos')
       
-      let query = `SELECT * FROM Registration.Signature Where PatientID = ${id} And SignType = '${type}' Order By ID Desc`
+      let query = `SELECT Signature, Createdate, ADDTIME(Createtime, '7:00:00') as Createtime FROM Registration.Signature Where PatientID = ${id} And SignType = '${type}' Order By ID Desc`
       let result = await repos.query(query)
       result[0].Createdate.setHours(result[0].Createdate.getHours() + 7);
+      
       res.send(result) 
     }
   }

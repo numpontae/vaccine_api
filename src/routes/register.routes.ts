@@ -1383,13 +1383,13 @@ class registerRoute {
       let querySubdistrict = `SELECT * FROM Registration.CT_CityArea_1 WHERE ID = ${id}`
       let subdistrict = await repos.query(querySubdistrict)
       if (!subdistrict.length) return null
-      return subdistrict[0].Desc_TH
+      return subdistrict[0].Desc_TC
     }
     let District = async (id: any) => {
       let queryDistrict = `SELECT * FROM Registration.CT_City_1 WHERE ID = ${id}`
       let district = await repos.query(queryDistrict)
       if (!district.length) return ''
-      return district[0].Desc_TH
+      return district[0].Desc_TC
     }
     let Province = async (id: any) => {
       let queryProvince = `SELECT * FROM Registration.CT_Province_1 WHERE ID = ${id}`
@@ -1715,13 +1715,13 @@ class registerRoute {
       let querySubdistrict = `SELECT * FROM Registration.CT_CityArea_1 WHERE ID = ${id}`
       let subdistrict = await repos.query(querySubdistrict)
       if (!subdistrict.length) return ''
-      return subdistrict[0].Desc_TH
+      return subdistrict[0].Desc_TC
     }
     let District = async (id: any) => {
       let queryDistrict = `SELECT * FROM Registration.CT_City_1 WHERE ID = ${id}`
       let district = await repos.query(queryDistrict)
       if (!district.length) return ''
-      return district[0].Desc_TH
+      return district[0].Desc_TC
     }
     let Province = async (id: any) => {
       let queryProvince = `SELECT * FROM Registration.CT_Province_1 WHERE ID = ${id}`
