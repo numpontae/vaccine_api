@@ -6,39 +6,6 @@ const axios = require('axios');
 import { rpaSetting } from "../config/config";
 import moment from 'moment-timezone';
 moment.tz.setDefault('Asia/Bangkok');
-var pdfMake = require("pdfmake/build/pdfmake");
-var pdfFonts = require("pdfmake/build/vfs_fonts");
-import { ct } from "./ct.routes";
-
-// var htmlToPdfMake = require("html-to-pdfmake");
-pdfMake.vfs = pdfFonts.pdfMake.vfs;
-
-pdfMake.fonts = {
-  THSarabunNew: {
-    normal: 'THSarabunNew.ttf',
-    bold: 'THSarabunNew Bold.ttf',
-    italics: 'THSarabunNew Italic.ttf',
-    bolditalics: 'THSarabunNew BoldItalic.ttf'
-  },
-  AngsanaNew: {
-    normal: 'angsa.ttf',
-    bold: 'angsab.ttf',
-    italics: 'angsai.ttf',
-    bolditalics: 'angsananewbolditalic.ttf'
-  },
-  // THSarabunNew: {
-  //   normal: 'https://fonts.gstatic.com/s/sarabun/v8/DtVhJx26TKEr37c9YHZ5iXwJ1gk.woff2',
-  //   bold: 'https://fonts.gstatic.com/s/sarabun/v8/DtVmJx26TKEr37c9YLJvik8s6zDX.woff2',
-  //   italics: 'THSarabunNew Italic.ttf',
-  //   bolditalics: 'THSarabunNew BoldItalic.ttf'
-  // },
-  Roboto: {
-    normal: 'Roboto-Regular.ttf',
-    bold: 'Roboto-Medium.ttf',
-    italics: 'Roboto-Italic.ttf',
-    bolditalics: 'Roboto-MediumItalic.ttf'
-  }
-}
 
 
 class registerRoute {
