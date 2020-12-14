@@ -215,7 +215,7 @@ class registerRoute {
         Family: familylist,
         Consent: consent
       }
-      console.log(result);
+
       return result
     } 
   }
@@ -361,14 +361,14 @@ class registerRoute {
           let valuesFamily: any[] = [] 
           body.personal_history.family.map(async (p: any) => {
             if (p.person != null && p.illness != null) {
-              let queryCheckDisease = `SELECT * FROM Registration.CT_Diseases WHERE DescEN = '${p.illness}' OR DescTH = '${p.illness}' And ActiveFamilyHistory = 1 `
-              let queryCheckFamily = `SELECT * FROM Registration.CT_Relation WHERE DescText like '%${p.person}%' And ActiveFamilyHistory = 1 `
+              let queryCheckDisease = `SELECT * FROM Registration.CT_Diseases WHERE (DescEN = '${p.illness}' OR DescTH = '${p.illness}' OR ID = ${p.illness}) And ActiveFamilyHistory = 1 `
+              let queryCheckFamily = `SELECT * FROM Registration.CT_Relation WHERE (DescText like '%${p.person}%' OR ID = ${p.person}) And ActiveFamilyHistory = 1 `
               let dataPerson = await  repos.query(queryCheckFamily)
               let dataIllness = await  repos.query(queryCheckDisease)
               if(dataPerson.length > 0 && dataIllness.length > 0)
               {
 
-                let value = [insertInfo.insertId, dataPerson[0].DescText, p.illness]
+                let value = [insertInfo.insertId, dataPerson[0].ID, dataIllness[0].ID]
                 valuesFamily.push(value) 
               }
             }
@@ -564,14 +564,14 @@ class registerRoute {
           let valuesFamily: any[] = [] 
           body.siblings.family.map(async (p: any) => {
             if (p.person != null && p.illness != null) {
-              let queryCheckDisease = `SELECT * FROM Registration.CT_Diseases WHERE DescEN = '${p.illness}' OR DescTH = '${p.illness}' And ActiveFamilyHistory = 1 `
-              let queryCheckFamily = `SELECT * FROM Registration.CT_Relation WHERE DescText like '%${p.person}%' And ActiveFamilyHistory = 1 `
+              let queryCheckDisease = `SELECT * FROM Registration.CT_Diseases WHERE (DescEN = '${p.illness}' OR DescTH = '${p.illness}' OR ID = ${p.illness}) And ActiveFamilyHistory = 1 `
+              let queryCheckFamily = `SELECT * FROM Registration.CT_Relation WHERE (DescText like '%${p.person}%' OR ID = ${p.person}) And ActiveFamilyHistory = 1 `
               let dataPerson = await  repos.query(queryCheckFamily)
               let dataIllness = await  repos.query(queryCheckDisease)
               if(dataPerson.length > 0 && dataIllness.length > 0)
               {
 
-                let value = [insertInfo.insertId, dataPerson[0].DescText, p.illness]
+                let value = [insertInfo.insertId, dataPerson[0].ID, dataIllness[0].ID]
                 valuesFamily.push(value) 
               }
             }
@@ -587,7 +587,7 @@ class registerRoute {
   }
   getPendingData() {
     return async (req: Request,res: Response) => {
-      
+      let {id, firstname, lastname, phone_no, passport, dateOfBirth, national_id, site, page} = req.body;
       let repos = di.get("repos");
       try {
         let startNum = (parseInt("1") * 15) - 15
@@ -597,13 +597,50 @@ class registerRoute {
         query += ` LEFT JOIN Registration.CT_Sex CTS ON CTS.Id = PI.Gender`
         query += ` WHERE Approve != 1`
         query += ` AND Confirm = 1`
-        // query += ` AND Site IN ('${site}')`
+        if (!_.isEmpty(firstname)) {
+          query += ` AND (PI.Firstname LIKE '%${firstname}%')`
+        }
+        if (!_.isEmpty(lastname)) {
+          query += ` AND (PI.Lastname LIKE '%${lastname}%')`
+        }
+        if (!_.isEmpty(phone_no)) {
+          query += ` AND PI.PhoneNo = '${phone_no}'`
+        }
+        if (!_.isEmpty(passport)) {
+          query += ` AND PI.Passport = '${passport}'`
+        }
+        if (!_.isEmpty(national_id)) {
+          query += ` AND PI.NationalID = '${national_id}'`
+        }
+        if (!_.isEmpty(dateOfBirth)) {
+          query += ` AND (PI.DOB = '${dateOfBirth}')`
+        }
+        
+        query += ` AND Site IN ('${site}')`
         query += ` ORDER BY ID DESC LIMIT ${startNum},${LimitNum}`
           
         let queryCount = `SELECT COUNT(PI.ID) as count FROM Registration.Patient_Info PI`
         queryCount += ` WHERE Approve != 1`
         queryCount += ` AND Confirm = 1`
-
+        if (!_.isEmpty(firstname)) {
+          queryCount += ` AND (PI.Firstname LIKE '%${firstname}%')`
+        }
+        if (!_.isEmpty(lastname)) {
+          queryCount += ` AND (PI.Lastname LIKE '%${lastname}%')`
+        }
+        if (!_.isEmpty(phone_no)) {
+          queryCount += ` AND PI.PhoneNo = '${phone_no}'`
+        }
+        if (!_.isEmpty(passport)) {
+          queryCount += ` AND PI.Passport = '${passport}'`
+        }
+        if (!_.isEmpty(national_id)) {
+          queryCount += ` AND PI.NationalID = '${national_id}'`
+        }
+        if (!_.isEmpty(dateOfBirth)) {
+          queryCount += ` AND (PI.DOB = '${dateOfBirth}')`
+        }
+        queryCount += ` AND Site IN ('${site}')`
           let count = await repos.query(queryCount)
           let data = await repos.query(query)
           await data.map((d: any) => {
@@ -627,7 +664,7 @@ class registerRoute {
   }
   getApprovedData() {
     return async (req: Request,res: Response) => {
-      
+      let {id, firstname, lastname, phone_no, passport, dateOfBirth, national_id, site, page} = req.body;
       let repos = di.get("repos");
       try {
         let startNum = (parseInt("1") * 15) - 15
@@ -638,14 +675,50 @@ class registerRoute {
         query += ` WHERE Approve = 1`
         query += ` AND Confirm = 1`
         query += ` AND DownloadPDF != 1`
-        // query += ` AND Site IN ('${site}')`
+        if (!_.isEmpty(firstname)) {
+          query += ` AND (PI.Firstname LIKE '%${firstname}%')`
+        }
+        if (!_.isEmpty(lastname)) {
+          query += ` AND (PI.Lastname LIKE '%${lastname}%')`
+        }
+        if (!_.isEmpty(phone_no)) {
+          query += ` AND PI.PhoneNo = '${phone_no}'`
+        }
+        if (!_.isEmpty(passport)) {
+          query += ` AND PI.Passport = '${passport}'`
+        }
+        if (!_.isEmpty(national_id)) {
+          query += ` AND PI.NationalID = '${national_id}'`
+        }
+        if (!_.isEmpty(dateOfBirth)) {
+          query += ` AND (PI.DOB = '${dateOfBirth}')`
+        }
+        query += ` AND Site IN ('${site}')`
         query += ` ORDER BY ID DESC LIMIT ${startNum},${LimitNum}`
           
         let queryCount = `SELECT COUNT(PI.ID) as count FROM Registration.Patient_Info PI`
         queryCount += ` WHERE Approve = 1`
         queryCount += ` AND Confirm = 1`
         queryCount += ` AND DownloadPDF != 1`
-
+        if (!_.isEmpty(firstname)) {
+          queryCount += ` AND (PI.Firstname LIKE '%${firstname}%')`
+        }
+        if (!_.isEmpty(lastname)) {
+          queryCount += ` AND (PI.Lastname LIKE '%${lastname}%')`
+        }
+        if (!_.isEmpty(phone_no)) {
+          queryCount += ` AND PI.PhoneNo = '${phone_no}'`
+        }
+        if (!_.isEmpty(passport)) {
+          queryCount += ` AND PI.Passport = '${passport}'`
+        }
+        if (!_.isEmpty(national_id)) {
+          queryCount += ` AND PI.NationalID = '${national_id}'`
+        }
+        if (!_.isEmpty(dateOfBirth)) {
+          queryCount += ` AND (PI.DOB = '${dateOfBirth}')`
+        }
+        queryCount += ` AND Site IN ('${site}')`
           let count = await repos.query(queryCount)
           let data = await repos.query(query)
           await data.map((d: any) => {
@@ -830,7 +903,8 @@ class registerRoute {
       PhoneNo: body.patient_info.phone_no,
       Email: body.patient_info.email,
       Homephone: body.patient_info.homephone,
-      Officephone: body.patient_info.officephone
+      Officephone: body.patient_info.officephone,
+      DefaultLanguage: body.defaultlanguage
     }
     let queryInfo = `UPDATE Registration.Patient_Info SET ? WHERE ID = '${body.ID}'`
     
@@ -1020,7 +1094,9 @@ class registerRoute {
       PhoneNo: body.general_info.phone_no,
       Email: body.general_info.email,
       Type: body.type,
-      Site: body.site
+      Site: body.site,
+      PreferredLanguage: body.general_info.preferredlanguage,
+      DefaultLanguage: body.defaultlanguage
     }
     let dataPresent = {
       Country: body.present.sameAddress ? body.permanent.country : body.present.country,
@@ -1040,7 +1116,7 @@ class registerRoute {
       District: body.permanent.districtid,
       Address: body.permanent.address,
       Province: body.permanent.provinceid,
-      sameAddress: null
+      sameAddress: body.permanent.sameAddress
     }
     let queryPermanent = `UPDATE Registration.Patient_Address SET ? WHERE PatientID = '${body.ID}' And Type = 1`
     let dataFinancial = {
@@ -1164,7 +1240,8 @@ class registerRoute {
       PhoneNo: body.patient_info.phone_no,
       Email: body.patient_info.email,
       Homephone: body.patient_info.homephone,
-      Officephone: body.patient_info.officephone
+      Officephone: body.patient_info.officephone,
+      DefaultLanguage: body.defaultlanguage
     }
     let queryInfo = `UPDATE Registration.Patient_Info SET ? WHERE ID = '${body.ID}'`
     
@@ -1382,21 +1459,34 @@ class registerRoute {
       if (!relation.length) return null
       return relation[0].Code
     }
+    let FamilyRelation = async (id: any) => {
+      let queryRelation = `SELECT * FROM Registration.CT_Relation Where ID = ${id}`
+      let relation = await repos.query(queryRelation)
+      if (!relation.length) return null
+      return relation[0].Desc
+    }
+    let FamilyDisease = async (id: any) => {
+      let queryRelation = `SELECT * FROM Registration.CT_Diseases Where ID = ${id}`
+      let disease = await repos.query(queryRelation)
+      if (!disease.length) return null
+      return body.defaultlanguage == 'th'? disease[0].DescTH : disease[0].DescEN
+    }
     let Nation = await repos.query(queryNation)
     let Religion = await repos.query(queryReligion)
     let Gender = await repos.query(queryGender)
     
     let family = await Promise.all(body.personal_history.family.map(async (item: any): Promise<any> => {
+
       //let queryRelation = `SELECT * FROM Registration.CT_Relation Where ID = ${item.person}`
       //let relation = await repos.query(queryRelation)
       return {
         "id_patient_family": null,
         "id_patient_information": null,
-        "relation": item.person,
+        "relation": await FamilyRelation(item.person),
         "disease": null,
         "start": 0,
         "end": 0,
-        "comment": item.illness
+        "comment": await FamilyDisease(item.illness)
       }
     }));
     let social: any = new Array()
@@ -1561,7 +1651,9 @@ class registerRoute {
       PhoneNo: body.general_info.phone_no,
       Email: body.general_info.email,
       Type: body.type,
-      Site: body.site
+      Site: body.site,
+      PreferredLanguage: body.general_info.preferredlanguage,
+      DefaultLanguage: body.defaultlanguage
     }
     let queryInfo = `UPDATE Registration.Patient_Info SET ? WHERE ID = '${body.ID}'`
     let dataPresent = {
@@ -1571,7 +1663,7 @@ class registerRoute {
       District: body.present.sameAddress ? body.permanent.districtid : body.present.districtid,
       Address: body.present.sameAddress ? body.permanent.address : body.present.address,
       Province: body.present.sameAddress ? body.permanent.provinceid : body.present.provinceid,
-      sameAddress: body.present.sameAddress
+      sameAddress: null
     }
     let queryPresent = `UPDATE Registration.Patient_Address SET ? WHERE PatientID = '${body.ID}' And Type = 0`
     let dataPermanent = {
@@ -1581,7 +1673,7 @@ class registerRoute {
       District: body.permanent.districtid,
       Address: body.permanent.address,
       Province: body.permanent.provinceid,
-      sameAddress: null
+      sameAddress: body.permanent.sameAddress
     }
     let queryPermanent = `UPDATE Registration.Patient_Address SET ? WHERE PatientID = '${body.ID}' And Type = 1`
     let dataFinancial = {
@@ -1714,21 +1806,36 @@ class registerRoute {
       if (!relation.length) return null
       return relation[0].Code
     }
+    let FamilyRelation = async (id: any) => {
+      let queryRelation = `SELECT * FROM Registration.CT_Relation Where ID = ${id}`
+      let relation = await repos.query(queryRelation)
+      if (!relation.length) return null
+      return relation[0].Desc
+    }
+    let FamilyDisease = async (id: any) => {
+      let queryRelation = `SELECT * FROM Registration.CT_Diseases Where ID = ${id}`
+      let disease = await repos.query(queryRelation)
+      if (!disease.length) return null
+      return body.defaultlanguage == 'th'? disease[0].DescTH : disease[0].DescEN
+    }
     let Nation = await repos.query(queryNation)
-    let Gender = await repos.query(queryGender)
     let Religion = await repos.query(queryReligion)
-    let family = await body.siblings.family.map((d: any) => {
-      let data = {
+    let Gender = await repos.query(queryGender)
+    
+    let family = await Promise.all(body.siblings.family.map(async (item: any): Promise<any> => {
+
+      //let queryRelation = `SELECT * FROM Registration.CT_Relation Where ID = ${item.person}`
+      //let relation = await repos.query(queryRelation)
+      return {
         "id_patient_family": null,
         "id_patient_information": null,
-        "relation": d.person,
-        "disease": d.illness,
+        "relation": await FamilyRelation(item.person),
+        "disease": null,
         "start": 0,
         "end": 0,
-        "comment":null
+        "comment": await FamilyDisease(item.illness)
       }
-      return data
-    })
+    }));
     let social: any = new Array()
     
     let datadrugabuse = {
@@ -1772,7 +1879,7 @@ class registerRoute {
         "marital_status": null,
         "preferrend_language": await PreferredLanguage(body.general_info.preferredlanguage),
         "occupation": null,
-        "mobile_phone":body.general_info.phone_no,
+        "mobile_phone": (body.general_info.phone_no && body.general_info.phone_no.length == 10) ? body.general_info.phone_no : ".",
         "email":body.general_info.email,
         "home_telephone": null,
         "office_telephone": null,

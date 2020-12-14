@@ -69,10 +69,17 @@ class ctRoute {
   }
   getPreferredLanguage() {
     return async (req: Request, res: Response) => {
+      let { language } = req.query
       let repos = di.get('repos')
       let query = `SELECT * FROM Registration.CT_PreferredLanguage`
       let result = await repos.query(query)
-      res.send(result) 
+      let response = result.map((d:any ) => {
+        return {
+          "ID": d.ID,
+          "Desc": language == 'th' ? d.Desc_TH : d.Desc_EN,
+        }
+      })
+      res.send(response) 
     }
   }
   getCountry() {
@@ -256,6 +263,36 @@ class ctRoute {
       res.send(result) 
     }
   }
+  getConsent() {
+    return async (req: Request, res: Response) => {
+      let { language } = req.query
+      let repos = di.get('repos')
+      
+      let query = `SELECT * FROM Registration.CT_Consent Where Status = 'Active'`
+      
+      let result = await repos.query(query)
+      let response: any
+      if (language == 'th') {
+        response = await result.map((d: any) => {
+          return {
+            ID: d.ID,
+            Clause: d.Clause,
+            Desc: d.MessageHtmlTH,
+          }
+        })
+      } else {
+         response = await result.map((d: any) => {
+          return {
+            ID: d.ID,
+            Clause: d.Clause,
+            Desc: d.MessageHtmlEN,
+          }
+        })
+      }
+      
+      res.send(response) 
+    }
+  }
 }
 
 const router = Router()
@@ -278,5 +315,6 @@ router
   .get("/historyrelation", route.getHistoryRelation())
   .get("/historydisease", route.getHistoryDisease())
   .get("/getsignature", route.getSignature())
-
+  .get("/consent", route.getConsent())
+  
 export const ct = router
