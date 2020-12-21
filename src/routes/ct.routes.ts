@@ -310,9 +310,10 @@ class ctRoute {
   }
   getHistoryDisease() {
     return async (req: Request, res: Response) => {
-      let { language } = req.query
+      let { id, language } = req.query
       let repos = di.get('repos')
       let query = `SELECT * FROM Registration.CT_Diseases WHERE ActiveFamilyHistory = 1 `
+      if (id && id !== 'undefined' && id != null) query += ` And ID = ${id}`
       let result = await repos.query(query)
       let response: any
       if (language == 'th') {
