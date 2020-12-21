@@ -19,7 +19,129 @@ class ctRoute {
       if (id && id !== 'undefined' && id != null) query += ` And ID = ${id}`
       let result = await repos.query(query)
       await result.map((d: any) => d.Desc = this.Capitalize(d.Desc.toLowerCase()))
+      
       res.send(result) 
+      
+
+
+      // let repos = di.get('repos')
+      // let query = `select Firstname from Registration.Patient_Info pi2 where Firstname = 'นำพล' or Firstname = 'รุ่งนภา' `
+      // let result = await repos.query(query)
+      // //await result.map((d: any) => d.Desc = this.Capitalize(d.Desc.toLowerCase()))
+      // console.log(result.Fir) 
+      
+      
+
+      // repos = di.get('cache')
+      // result = await new Promise((resolve, reject) => {
+      //   repos.reserve((err: any, connObj: any) => {
+      //     if (connObj) {
+      //       let conn = connObj.conn;
+            
+      //       conn.createStatement((err: any, statement: any) => {
+      //         if (err) {
+      //           reject(err);
+      //         } else {
+      //           statement.setFetchSize(100, function (err: any) {
+      //             if (err) {
+      //               reject(err);
+      //             } else {
+      //               const query = `SELECT
+      //               PAPMI_RowId,
+      //         PAPMI_No "hn",
+      //               PAPMI_Title_DR->TTL_RowId "title",
+      //               PAPMI_Name "firstname",
+      //               PAPMI_Name2 "lastname",
+      //               PAPMI_Name5 "nameen",
+      //               PAPMI_Name7 "surnameen",
+      //               tochar(PAPMI_RowId->PAPER_Dob, 'YYYY-MM-DD') "dob",
+      //               PAPMI_Sex_DR->CTSEX_RowId "gender",
+      //               PAPMI_RowId->PAPER_Nation_DR->CTNAT_RowId "nationality",
+      //               PAPMI_RowId->PAPER_Religion_DR->CTRLG_RowId "religion",
+      //         PAPMI_RowId->PAPER_Religion_DR->CTRLG_Code "religion_code",
+      //               PAPMI_RowId->PAPER_Religion_DR->CTRLG_Desc "religion_desc",
+      //         PAPMI_RowId->PAPER_PrefLanguage_DR "preferredlanguage",
+      //               PAPMI_Email "email",
+      //               PAPMI_RowId->PAPER_ID "nationalid",
+      //               PAPMI_RowId->PAPER_PassportNumber "passport",
+      //               SUBSTRING(PAPMI_RowId->PAPER_Marital_DR->CTMAR_Desc, CHARINDEX('(', PAPMI_RowId->PAPER_Marital_DR->CTMAR_Desc)+1, (LENGTH(PAPMI_RowId->PAPER_Marital_DR->CTMAR_Desc)-CHARINDEX('(', PAPMI_RowId->PAPER_Marital_DR->CTMAR_Desc))-1) "marital_desc",
+      //               PAPMI_RowId->PAPER_SocialStatus_DR->SS_Code "Occupation_Code",
+      //               PAPMI_RowId->PAPER_SocialStatus_DR->SS_Desc "Occupation_Desc",
+      //               PAPMI_RowId->PAPER_MobPhone "mobilephone",
+      //               PAPMI_RowId->PAPER_TelH,
+      //               PAPMI_RowId->PAPER_TelO,
+      //               PAPMI_SecondPhone,
+      //         CASE 
+      //          WHEN PAPMI_RowId->PAPER_Country_DR->CTCOU_RowId IS NULL 
+      //          AND ((PAPMI_RowId->PAPER_Zip_DR->CTZIP_Code NOT IN ('900001', '12500', '40001', '74111', '80516', 'JAN-64', 'AUG-43', '11-JAN', '8-JAN', '7-FEB', '900000', '999999') AND PAPMI_RowId->PAPER_Zip_DR->CTZIP_Code IS NOT NULL) 
+      //          OR (PAPMI_RowId->PAPER_Zip_DR->CTZIP_Province_DR->PROV_RowId NOT IN ('77', '78') AND PAPMI_RowId->PAPER_Zip_DR->CTZIP_Province_DR->PROV_RowId IS NOT NULL)
+      //          OR (PAPMI_RowId->PAPER_Zip_DR->CTZIP_CITY_DR->CTCIT_RowId NOT IN ('1116', '936') AND PAPMI_RowId->PAPER_Zip_DR->CTZIP_CITY_DR->CTCIT_RowId IS NOT NULL)) THEN 2
+      //          ELSE PAPMI_RowId->PAPER_Country_DR->CTCOU_RowId
+      //         END "countryid",
+      //               PAPMI_RowId->PAPER_Country_DR->CTCOU_Code "countrycode",
+      //               PAPMI_RowId->PAPER_Country_DR->CTCOU_Desc "countrydesc",
+      //         CASE
+      //          WHEN PAPMI_RowId->PAPER_Zip_DR->CTZIP_Code IN ('900001', '12500', '40001', '74111', '80516', 'JAN-64', 'AUG-43', '11-JAN', '8-JAN', '7-FEB', '900000', '999999') THEN null
+      //          ELSE  PAPMI_RowId->PAPER_Zip_DR->CTZIP_Code
+      //         END "zipcode",
+      //           CASE
+      //          WHEN PAPMI_RowId->PAPER_Zip_DR->CTZIP_Province_DR->PROV_RowId IN ('77', '78') THEN null
+      //          ELSE PAPMI_RowId->PAPER_Zip_DR->CTZIP_Province_DR->PROV_RowId
+      //         END "province",
+      //               PAPMI_RowId->PAPER_Zip_DR->CTZIP_Province_DR->PROV_Desc "provincedesc",
+      //         CASE
+      //          WHEN PAPMI_RowId->PAPER_Zip_DR->CTZIP_CITY_DR->CTCIT_RowId IN ('1116', '936') THEN null
+      //          ELSE  PAPMI_RowId->PAPER_Zip_DR->CTZIP_CITY_DR->CTCIT_RowId
+      //         END "district",
+      //               PAPMI_RowId->PAPER_Zip_DR->CTZIP_CITY_DR->CTCIT_Desc "districtdesc",
+      //               PAPMI_CityArea_DR->CITAREA_RowId "subdistrictcid",
+      //               PAPMI_CityArea_DR->CITAREA_Desc "subdistrictdesc",
+      //               PAPMI_RowId->PAPER_StName "address",
+      //         PAPMI_RowId->PAPER_AgeYr "age",
+      //         CASE
+      //             WHEN PAPMI_RowId->PAPER_AgeYr >= 15 THEN 0
+      //              ELSE 1
+      //         END "type",
+      //         0 "typeaddress"
+      //           FROM PA_PatMas where PAPMI_Name = 'นำพล'`;           
+      //               statement.executeQuery(query, function (
+      //                 err: any,
+      //                 resultset: any
+      //               ) {
+      //                 if (err) {
+      //                   reject(err);
+      //                 } else {
+      //                   resultset.toObjArray(function (
+      //                     err: any,
+      //                     results: any
+      //                   ) {
+      //                     resolve(results);
+      //                     //console.log(results);
+      //                   });
+      //                   console.log(resultset);
+      //                   //console.log(results);
+      //                   console.log(err);
+      //                 }
+      //               });
+      //             }
+      //           });
+      //         }
+      //       });
+      //       repos.release(connObj, function (err: any) {
+      //         if (err) {
+      //           console.log(err);
+      //         }
+      //       });
+      //     }
+      //   });
+      // });
+      
+      // console.log(result)
+      
+      // //let result = await cache.query(query)
+      // //console.log(result)
+      // //await result.map((d: any) => d.Desc = this.Capitalize(d.Desc.toLowerCase()))
+      // res.send(result) 
     }
   }
   getNationality() {
@@ -256,7 +378,7 @@ class ctRoute {
       let { id, type } = req.query
       let repos = di.get('repos')
       
-      let query = `SELECT Signature, Createdate, ADDTIME(Createtime, '7:00:00') as Createtime FROM Registration.Signature Where PatientID = ${id} And SignType = '${type}' Order By ID Desc`
+      let query = `SELECT Signature, Createdate, Createtime FROM Registration.Signature Where PatientID = ${id} And SignType = '${type}' Order By ID Desc`
       let result = await repos.query(query)
       result[0].Createdate.setHours(result[0].Createdate.getHours() + 7);
       
