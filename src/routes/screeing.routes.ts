@@ -21,8 +21,8 @@ class screeningRoute {
       let queryFamily = `SELECT * FROM Screening.Family_History WHERE HN = '${hn}' `
       let querySocial = `SELECT * FROM Screening.Patient_Social WHERE HN = '${hn}' `
       let queryConsent = `SELECT * FROM Screening.Consent WHERE HN = '${hn}' `
-      let queryPatientSignature = `SELECT Signature, Createdate, Createtime FROM Screening.Signature Where HN = '${info[0].HN}' And SignType = 'Patient' Order By ID Desc`
-      let queryStaffSignature = `SELECT Signature, Createdate, Createtime FROM Screening.Signature Where HN = '${info[0].HN}' And SignType = 'Approver' Order By ID Desc`
+      // let queryPatientSignature = `SELECT Signature, Createdate, Createtime FROM Screening.Signature Where HN = '${info[0].HN}' And SignType = 'Patient' Order By ID Desc`
+      // let queryStaffSignature = `SELECT Signature, Createdate, Createtime FROM Screening.Signature Where HN = '${info[0].HN}' And SignType = 'Approver' Order By ID Desc`
       
       let address = await repos.query(queryAddress)
       let emergency = await repos.query(queryEmergency)
@@ -31,10 +31,10 @@ class screeningRoute {
       let family = await repos.query(queryFamily)
       let social = await repos.query(querySocial)
       let consent = await repos.query(queryConsent)
-      let patientSignature = await repos.query(queryPatientSignature)
-      patientSignature[0].Createdate.setHours(patientSignature[0].Createdate.getHours() + 7);
-      let staffSignature = await repos.query(queryStaffSignature)
-      staffSignature[0].Createdate.setHours(staffSignature[0].Createdate.getHours() + 7);
+      // let patientSignature = await repos.query(queryPatientSignature)
+      // patientSignature[0].Createdate.setHours(patientSignature[0].Createdate.getHours() + 7);
+      // let staffSignature = await repos.query(queryStaffSignature)
+      // staffSignature[0].Createdate.setHours(staffSignature[0].Createdate.getHours() + 7);
       let dataSocial = social.map((d: any) => {
         let data = {
           Habit: d.Habit,
@@ -130,8 +130,8 @@ class screeningRoute {
         Family: familylist,
         SocialHistory: dataSocial,
         Consent: consent,
-        PatientSignature: patientSignature,
-        StaffSignature: staffSignature,
+        // PatientSignature: patientSignature,
+        // StaffSignature: staffSignature,
       }
       return result
     } else {
