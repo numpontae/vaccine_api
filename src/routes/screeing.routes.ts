@@ -30,11 +30,11 @@ class screeningRoute {
       let history = await repos.query(queryHistory)
       let family = await repos.query(queryFamily)
       let social = await repos.query(querySocial)
-      // let consent = await repos.query(queryConsent)
-      // let patientSignature = await repos.query(queryPatientSignature)
-      // patientSignature[0].Createdate.setHours(patientSignature[0].Createdate.getHours() + 7);
-      // let staffSignature = await repos.query(queryStaffSignature)
-      // staffSignature[0].Createdate.setHours(staffSignature[0].Createdate.getHours() + 7);
+      let consent = await repos.query(queryConsent)
+      let patientSignature = await repos.query(queryPatientSignature)
+      patientSignature[0].Createdate.setHours(patientSignature[0].Createdate.getHours() + 7);
+      let staffSignature = await repos.query(queryStaffSignature)
+      staffSignature[0].Createdate.setHours(staffSignature[0].Createdate.getHours() + 7);
       let dataSocial = social.map((d: any) => {
         let data = {
           Habit: d.Habit,
