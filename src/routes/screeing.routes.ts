@@ -20,9 +20,9 @@ class screeningRoute {
       let queryHistory = `SELECT * FROM Screening.Patient_History WHERE HN = '${hn}' `
       let queryFamily = `SELECT * FROM Screening.Family_History WHERE HN = '${hn}' `
       let querySocial = `SELECT * FROM Screening.Patient_Social WHERE HN = '${hn}' `
-      // let queryConsent = `SELECT * FROM Screening.Consent WHERE HN = '${hn}' `
-      // let queryPatientSignature = `SELECT Signature, Createdate, Createtime FROM Screening.Signature Where HN = '${info[0].HN}' And SignType = 'Patient' Order By ID Desc`
-      // let queryStaffSignature = `SELECT Signature, Createdate, Createtime FROM Screening.Signature Where HN = '${info[0].HN}' And SignType = 'Approver' Order By ID Desc`
+      let queryConsent = `SELECT * FROM Screening.Consent WHERE HN = '${hn}' `
+      let queryPatientSignature = `SELECT Signature, Createdate, Createtime FROM Screening.Signature Where HN = '${info[0].HN}' And SignType = 'Patient' Order By ID Desc`
+      let queryStaffSignature = `SELECT Signature, Createdate, Createtime FROM Screening.Signature Where HN = '${info[0].HN}' And SignType = 'Approver' Order By ID Desc`
       
       let address = await repos.query(queryAddress)
       let emergency = await repos.query(queryEmergency)
@@ -129,9 +129,9 @@ class screeningRoute {
         },
         Family: familylist,
         SocialHistory: dataSocial,
-        // Consent: consent,
-        // PatientSignature: patientSignature,
-        // StaffSignature: staffSignature,
+        Consent: consent,
+        PatientSignature: patientSignature,
+        StaffSignature: staffSignature,
       }
       return result
     } else {
