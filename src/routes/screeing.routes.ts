@@ -177,7 +177,7 @@ class screeningRoute {
         },
         Pediatric: pediatric[0],
         Family: familylist,
-        //Consent: consent
+        Consent: consent
       }
       return result
     } 
@@ -234,7 +234,7 @@ class screeningRoute {
     return async (req: Request, res: Response) => {
       // Get Screeing Data
       //console.log(result);
-      var CronJob = require('cron').CronJob;
+      //var CronJob = require('cron').CronJob;
       // var job = new CronJob('00 50 23 * * 0-6',async function() {
         let body = req.body;
         console.log("Get Patent Info at " + new Date())
