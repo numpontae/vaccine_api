@@ -14,8 +14,10 @@ class ctRoute {
 
       let repos = di.get('repos')
       let query = `SELECT * FROM Registration.CT_Title`
-      if (language == 'th') query += ` Where Code IN ('00008', '00010', '00116', '00117', '00118')`
-      if (language == 'en') query += ` Where Code IN ('00008e', '00116e', '00010E', '00118e')`
+      if (language == 'th') query += ` Where Code IN ('00008', '00010', '00116', '00117', '00118') UNION
+      SELECT * FROM Registration.CT_Title ct WHERE Code NOT LIKE '%E%' AND CODE NOT IN ('00008', '00010', '00116', '00117', '00118')`
+      if (language == 'en') query += ` Where Code IN ('00008e', '00116e', '00010E', '00118e') UNION
+      SELECT * FROM Registration.CT_Title ct WHERE Code LIKE '%E%' AND CODE NOT IN ('00008e', '00116e', '00010E', '00118e')`
       if (id && id !== 'undefined' && id != null) query += ` And ID = ${id}`
       let result = await repos.query(query)
       await result.map((d: any) => d.Desc = this.Capitalize(d.Desc.toLowerCase()))

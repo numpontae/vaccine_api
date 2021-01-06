@@ -66,6 +66,10 @@ class registerRoute {
       let queryFamily = `SELECT * FROM Registration.Family_History WHERE PatientID = ${info[0].ID}`
       let querySocial = `SELECT * FROM Registration.Patient_Social WHERE PatientID = ${info[0].ID}`
       let queryConsent = `SELECT * FROM Registration.Consent WHERE PatientID = ${info[0].ID}`
+      let queryPatientSignature = `SELECT Signature, Createdate, Createtime FROM Registration.Signature Where PatientID = ${info[0].ID} And SignType = 'Patient' Order By ID Desc`
+      let queryStaffSignature = `SELECT Signature, Createdate, Createtime FROM Registration.Signature Where PatientID = ${info[0].ID} And SignType = 'Approver' Order By ID Desc`
+
+      
       let address = await repos.query(queryAddress)
       let emergency = await repos.query(queryEmergency)
       let financial = await repos.query(queryFinancial)
@@ -73,6 +77,10 @@ class registerRoute {
       let family = await repos.query(queryFamily)
       let social = await repos.query(querySocial)
       let consent = await repos.query(queryConsent)
+      let patientSignature = await repos.query(queryPatientSignature)
+      patientSignature[0].Createdate.setHours(patientSignature[0].Createdate.getHours() + 7);
+      let staffSignature = await repos.query(queryStaffSignature)
+      staffSignature[0].Createdate.setHours(staffSignature[0].Createdate.getHours() + 7);
       let dataSocial = social.map((d: any) => {
         let data = {
           Habit: d.Habit,
@@ -167,7 +175,9 @@ class registerRoute {
         },
         Family: familylist,
         SocialHistory: dataSocial,
-        Consent: consent
+        Consent: consent,
+        PatientSignature: patientSignature,
+        StaffSignature: staffSignature,
       }
       return result
     } else {
@@ -224,6 +234,8 @@ class registerRoute {
       let body = req.body;
       let repos = di.get("repos");
       if ( body.type == 0 ) {
+        
+        
         let dateDob = new Date(body.patient_info.dob)
         dateDob.setHours(dateDob.getHours() + 7 );
         let dataInfo = {
@@ -358,8 +370,8 @@ class registerRoute {
         await repos.query(queryFinancial, dataFinancial);
         await repos.query(queryHistory, dataHistory);
         if (body.personal_history.family.length > 0) {
-          let valuesFamily: any[] = [] 
           body.personal_history.family.map(async (p: any) => {
+            let valuesFamily: any[] = [] 
             if (p.person != null && p.illness != null) {
               let queryCheckDisease = `SELECT * FROM Registration.CT_Diseases WHERE (DescEN = '${p.illness}' OR DescTH = '${p.illness}' OR ID = ${p.illness}) And ActiveFamilyHistory = 1 `
               let queryCheckFamily = `SELECT * FROM Registration.CT_Relation WHERE (DescText like '%${p.person}%' OR ID = '${p.person}') And ActiveFamilyHistory = 1 `
@@ -561,8 +573,8 @@ class registerRoute {
         
         await repos.query(queryParent, [valuesParent]);
         if (body.siblings.family.length > 0) {
-          let valuesFamily: any[] = [] 
           body.siblings.family.map(async (p: any) => {
+            let valuesFamily: any[] = [] 
             if (p.person != null && p.illness != null) {
               let queryCheckDisease = `SELECT * FROM Registration.CT_Diseases WHERE (DescEN = '${p.illness}' OR DescTH = '${p.illness}' OR ID = ${p.illness}) And ActiveFamilyHistory = 1 `
               let queryCheckFamily = `SELECT * FROM Registration.CT_Relation WHERE (DescText like '%${p.person}%' OR ID = '${p.person}') And ActiveFamilyHistory = 1 `
