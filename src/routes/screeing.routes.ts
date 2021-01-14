@@ -4,6 +4,7 @@ import * as _ from "lodash";
 import CryptoJS from "crypto-js";
 const axios = require('axios');
 import { rpaSetting } from "../config/config";
+import { result } from "lodash";
 
 class screeningRoute {
   async getPatientByHN(hn: any) {
@@ -12,7 +13,6 @@ class screeningRoute {
     query += ` WHERE 1 = 1 `
     query += ` AND PI.HN = '${hn}' `
     let info = await repos.query(query)
-
     if (info[0].Type == 0) {
       let queryAddress = `SELECT * FROM Screening.Patient_Address WHERE HN = '${hn}' ORDER BY Type `
       let queryEmergency = `SELECT * FROM Screening.Patient_Emergency WHERE HN = '${hn}' `
@@ -21,9 +21,9 @@ class screeningRoute {
       let queryFamily = `SELECT * FROM Screening.Family_History WHERE HN = '${hn}' `
       let querySocial = `SELECT * FROM Screening.Patient_Social WHERE HN = '${hn}' `
       let queryConsent = `SELECT * FROM Screening.Consent WHERE HN = '${hn}' `
-      // let queryPatientSignature = `SELECT Signature, Createdate, Createtime FROM Screening.Signature Where HN = '${info[0].HN}' And SignType = 'Patient' Order By ID Desc`
-      // let queryStaffSignature = `SELECT Signature, Createdate, Createtime FROM Screening.Signature Where HN = '${info[0].HN}' And SignType = 'Approver' Order By ID Desc`
-      
+      let queryPatientSignature = `SELECT Signature, Createdate, Createtime FROM Screening.Signature Where HN = '${info[0].HN}' And SignType = 'Patient' Order By ID Desc`
+      let queryStaffSignature = `SELECT Signature, Createdate, Createtime FROM Screening.Signature Where HN = '${info[0].HN}' And SignType = 'Approver' Order By ID Desc`
+
       let address = await repos.query(queryAddress)
       let emergency = await repos.query(queryEmergency)
       let financial = await repos.query(queryFinancial)
@@ -31,10 +31,12 @@ class screeningRoute {
       let family = await repos.query(queryFamily)
       let social = await repos.query(querySocial)
       let consent = await repos.query(queryConsent)
-      // let patientSignature = await repos.query(queryPatientSignature)
-      // patientSignature[0].Createdate.setHours(patientSignature[0].Createdate.getHours() + 7);
-      // let staffSignature = await repos.query(queryStaffSignature)
-      // staffSignature[0].Createdate.setHours(staffSignature[0].Createdate.getHours() + 7);
+      
+      let patientSignature = await repos.query(queryPatientSignature)
+      if(patientSignature.length > 0) patientSignature[0].Createdate.setHours(patientSignature[0].Createdate.getHours() + 7);
+      let staffSignature = await repos.query(queryStaffSignature)
+      if(staffSignature.length > 0) staffSignature[0].Createdate.setHours(staffSignature[0].Createdate.getHours() + 7);
+
       let dataSocial = social.map((d: any) => {
         let data = {
           Habit: d.Habit,
@@ -130,9 +132,10 @@ class screeningRoute {
         Family: familylist,
         SocialHistory: dataSocial,
         Consent: consent,
-        // PatientSignature: patientSignature,
-        // StaffSignature: staffSignature,
+        PatientSignature: patientSignature[0],
+        StaffSignature: staffSignature[0],
       }
+
       return result
     } else {
       let queryAddress = `SELECT * FROM Screening.Patient_Address WHERE HN = ${hn} ORDER BY Type`
@@ -232,12 +235,1136 @@ class screeningRoute {
   }
   postScreening() {
     return async (req: Request, res: Response) => {
-      // Get Screeing Data
-      //console.log(result);
-      //var CronJob = require('cron').CronJob;
-      // var job = new CronJob('00 50 23 * * 0-6',async function() {
-        let body = req.body;
-        console.log("Get Patent Info at " + new Date())
+    async function updatePDPA()
+    {
+      const res = await axios.post('http://svh-traksd2.bdms.co.th:57772/csp/sd2/pdpa/update', 
+      {
+        "hn": "",
+        "firstname": "NPP",
+        "lastname": "",
+        "idcard": "1341400135163",
+        "dob": ""
+        
+    },
+      {  
+      auth: {
+        username: 'bluefish',
+        password: 'bluefish'
+      },
+      headers: {
+        'Accept': 'application/json'
+    }
+      
+    });
+        console.log(res)
+        console.log(res.data)
+    }
+    
+    // 
+      setTimeout(updatePDPA, 5000);
+      
+
+      // let body = req.body;
+      // let repos = di.get("cache");
+      // let result: any = await new Promise((resolve, reject) => {
+      //   repos.reserve((err: any, connObj: any) => {
+      //     if (connObj) {
+      //       let conn = connObj.conn;
+            
+      //       conn.createStatement((err: any, statement: any) => {
+      //         if (err) {
+      //           reject(err);
+      //         } else {
+      //           statement.setFetchSize(100, function (err: any) {
+      //             if (err) {
+      //               reject(err);
+      //             } else {
+      //               const query = `SELECT	PAPMI_No "HN",
+      //               PAPMI_Title_DR->TTL_RowId "Title",
+      //               PAPMI_Name "Firstname",
+      //               PAPMI_Name2 "Lastname",
+      //               PAPMI_Name5 "FirstnameEn",
+      //               PAPMI_Name7 "LastnameEn",
+      //               tochar(PAPER_Dob, 'YYYY-MM-DD') "DOB",
+      //               PAPMI_Sex_DR "Gender",
+      //               PAPER_Nation_DR "Nationality",
+      //               PAPER_Religion_DR "Religion",
+      //             PAPER_PrefLanguage_DR "PreferredLanguage",
+      //               PAPMI_Email "Email",
+      //               PAPER_ID "NationalID",
+      //               PAPER_PassportNumber "Passport",
+      //               SUBSTRING(PAPER_Marital_DR->CTMAR_Desc, CHARINDEX('(', PAPER_Marital_DR->CTMAR_Desc)+1, (LENGTH(PAPER_Marital_DR->CTMAR_Desc)-CHARINDEX('(', PAPER_Marital_DR->CTMAR_Desc))-1) "MaritalStatus",
+      //               PAPER_SocialStatus_DR->SS_Desc "Occupation",
+      //               PAPER_MobPhone "PhoneNo",
+      //               PAPER_TelH "Homephone" ,
+      //         CASE
+      //               WHEN PAPMI_Title_DR LIKE '%e%' THEN 'en'
+      //               ELSE 'th'
+      //         END "DefaultLanguage",
+      //         CASE
+      //             WHEN PAPER_AgeYr > 15 THEN 0
+      //              ELSE 1
+      //         END "type"
+      //           FROM PA_PatMas
+      //           LEFT JOIN PA_Person ON PA_PatMas.PAPMI_PAPER_DR = PA_Person.PAPER_RowId
+      //           WHERE PAPMI_No IS NOT NULL AND PAPER_UpdateDate BETWEEN TO_DATE(CURRENT_DATE - 1) AND CURRENT_DATE`;           
+      //               statement.executeQuery(query, function (
+      //                 err: any,
+      //                 resultset: any
+      //               ) {
+      //                 if (err) {
+      //                   reject(err);
+      //                 } else {
+      //                   resultset.toObjArray(function (
+      //                     err: any,
+      //                     results: any
+      //                   ) {
+      //                     resolve(results);
+      //                   });
+      //                 }
+      //               });
+      //             }
+      //           });
+      //         }
+      //       });
+      //       repos.release(connObj, function (err: any) {
+      //         if (err) {
+      //           console.log(err);
+      //         }
+      //       });
+      //     }
+      //   });
+      // });
+      // repos = di.get("repos")
+      // let query_1 = `REPLACE INTO Screening.Patient_Info SET ? `
+      
+      // await result.map((d: any) => {
+      //   repos.query(query_1, d,function(err:any, results:any) {
+      //     if (err) {
+      //       return console.error(err.message);
+      //     }
+      //   });
+        
+      //   let query_2 = `REPLACE INTO Screening.Patient_Financial (HN) VALUES ('${d.HN}') `
+      //   repos.query(query_2, d,function(err:any, results:any) {
+      //     if (err) {
+      //       return console.error(err.message);
+      //     }
+      //   }); 
+      //   let query_3 = `REPLACE INTO Screening.Patient_History (HN) VALUES ('${d.HN}') `
+      //   repos.query(query_3, d,function(err:any, results:any) {
+      //     if (err) {
+      //       return console.error(err.message);
+      //     }
+      //   }); 
+      // })
+      // let query = `UPDATE Screening.Patient_Financial pf1 
+      // INNER JOIN Screening.Patient_Info pi1 ON pf1.HN = pi1.HN
+      // INNER JOIN Registration.Patient_Info pi2 ON pi1.NationalID = pi2.NationalID 
+      // INNER JOIN Registration.Patient_Financial pf2 ON pf2.PatientID = pi2.ID 
+      // SET pf1.SelfPay = pf2.SelfPay,
+      //     pf1.CompanyContact = pf2.CompanyContact,
+      //     pf1.Insurance = pf2.Insurance,
+      //     pf1.CompanyDesc = pf2.CompanyDesc,
+      //     pf1.InsuranceDesc = pf2.InsuranceDesc,
+      //     pf1.PaymentAs = pf2.PaymentAs,
+      //     pf1.Title = pf2.Title,
+      //     pf1.Firstname = pf2.Firstname,
+      //     pf1.Lastname = pf2.Lastname,
+      //     pf1.DOB = pf2.DOB,
+      //     pf1.Aforemention = pf2.Aforemention
+      // WHERE pi1.NationalID IS NOT NULL AND pf1.Createdate BETWEEN ADDDATE(CURDATE(),-1) AND CURDATE()  `
+      // await  repos.query(query)
+      // query = `UPDATE Screening.Patient_Financial pf1 
+      // INNER JOIN Screening.Patient_Info pi1 ON pf1.HN = pi1.HN
+      // INNER JOIN Registration.Patient_Info pi2 ON pi1.Firstname = pi2.Firstname AND pi1.Lastname = pi2.Lastname AND pi1.DOB = pi2.DOB 
+      // INNER JOIN Registration.Patient_Financial pf2 ON pf2.PatientID = pi2.ID 
+      // SET pf1.SelfPay = pf2.SelfPay,
+      //     pf1.CompanyContact = pf2.CompanyContact,
+      //     pf1.Insurance = pf2.Insurance,
+      //     pf1.CompanyDesc = pf2.CompanyDesc,
+      //     pf1.InsuranceDesc = pf2.InsuranceDesc,
+      //     pf1.PaymentAs = pf2.PaymentAs,
+      //     pf1.Title = pf2.Title,
+      //     pf1.Firstname = pf2.Firstname,
+      //     pf1.Lastname = pf2.Lastname,
+      //     pf1.DOB = pf2.DOB,
+      //     pf1.Aforemention = pf2.Aforemention
+      // WHERE pi1.NationalID IS NULL AND pf1.Createdate BETWEEN ADDDATE(CURDATE(),-1) AND CURDATE() `
+      // await  repos.query(query)
+      
+      // query = `UPDATE Screening.Patient_History ph1 
+      // INNER JOIN Screening.Patient_Info pi1 ON ph1.HN = pi1.HN
+      // INNER JOIN Registration.Patient_Info pi2 ON pi1.NationalID = pi2.NationalID 
+      // INNER JOIN Registration.Patient_History ph2 ON ph2.PatientID = pi2.ID 
+      // SET ph1.MaritalStatus = ph2.MaritalStatus,
+      //     ph1.Children = ph2.Children,
+      //     ph1.Diseases = ph2.Diseases,
+      //     ph1.Medication = ph2.Medication,
+      //     ph1.CommentMedication = ph2.CommentMedication,
+      //     ph1.Hospitalization = ph2.Hospitalization,
+      //     ph1.CommentHospitalization = ph2.CommentHospitalization,
+      //     ph1.Physical = ph2.Physical,
+      //     ph1.CommentPhysical = ph2.CommentPhysical,
+      //     ph1.Exercise = ph2.Exercise,
+      //     ph1.Pregnant = ph2.Pregnant,
+      //     ph1.CommentPregnant = ph2.CommentPregnant,
+      //     ph1.Giver = ph2.Giver,
+      //     ph1.CommentGiver = ph2.CommentGiver,
+      //     ph1.AbsenceFromWork = ph2.AbsenceFromWork,
+      //     ph1.Reimbursement = ph2.Reimbursement,
+      //     ph1.GovernmentReimbursement = ph2.GovernmentReimbursement,
+      //     ph1.StateEnterprise = ph2.StateEnterprise,
+      //     ph1.Authorize = ph2.Authorize,
+      //     ph1.CommentAuthorize = ph2.CommentAuthorize,
+      //     ph1.Spiritual = ph2.Spiritual,
+      //     ph1.CommentSpiritual = ph2.CommentSpiritual,
+      //     ph1.Allergies = ph2.Allergies,
+      //     ph1.CommentAllergies = ph2.CommentAllergies,
+      //     ph1.Alcohol = ph2.Alcohol,
+      //     ph1.DrugAbuse = ph2.DrugAbuse,
+      //     ph1.Smoke = ph2.Smoke,
+      //     ph1.FatherAlive = ph2.FatherAlive,
+      //     ph1.FatherAge = ph2.FatherAge,
+      //     ph1.CauseFather = ph2.CauseFather,
+      //     ph1.MotherAlive = ph2.MotherAlive,
+      //     ph1.MotherAge = ph2.MotherAge,
+      //     ph1.CauseMother = ph2.CauseMother 
+      // WHERE pi1.NationalID IS NOT NULL AND ph1.Createdate BETWEEN ADDDATE(CURDATE(),-1) AND CURDATE()  `
+      // await  repos.query(query)
+      // query = `UPDATE Screening.Patient_History ph1 
+      // INNER JOIN Screening.Patient_Info pi1 ON ph1.HN = pi1.HN
+      // INNER JOIN Registration.Patient_Info pi2 ON pi1.Firstname = pi2.Firstname AND pi1.Lastname = pi2.Lastname AND pi1.DOB = pi2.DOB 
+      // INNER JOIN Registration.Patient_History ph2 ON ph2.PatientID = pi2.ID 
+      // SET ph1.MaritalStatus = ph2.MaritalStatus,
+      //     ph1.Children = ph2.Children,
+      //     ph1.Diseases = ph2.Diseases,
+      //     ph1.Medication = ph2.Medication,
+      //     ph1.CommentMedication = ph2.CommentMedication,
+      //     ph1.Hospitalization = ph2.Hospitalization,
+      //     ph1.CommentHospitalization = ph2.CommentHospitalization,
+      //     ph1.Physical = ph2.Physical,
+      //     ph1.CommentPhysical = ph2.CommentPhysical,
+      //     ph1.Exercise = ph2.Exercise,
+      //     ph1.Pregnant = ph2.Pregnant,
+      //     ph1.CommentPregnant = ph2.CommentPregnant,
+      //     ph1.Giver = ph2.Giver,
+      //     ph1.CommentGiver = ph2.CommentGiver,
+      //     ph1.AbsenceFromWork = ph2.AbsenceFromWork,
+      //     ph1.Reimbursement = ph2.Reimbursement,
+      //     ph1.GovernmentReimbursement = ph2.GovernmentReimbursement,
+      //     ph1.StateEnterprise = ph2.StateEnterprise,
+      //     ph1.Authorize = ph2.Authorize,
+      //     ph1.CommentAuthorize = ph2.CommentAuthorize,
+      //     ph1.Spiritual = ph2.Spiritual,
+      //     ph1.CommentSpiritual = ph2.CommentSpiritual,
+      //     ph1.Allergies = ph2.Allergies,
+      //     ph1.CommentAllergies = ph2.CommentAllergies,
+      //     ph1.Alcohol = ph2.Alcohol,
+      //     ph1.DrugAbuse = ph2.DrugAbuse,
+      //     ph1.Smoke = ph2.Smoke,
+      //     ph1.FatherAlive = ph2.FatherAlive,
+      //     ph1.FatherAge = ph2.FatherAge,
+      //     ph1.CauseFather = ph2.CauseFather,
+      //     ph1.MotherAlive = ph2.MotherAlive,
+      //     ph1.MotherAge = ph2.MotherAge,
+      //     ph1.CauseMother = ph2.CauseMother 
+      // WHERE pi1.NationalID IS NULL AND ph1.Createdate BETWEEN ADDDATE(CURDATE(),-1) AND CURDATE() `
+      // await  repos.query(query)
+      
+      // repos = di.get("cache");
+      // result = await new Promise((resolve, reject) => {
+      //   repos.reserve((err: any, connObj: any) => {
+      //     if (connObj) {
+      //       let conn = connObj.conn;
+            
+      //       conn.createStatement((err: any, statement: any) => {
+      //         if (err) {
+      //           reject(err);
+      //         } else {
+      //           statement.setFetchSize(100, function (err: any) {
+      //             if (err) {
+      //               reject(err);
+      //             } else {
+      //               const query = `SELECT	NOK_PAPMI_ParRef->PAPMI_No "HN",
+      //               NOK.NOK_Name "Firstname", 
+      //               NOK.NOK_Name2 "Lastname",
+      //               NOK.NOK_Relation_DR "Relation",
+      //               NOK.NOK_Email "Email",
+      //               CASE
+      //                   WHEN NOK.NOK_MobPhone IS NOT NULL THEN Nok_TelH
+      //                   ELSE NOK.NOK_TelH
+      //               END "PhoneNo",
+      //               CASE 
+      //                    WHEN Nok.NOK_Country_DR->CTCOU_RowId IS NULL 
+      //                      AND ((Nok.NOK_Zip_DR->CTZIP_Code NOT IN ('900001', '12500', '40001', '74111', '80516', 'JAN-64', 'AUG-43', '11-JAN', '8-JAN', '7-FEB', '900000', '999999') AND NOK_PAPMI_ParRef->PAPMI_RowId->PAPER_Zip_DR->CTZIP_Code IS NOT NULL) 
+      //                     OR (NOK_PAPMI_ParRef->PAPMI_RowId->PAPER_Zip_DR->CTZIP_Province_DR->PROV_RowId NOT IN ('77', '78') AND NOK_Zip_DR->CTZIP_Province_DR->PROV_RowId IS NOT NULL)
+      //                      OR (NOK_Zip_DR->CTZIP_CITY_DR->CTCIT_RowId NOT IN ('1116', '936') AND NOK_Zip_DR->CTZIP_CITY_DR->CTCIT_RowId IS NOT NULL)) THEN 2
+      //                    ELSE NOK_Country_DR->CTCOU_RowId
+      //                 END "Country",
+      //               NOK.NOK_Zip_DR->CTZIP_Code "Postcode",
+      //               NOK.NOK_CityArea_DR "Subdistrict",
+      //               NOK.NOK_CityCode_DR "District",
+      //               NOK.NOK_StNameLine1 "Address",
+      //               NOK.NOK_Province_DR "Province",
+      //               '0' "sameAddress"FROM PA_Nok Nok
+      //               Where NOK_PAPMI_ParRef->PAPMI_No IS NOT NULL AND NOK_ContactType_DR = 1 AND NOK_UpdateDate BETWEEN TO_DATE(CURRENT_DATE - 1) AND CURRENT_DATE 
+      //               AND Nok.NOK_Name is not null AND Nok.NOK_Name2 is not null 
+      //               AND NOK_PAPMI_ParRef->PAPMI_RowId->PAPER_AgeYr > 15
+      //               ORDER BY NOK_PAPMI_ParRef Desc `;           
+      //               statement.executeQuery(query, function (
+      //                 err: any,
+      //                 resultset: any
+      //               ) {
+      //                 if (err) {
+      //                   reject(err);
+      //                 } else {
+      //                   resultset.toObjArray(function (
+      //                     err: any,
+      //                     results: any
+      //                   ) {
+      //                     resolve(results);
+      //                   });
+      //                 }
+      //               });
+      //             }
+      //           });
+      //         }
+      //       });
+      //       repos.release(connObj, function (err: any) {
+      //         if (err) {
+      //           console.log(err);
+      //         }
+      //       });
+      //     }
+      //   });
+      // });
+      // repos = di.get("repos")
+      // query_1 = `REPLACE INTO Screening.Patient_Emergency SET ? `
+      // result.map((d: any) => {
+      //   repos.query(query_1, d,function(err:any, results:any) {
+      //     if (err) {
+      //       return console.error(err.message);
+      //     }
+      //   });
+        
+      // });
+      
+      // let query_3 = `UPDATE Screening.Patient_Emergency pe
+      //   SET pe.Subdistrict = (SELECT ca1.ID FROM Registration.CT_CityArea_1 ca1 WHERE ca1.Desc_TH = 
+      //   (SELECT ca.Desc_TH FROM Registration.CT_CityArea ca WHERE ca.ID = pe.Subdistrict limit 1) AND ca1.Zip_Code = pe.Postcode limit 1)
+      //   WHERE pe.Createdate BETWEEN ADDDATE(CURDATE(),-1) AND CURDATE() `
+      //   repos.query(query_3, function(err:any, results:any) {
+      //     if (err) {
+      //       return console.error(err.message);
+      //     }
+      //   });
+      
+      // repos = di.get("cache");
+      // result = await new Promise((resolve, reject) => {
+      //   repos.reserve((err: any, connObj: any) => {
+      //     if (connObj) {
+      //       let conn = connObj.conn;
+            
+      //       conn.createStatement((err: any, statement: any) => {
+      //         if (err) {
+      //           reject(err);
+      //         } else {
+      //           statement.setFetchSize(100, function (err: any) {
+      //             if (err) {
+      //               reject(err);
+      //             } else {
+      //               const query = `SELECT	NOK_PAPMI_ParRef->PAPMI_No "HN",
+      //               NOK.NOK_Name "Firstname", 
+      //               NOK.NOK_Name2 "Lastname",
+      //               NOK.NOK_Relation_DR "Relation",
+      //               NOK.NOK_Email "Email",
+      //               CASE
+      //                   WHEN NOK.NOK_MobPhone IS NOT NULL THEN Nok_TelH
+      //                   ELSE NOK.NOK_TelH
+      //               END "PhoneNo",
+      //               CASE 
+      //                    WHEN Nok.NOK_Country_DR->CTCOU_RowId IS NULL 
+      //                      AND ((Nok.NOK_Zip_DR->CTZIP_Code NOT IN ('900001', '12500', '40001', '74111', '80516', 'JAN-64', 'AUG-43', '11-JAN', '8-JAN', '7-FEB', '900000', '999999') AND NOK_PAPMI_ParRef->PAPMI_RowId->PAPER_Zip_DR->CTZIP_Code IS NOT NULL) 
+      //                     OR (NOK_PAPMI_ParRef->PAPMI_RowId->PAPER_Zip_DR->CTZIP_Province_DR->PROV_RowId NOT IN ('77', '78') AND NOK_Zip_DR->CTZIP_Province_DR->PROV_RowId IS NOT NULL)
+      //                      OR (NOK_Zip_DR->CTZIP_CITY_DR->CTCIT_RowId NOT IN ('1116', '936') AND NOK_Zip_DR->CTZIP_CITY_DR->CTCIT_RowId IS NOT NULL)) THEN 2
+      //                    ELSE NOK_Country_DR->CTCOU_RowId
+      //                 END "Country",
+      //               NOK.NOK_Zip_DR->CTZIP_Code "Postcode",
+      //               NOK.NOK_CityArea_DR "Subdistrict",
+      //               NOK.NOK_CityCode_DR "District",
+      //               NOK.NOK_StNameLine1 "Address",
+      //               NOK.NOK_Province_DR "Province",
+      //               '0' "sameAddress"FROM PA_Nok Nok
+      //               Where NOK_PAPMI_ParRef->PAPMI_No IS NOT NULL AND NOK_UpdateDate BETWEEN TO_DATE(CURRENT_DATE - 1) AND CURRENT_DATE 
+      //               AND Nok.NOK_Name is not null AND Nok.NOK_Name2 is not null 
+      //               AND NOK_PAPMI_ParRef->PAPMI_RowId->PAPER_AgeYr <= 15
+      //               ORDER BY NOK_PAPMI_ParRef Desc `;           
+      //               statement.executeQuery(query, function (
+      //                 err: any,
+      //                 resultset: any
+      //               ) {
+      //                 if (err) {
+      //                   reject(err);
+      //                 } else {
+      //                   resultset.toObjArray(function (
+      //                     err: any,
+      //                     results: any
+      //                   ) {
+      //                     resolve(results);
+      //                   });
+      //                 }
+      //               });
+      //             }
+      //           });
+      //         }
+      //       });
+      //       repos.release(connObj, function (err: any) {
+      //         if (err) {
+      //           console.log(err);
+      //         }
+      //       });
+      //     }
+      //   });
+      // });
+      // repos = di.get("repos")
+      // query_1 = `REPLACE INTO Screening.Parent SET ? `
+      // result.map((d: any) => {
+      //   repos.query(query_1, d,function(err:any, results:any) {
+      //     if (err) {
+      //       return console.error(err.message);
+      //     }
+      //   });
+      // })
+      
+      // repos = di.get("cache");
+      // result = await new Promise((resolve, reject) => {
+      //   repos.reserve((err: any, connObj: any) => {
+      //     if (connObj) {
+      //       let conn = connObj.conn;
+            
+      //       conn.createStatement((err: any, statement: any) => {
+      //         if (err) {
+      //           reject(err);
+      //         } else {
+      //           statement.setFetchSize(100, function (err: any) {
+      //             if (err) {
+      //               reject(err);
+      //             } else {
+      //               const query = `SELECT PAPMI_No "HN",
+      //               CASE 
+      //                  WHEN PAPER_Country_DR IS NULL 
+      //                  AND ((PAPER_Zip_DR->CTZIP_Code NOT IN ('900001', '12500', '40001', '74111', '80516', 'JAN-64', 'AUG-43', '11-JAN', '8-JAN', '7-FEB', '900000', '999999') AND PAPER_Zip_DR->CTZIP_Code IS NOT NULL) 
+      //                  OR (PAPER_Zip_DR->CTZIP_Province_DR NOT IN ('77', '78') AND PAPER_Zip_DR->CTZIP_Province_DR IS NOT NULL)
+      //                  OR (PAPER_Zip_DR->CTZIP_CITY_DR NOT IN ('1116', '936') AND PAPER_Zip_DR->CTZIP_CITY_DR IS NOT NULL)) THEN 2
+      //                  ELSE PAPER_Country_DR
+      //                 END "Country",
+      //                 CASE
+      //                  WHEN PAPER_Zip_DR->CTZIP_Code IN ('900001', '12500', '40001', '74111', '80516', 'JAN-64', 'AUG-43', '11-JAN', '8-JAN', '7-FEB', '900000', '999999') THEN null
+      //                  ELSE  PAPER_Zip_DR->CTZIP_Code
+      //                 END "Postcode",
+      //                   CASE
+      //                  WHEN PAPER_Zip_DR->CTZIP_Province_DR IN ('77', '78') THEN null
+      //                  ELSE PAPER_Zip_DR->CTZIP_Province_DR
+      //                 END "Province",
+      //                 CASE
+      //                  WHEN PAPER_Zip_DR->CTZIP_CITY_DR IN ('1116', '936') THEN null
+      //                  ELSE  PAPER_Zip_DR->CTZIP_CITY_DR
+      //                 END "District",
+      //                 PAPER_CityArea_DR "Subdistrict",
+      //                 PAPER_StName "Address",
+      //                       '0' "Type"
+      //                 FROM PA_PatMas
+      //                   INNER JOIN PA_Person ON PA_PatMas.PAPMI_PAPER_DR = PA_Person.PAPER_RowId
+      //                   WHERE PAPMI_No IS NOT NULL AND PAPER_UpdateDate BETWEEN TO_DATE(CURRENT_DATE - 1) AND CURRENT_DATE
+      //               `;           
+      //               statement.executeQuery(query, function (
+      //                 err: any,
+      //                 resultset: any
+      //               ) {
+      //                 if (err) {
+      //                   reject(err);
+      //                 } else {
+      //                   resultset.toObjArray(function (
+      //                     err: any,
+      //                     results: any
+      //                   ) {
+      //                     resolve(results);
+      //                   });
+      //                 }
+      //               });
+      //             }
+      //           });
+      //         }
+      //       });
+      //       repos.release(connObj, function (err: any) {
+      //         if (err) {
+      //           console.log(err);
+      //         }
+      //       });
+      //     }
+      //   });
+      // });
+      // repos = di.get("repos")
+      // let query_del
+
+      // result.map((d: any) => {
+      //   query_del = `DELETE FROM Screening.Patient_Address WHERE HN = '${d.HN}' AND Type = '${d.Type}' AND Type = 0 `
+      //   repos.query(query_del,function(err:any, results:any) {
+      //     if (err) {
+      //       return console.error(err.message);
+      //     } 
+      //   });
+      // });
+      
+      // query_1 = `INSERT INTO Screening.Patient_Address SET ? `
+      // result.map((d: any) => {
+      //   repos.query(query_1, d,function(err:any, results:any) {
+      //     if (err) {
+      //       return console.error(err.message);
+      //     }
+      //   });
+      // });
+
+      
+      // let query_2 = `UPDATE Screening.Patient_Address pa
+      //   SET pa.Subdistrict = (SELECT ca1.ID FROM Registration.CT_CityArea_1 ca1 WHERE ca1.Desc_TH = 
+      //   (SELECT ca.Desc_TH FROM Registration.CT_CityArea ca WHERE ca.ID = pa.Subdistrict limit 1) AND ca1.Zip_Code = pa.Postcode limit 1)
+      //   WHERE pa.Createdate BETWEEN ADDDATE(CURDATE(),-1) AND CURDATE() `
+      //   repos.query(query_2, function(err:any, results:any) {
+      //     if (err) {
+      //       return console.error(err.message);
+      //     }
+      //   });
+        
+      
+      // repos = di.get("cache");
+      // result = await new Promise((resolve, reject) => {
+      //   repos.reserve((err: any, connObj: any) => {
+      //     if (connObj) {
+      //       let conn = connObj.conn;
+            
+      //       conn.createStatement((err: any, statement: any) => {
+      //         if (err) {
+      //           reject(err);
+      //         } else {
+      //           statement.setFetchSize(100, function (err: any) {
+      //             if (err) {
+      //               reject(err);
+      //             } else {
+      //               const query = `SELECT  FAM_PAPMI_ParRef->PAPMI_No "HN", 
+      //               FAM_Relation_DR "Person",
+      //               FAM_Desc "Disease"
+      //               FROM PA_Family
+      //               WHERE FAM_PAPMI_ParRef->PAPMI_No IS NOT NULL AND FAM_UpdateDate BETWEEN TO_DATE(CURRENT_DATE - 1) AND CURRENT_DATE `;           
+      //               statement.executeQuery(query, function (
+      //                 err: any,
+      //                 resultset: any
+      //               ) {
+      //                 if (err) {
+      //                   reject(err);
+      //                 } else {
+      //                   resultset.toObjArray(function (
+      //                     err: any,
+      //                     results: any
+      //                   ) {
+      //                     resolve(results);
+      //                   });
+      //                 }
+      //               });
+      //             }
+      //           });
+      //         }
+      //       });
+      //       repos.release(connObj, function (err: any) {
+      //         if (err) {
+      //           console.log(err);
+      //         }
+      //       });
+      //     }
+      //   });
+      // });
+      // repos = di.get("repos")
+      // query_1 = `INSERT INTO Screening.Family_History SET ? `
+      // result.map((d: any) => {
+      //   repos.query(query_1, d,function(err:any, results:any) {
+      //     if (err) {
+      //       return console.error(err.message);
+      //     }
+      //   });
+      // })
+
+      // repos = di.get("cache");
+      // result = await new Promise((resolve, reject) => {
+      //   repos.reserve((err: any, connObj: any) => {
+      //     if (connObj) {
+      //       let conn = connObj.conn;
+            
+      //       conn.createStatement((err: any, statement: any) => {
+      //         if (err) {
+      //           reject(err);
+      //         } else {
+      //           statement.setFetchSize(100, function (err: any) {
+      //             if (err) {
+      //               reject(err);
+      //             } else {
+      //               const query = `SELECT SCH_PAPMI_ParRef->PAPMI_No "HN", 
+      //               SCH_Habits_DR->HAB_Desc "Habit",
+      //               CASE WHEN SCH_HabitsQty_DR->QTY_desc = 'None' THEN NULL
+      //                 ELSE SCH_HabitsQty_DR->QTY_desc
+      //               END "Quantity", 
+      //               SCH_Desc "Comment",
+      //               CASE WHEN SCH_HabitsQty_DR->QTY_desc IS NOT NULL AND SCH_HabitsQty_DR->QTY_desc = 'None' THEN 0
+      //                 ELSE 1
+      //               END "Status",
+      //               CASE
+      //                 WHEN SCH_DuratDays is not null THEN SCH_DuratDays
+      //                 WHEN SCH_DuratMonth is not null THEN SCH_DuratMonth
+      //                 WHEN SCH_DuratYear is not null THEN SCH_DuratYear
+      //                 ELSE NULL
+      //               END "DurationQuantity",
+      //               CASE
+      //                 WHEN SCH_DuratDays is not null THEN 'Days'
+      //                 WHEN SCH_DuratMonth is not null THEN 'Weeks'
+      //                 WHEN SCH_DuratYear is not null THEN 'Years'
+      //                 ELSE NULL
+      //               END "DurationUnit"
+      //               FROM PA_SocHist 
+      //               WHERE SCH_PAPMI_ParRef->PAPMI_No IS NOT NULL AND SCH_UpdateDate BETWEEN TO_DATE(CURRENT_DATE - 1) AND CURRENT_DATE `;           
+      //               statement.executeQuery(query, function (
+      //                 err: any,
+      //                 resultset: any
+      //               ) {
+      //                 if (err) {
+      //                   reject(err);
+      //                 } else {
+      //                   resultset.toObjArray(function (
+      //                     err: any,
+      //                     results: any
+      //                   ) {
+      //                     resolve(results);
+      //                   });
+      //                 }
+      //               });
+      //             }
+      //           });
+      //         }
+      //       });
+      //       repos.release(connObj, function (err: any) {
+      //         if (err) {
+      //           console.log(err);
+      //         }
+      //       });
+      //     }
+      //   });
+      // });
+      // repos = di.get("repos")
+      // query_1 = `INSERT INTO Screening.Patient_Social SET ? `
+      // result.map((d: any) => {
+      //   query_del = `DELETE FROM Screening.Patient_Social WHERE HN = '${d.HN}' AND Habit = '${d.Habit}' `
+      //   repos.query(query_del,function(err:any, results:any) {
+      //     if (err) {
+      //       return console.error(err.message);
+      //     }
+      //   });
+      // })
+      // result.map((d: any) => {
+      //   repos.query(query_1, d,function(err:any, results:any) {
+      //     if (err) {
+      //       return console.error(err.message);
+      //     }
+      //   });
+      // })
+
+      
+      
+      
+     };
+  }
+  async postScreeningFromTC(national_id: any, passport:any ,firstname:any ,lastname:any ,dateOfBirth:any) {
+        
+        let repos = di.get("cache");
+        let dataHN: any = await new Promise((resolve, reject) => {
+          repos.reserve((err: any, connObj: any) => {
+            if (connObj) {
+              let conn = connObj.conn;
+              
+              conn.createStatement((err: any, statement: any) => {
+                if (err) {
+                  reject(err);
+                } else {
+                  statement.setFetchSize(100, function (err: any) {
+                    if (err) {
+                      reject(err);
+                    } else {
+                      let query = `SELECT	PAPMI_No "HN", PAPMI_ID "NationalID" FROM PA_PatMas WHERE PAPMI_No IS NOT NULL `;    
+                      if (!_.isEmpty(national_id)) {
+                        query += ` AND PAPMI_ID = '${national_id}'`
+                      }
+                      if (!_.isEmpty(passport)) {
+                        query += ` AND PAPER_PassportNumber = '${passport}'`
+                      }
+                      if (!_.isEmpty(firstname)) {
+                        query += ` AND PAPMI_Name like '${firstname}%'`
+                      }
+                      if (!_.isEmpty(lastname)) {
+                        query += ` AND PAPMI_Name2 like '${lastname}%'`
+                      }
+                      if (!_.isEmpty(dateOfBirth)) {
+                        query += ` AND PAPMI_DOB = '${dateOfBirth}'`
+                      }       
+                      statement.executeQuery(query, function (
+                        err: any,
+                        resultset: any
+                      ) {
+                        if (err) {
+                          reject(err);
+                        } else {
+                          resultset.toObjArray(function (
+                            err: any,
+                            results: any
+                          ) {
+                            resolve(results);
+                          });
+                        }
+                      });
+                    }
+                  });
+                }
+              });
+              repos.release(connObj, function (err: any) {
+                if (err) {
+                  console.log(err);
+                }
+              });
+            }
+          });
+        });
+      
+        await Promise.all(dataHN.map(async (d: any): Promise<any> => {
+        await this.postPatientInfoBYHN(d.HN)
+        if (d.NationalID)
+        {
+          await this.updateScreeningDataGroupBYNationID(d.HN)
+        }else
+        {
+          await this.updateScreeningDataGroupBYData(d.HN)
+        }
+        
+        await this.postEmergencyByHN(d.HN)
+        await this.postParentByHN(d.HN)
+        await this.postPatientAddressByHN(d.HN)
+        await this.postPatientFamilyByHN(d.HN)
+        await this.postPatientSocialByHN(d.HN)
+        }));
+  }
+  async postScreeningByData(firstname: any, lastname: any, dateofbirth: any) {
+        
+    let repos = di.get("cache");
+    let HN: any = await new Promise((resolve, reject) => {
+      repos.reserve((err: any, connObj: any) => {
+        if (connObj) {
+          let conn = connObj.conn;
+          
+          conn.createStatement((err: any, statement: any) => {
+            if (err) {
+              reject(err);
+            } else {
+              statement.setFetchSize(100, function (err: any) {
+                if (err) {
+                  reject(err);
+                } else {
+                  const query = `SELECT	PAPMI_No FROM PA_PatMas WHERE PAPMI_No IS NOT NULL AND PAPMI_Name = '${firstname}' AND PAPMI_Name2 = '${lastname}' AND PAPMI_DOB = '${dateofbirth}' `;           
+                  statement.executeQuery(query, function (
+                    err: any,
+                    resultset: any
+                  ) {
+                    if (err) {
+                      reject(err);
+                    } else {
+                      resultset.toObjArray(function (
+                        err: any,
+                        results: any
+                      ) {
+                        resolve(results.length > 0 ? results[0].PAPMI_No : null);
+                      });
+                    }
+                  });
+                }
+              });
+            }
+          });
+          repos.release(connObj, function (err: any) {
+            if (err) {
+              console.log(err);
+            }
+          });
+        }
+      });
+    });
+    
+  if (HN)
+  {
+
+    await this.postPatientInfoBYHN(HN)
+    this.updateScreeningDataGroupBYData(HN)
+    this.postEmergencyByHN(HN)
+    this.postParentByHN(HN)
+    this.postPatientAddressByHN(HN)
+    this.postPatientFamilyByHN(HN)
+    this.postPatientSocialByHN(HN)
+  }
+  
+}
+  async postPatientInfoBYHN (HN: any)
+  {
+    let repos = di.get("cache")
+    let result: any = await new Promise((resolve, reject) => {
+      repos.reserve((err: any, connObj: any) => {
+        if (connObj) {
+          let conn = connObj.conn;
+          conn.createStatement((err: any, statement: any) => {
+            if (err) {
+              reject(err);
+            } else {
+              statement.setFetchSize(100, function (err: any) {
+                if (err) {
+                  reject(err);
+                } else {
+                  const query = `SELECT	PAPMI_No "HN",
+                  PAPMI_Title_DR->TTL_RowId "Title",
+                  PAPMI_Name "Firstname",
+                  PAPMI_Name2 "Lastname",
+                  PAPMI_Name5 "FirstnameEn",
+                  PAPMI_Name7 "LastnameEn",
+                  tochar(PAPER_Dob, 'YYYY-MM-DD') "DOB",
+                  PAPMI_Sex_DR "Gender",
+                  PAPER_Nation_DR "Nationality",
+                  PAPER_Religion_DR "Religion",
+                PAPER_PrefLanguage_DR "PreferredLanguage",
+                  PAPMI_Email "Email",
+                  PAPER_ID "NationalID",
+                  PAPER_PassportNumber "Passport",
+                  SUBSTRING(PAPER_Marital_DR->CTMAR_Desc, CHARINDEX('(', PAPER_Marital_DR->CTMAR_Desc)+1, (LENGTH(PAPER_Marital_DR->CTMAR_Desc)-CHARINDEX('(', PAPER_Marital_DR->CTMAR_Desc))-1) "MaritalStatus",
+                  PAPER_SocialStatus_DR->SS_Desc "Occupation",
+                  PAPER_MobPhone "PhoneNo",
+                  PAPER_TelH "Homephone" ,
+            CASE
+                  WHEN PAPMI_Title_DR LIKE '%e%' THEN 'en'
+                  ELSE 'th'
+            END "DefaultLanguage",
+            CASE
+                WHEN PAPER_AgeYr > 15 THEN 0
+                 ELSE 1
+            END "type",
+            0 "Confirm",
+            0 "Approve"
+              FROM PA_PatMas
+              LEFT JOIN PA_Person ON PA_PatMas.PAPMI_PAPER_DR = PA_Person.PAPER_RowId
+              WHERE PAPMI_No IS NOT NULL AND PAPMI_No = '${HN}' `;           
+                  statement.executeQuery(query, function (
+                    err: any,
+                    resultset: any
+                  ) {
+                    if (err) {
+                      reject(err);
+                    } else {
+                      resultset.toObjArray(function (
+                        err: any,
+                        results: any
+                      ) {
+                        resolve(results);
+                      });
+                    }
+                  });
+                }
+              });
+            }
+          });
+          repos.release(connObj, function (err: any) {
+            if (err) {
+              console.log(err);
+            }
+          });
+        }
+      });
+    });
+    repos = di.get("repos")
+    let query_1 = `REPLACE INTO Screening.Patient_Info SET ? `
+      
+      await result.map((d: any) => {
+        repos.query(query_1, d,function(err:any, results:any) {
+          if (err) {
+            return console.error(err.message);
+          }
+        });
+      })
+    
+  }
+  async updateScreeningDataGroupBYNationID (HN: any)
+  {
+    let repos = di.get("repos")
+    let query = `INSERT INTO Screening.Patient_Financial (HN) VALUES ('${HN}') `
+        repos.query(query, function(err:any, results:any) {
+          if (err) {
+            return console.error(err.message);
+          }
+          query = `UPDATE Screening.Patient_Financial pf1 
+          INNER JOIN Screening.Patient_Info pi1 ON pf1.HN = pi1.HN
+          INNER JOIN Registration.Patient_Info pi2 ON pi1.NationalID = pi2.NationalID 
+          INNER JOIN Registration.Patient_Financial pf2 ON pf2.PatientID = pi2.ID 
+          SET pf1.SelfPay = pf2.SelfPay,
+              pf1.CompanyContact = pf2.CompanyContact,
+              pf1.Insurance = pf2.Insurance,
+              pf1.CompanyDesc = pf2.CompanyDesc,
+              pf1.InsuranceDesc = pf2.InsuranceDesc,
+              pf1.PaymentAs = pf2.PaymentAs,
+              pf1.Title = pf2.Title,
+              pf1.Firstname = pf2.Firstname,
+              pf1.Lastname = pf2.Lastname,
+              pf1.DOB = pf2.DOB,
+              pf1.Aforemention = pf2.Aforemention
+          WHERE  pi1.HN = '${HN}' AND pi1.Updated < pi2.Updated `
+          repos.query(query)
+        }); 
+      
+      query = `INSERT INTO Screening.Patient_History (HN) VALUES ('${HN}') `
+        repos.query(query, function(err:any, results:any) {
+          if (err) {
+            return console.error(err.message);
+          }
+          query = `UPDATE Screening.Patient_History ph1 
+                  INNER JOIN Screening.Patient_Info pi1 ON ph1.HN = pi1.HN
+                  INNER JOIN Registration.Patient_Info pi2 ON pi1.NationalID = pi2.NationalID 
+                  INNER JOIN Registration.Patient_History ph2 ON ph2.PatientID = pi2.ID 
+                  SET ph1.MaritalStatus = ph2.MaritalStatus,
+                      ph1.Children = ph2.Children,
+                      ph1.Diseases = ph2.Diseases,
+                      ph1.Medication = ph2.Medication,
+                      ph1.CommentMedication = ph2.CommentMedication,
+                      ph1.Hospitalization = ph2.Hospitalization,
+                      ph1.CommentHospitalization = ph2.CommentHospitalization,
+                      ph1.Physical = ph2.Physical,
+                      ph1.CommentPhysical = ph2.CommentPhysical,
+                      ph1.Exercise = ph2.Exercise,
+                      ph1.Pregnant = ph2.Pregnant,
+                      ph1.CommentPregnant = ph2.CommentPregnant,
+                      ph1.Giver = ph2.Giver,
+                      ph1.CommentGiver = ph2.CommentGiver,
+                      ph1.AbsenceFromWork = ph2.AbsenceFromWork,
+                      ph1.Reimbursement = ph2.Reimbursement,
+                      ph1.GovernmentReimbursement = ph2.GovernmentReimbursement,
+                      ph1.StateEnterprise = ph2.StateEnterprise,
+                      ph1.Authorize = ph2.Authorize,
+                      ph1.CommentAuthorize = ph2.CommentAuthorize,
+                      ph1.Spiritual = ph2.Spiritual,
+                      ph1.CommentSpiritual = ph2.CommentSpiritual,
+                      ph1.Allergies = ph2.Allergies,
+                      ph1.CommentAllergies = ph2.CommentAllergies,
+                      ph1.Alcohol = ph2.Alcohol,
+                      ph1.DrugAbuse = ph2.DrugAbuse,
+                      ph1.Smoke = ph2.Smoke,
+                      ph1.FatherAlive = ph2.FatherAlive,
+                      ph1.FatherAge = ph2.FatherAge,
+                      ph1.CauseFather = ph2.CauseFather,
+                      ph1.MotherAlive = ph2.MotherAlive,
+                      ph1.MotherAge = ph2.MotherAge,
+                      ph1.CauseMother = ph2.CauseMother 
+                  WHERE pi1.HN = '${HN}'  `
+          repos.query(query)
+        }); 
+  }
+  async updateScreeningDataGroupBYData (HN: any)
+  {
+    let repos = di.get("repos")
+    let query = `INSERT INTO Screening.Patient_Financial (HN) VALUES ('${HN}') `
+        repos.query(query, function(err:any, results:any) {
+          if (err) {
+            return console.error(err.message);
+          }
+          query = `UPDATE Screening.Patient_Financial pf1 
+          INNER JOIN Screening.Patient_Info pi1 ON pf1.HN = pi1.HN
+          INNER JOIN Registration.Patient_Info pi2 ON pi1.Firstname = pi2.Firstname AND pi1.Lastname = pi2.Lastname AND pi1.DOB = pi2.DOB
+          INNER JOIN Registration.Patient_Financial pf2 ON pf2.PatientID = pi2.ID 
+          SET pf1.SelfPay = pf2.SelfPay,
+              pf1.CompanyContact = pf2.CompanyContact,
+              pf1.Insurance = pf2.Insurance,
+              pf1.CompanyDesc = pf2.CompanyDesc,
+              pf1.InsuranceDesc = pf2.InsuranceDesc,
+              pf1.PaymentAs = pf2.PaymentAs,
+              pf1.Title = pf2.Title,
+              pf1.Firstname = pf2.Firstname,
+              pf1.Lastname = pf2.Lastname,
+              pf1.DOB = pf2.DOB,
+              pf1.Aforemention = pf2.Aforemention
+          WHERE  pi1.HN = '${HN}'  `
+          repos.query(query)
+        }); 
+      
+      query = `INSERT INTO Screening.Patient_History (HN) VALUES ('${HN}') `
+        repos.query(query, function(err:any, results:any) {
+          if (err) {
+            return console.error(err.message);
+          }
+          query = `UPDATE Screening.Patient_History ph1 
+                  INNER JOIN Screening.Patient_Info pi1 ON ph1.HN = pi1.HN
+                  INNER JOIN Registration.Patient_Info pi2 ON pi1.Firstname = pi2.Firstname AND pi1.Lastname = pi2.Lastname AND pi1.DOB = pi2.DOB
+                  INNER JOIN Registration.Patient_History ph2 ON ph2.PatientID = pi2.ID 
+                  SET ph1.MaritalStatus = ph2.MaritalStatus,
+                      ph1.Children = ph2.Children,
+                      ph1.Diseases = ph2.Diseases,
+                      ph1.Medication = ph2.Medication,
+                      ph1.CommentMedication = ph2.CommentMedication,
+                      ph1.Hospitalization = ph2.Hospitalization,
+                      ph1.CommentHospitalization = ph2.CommentHospitalization,
+                      ph1.Physical = ph2.Physical,
+                      ph1.CommentPhysical = ph2.CommentPhysical,
+                      ph1.Exercise = ph2.Exercise,
+                      ph1.Pregnant = ph2.Pregnant,
+                      ph1.CommentPregnant = ph2.CommentPregnant,
+                      ph1.Giver = ph2.Giver,
+                      ph1.CommentGiver = ph2.CommentGiver,
+                      ph1.AbsenceFromWork = ph2.AbsenceFromWork,
+                      ph1.Reimbursement = ph2.Reimbursement,
+                      ph1.GovernmentReimbursement = ph2.GovernmentReimbursement,
+                      ph1.StateEnterprise = ph2.StateEnterprise,
+                      ph1.Authorize = ph2.Authorize,
+                      ph1.CommentAuthorize = ph2.CommentAuthorize,
+                      ph1.Spiritual = ph2.Spiritual,
+                      ph1.CommentSpiritual = ph2.CommentSpiritual,
+                      ph1.Allergies = ph2.Allergies,
+                      ph1.CommentAllergies = ph2.CommentAllergies,
+                      ph1.Alcohol = ph2.Alcohol,
+                      ph1.DrugAbuse = ph2.DrugAbuse,
+                      ph1.Smoke = ph2.Smoke,
+                      ph1.FatherAlive = ph2.FatherAlive,
+                      ph1.FatherAge = ph2.FatherAge,
+                      ph1.CauseFather = ph2.CauseFather,
+                      ph1.MotherAlive = ph2.MotherAlive,
+                      ph1.MotherAge = ph2.MotherAge,
+                      ph1.CauseMother = ph2.CauseMother 
+                  WHERE pi1.HN = '${HN}'  `
+          repos.query(query)
+        }); 
+  }
+  async postEmergencyByHN(HN: any) {
+    let repos = di.get("cache");
+    let result: any = await new Promise((resolve, reject) => {
+        repos.reserve((err: any, connObj: any) => {
+          if (connObj) {
+            let conn = connObj.conn;
+            
+            conn.createStatement((err: any, statement: any) => {
+              if (err) {
+                reject(err);
+              } else {
+                statement.setFetchSize(100, function (err: any) {
+                  if (err) {
+                    reject(err);
+                  } else {
+                    const query = `SELECT	NOK_PAPMI_ParRef->PAPMI_No "HN",
+                              CASE 
+                                WHEN NOK.NOK_PAPER_DR IS NOT NULL THEN NOK.NOK_PAPER_DR->PAPER_Name
+                                ELSE NOK.NOK_Name 
+                              END "Firstname", 
+                                        CASE 
+                                          WHEN NOK.NOK_PAPER_DR IS NOT NULL THEN NOK.NOK_PAPER_DR->PAPER_Name2
+                                          ELSE NOK.NOK_Name2
+                                        END "Lastname",
+                                        NOK.NOK_Relation_DR "Relation",
+                                        CASE 
+                                          WHEN NOK.NOK_PAPER_DR IS NOT NULL THEN NOK.NOK_PAPER_DR->PAPER_Email
+                                          ELSE NOK.NOK_Email
+                                        END "Email",
+                                        CASE
+                                          WHEN NOK.NOK_PAPER_DR IS NOT NULL THEN NOK.NOK_PAPER_DR->PAPER_TelH
+                                            WHEN NOK.NOK_MobPhone IS NOT NULL THEN NOK_MobPhone
+                                            ELSE NOK.NOK_TelH
+                                        END "PhoneNo",
+                                        CASE 
+                                          WHEN NOK.NOK_PAPER_DR->PAPER_Country_DR IS NOT NULL THEN NOK.NOK_PAPER_DR->PAPER_Country_DR
+                                             WHEN Nok.NOK_Country_DR->CTCOU_RowId IS NULL 
+                                               AND ((Nok.NOK_Zip_DR->CTZIP_Code NOT IN ('900001', '12500', '40001', '74111', '80516', 'JAN-64', 'AUG-43', '11-JAN', '8-JAN', '7-FEB', '900000', '999999') AND NOK_PAPMI_ParRef->PAPMI_RowId->PAPER_Zip_DR->CTZIP_Code IS NOT NULL) 
+                                              OR (NOK_PAPMI_ParRef->PAPMI_RowId->PAPER_Zip_DR->CTZIP_Province_DR->PROV_RowId NOT IN ('77', '78') AND NOK_Zip_DR->CTZIP_Province_DR->PROV_RowId IS NOT NULL)
+                                               OR (NOK_Zip_DR->CTZIP_CITY_DR->CTCIT_RowId NOT IN ('1116', '936') AND NOK_Zip_DR->CTZIP_CITY_DR->CTCIT_RowId IS NOT NULL)) THEN 2
+                                             ELSE NOK_Country_DR->CTCOU_RowId
+                                          END "Country",
+                                        CASE 
+                                WHEN NOK.NOK_PAPER_DR IS NOT NULL THEN NOK.NOK_PAPER_DR->PAPER_Zip_DR->CTZIP_Code
+                                ELSE NOK.NOK_Zip_DR->CTZIP_Code
+                              END "Postcode",
+                                        CASE 
+                                WHEN NOK.NOK_PAPER_DR IS NOT NULL THEN NOK.NOK_PAPER_DR->PAPER_CityArea_DR
+                                ELSE NOK.NOK_CityArea_DR
+                              END "Subdistrict",
+                                        CASE 
+                                WHEN NOK.NOK_PAPER_DR IS NOT NULL THEN NOK.NOK_PAPER_DR->PAPER_CityCode_DR
+                                ELSE NOK.NOK_CityCode_DR
+                              END "District",
+                                        CASE 
+                                WHEN NOK.NOK_PAPER_DR IS NOT NULL THEN NOK.NOK_PAPER_DR->PAPER_NokAddress1
+                                ELSE 'NOK.NOK_StNameLine1'
+                              END "Address",
+                                        CASE 
+                                WHEN NOK.NOK_PAPER_DR IS NOT NULL THEN NOK.NOK_PAPER_DR->PAPER_CT_Province_DR
+                                ELSE NOK.NOK_Province_DR
+                              END "Province",
+                                        '0' "sameAddress" FROM PA_Nok Nok
+                                        Where NOK_PAPMI_ParRef->PAPMI_No = '${HN}'
+                                        AND NOK_PAPMI_ParRef->PAPMI_RowId->PAPER_AgeYr > 15
+                                        AND ((NOK.NOK_Name IS NOT NULL AND NOK.NOK_Name2 IS NOT NULL) OR 
+                                        (NOK.NOK_PAPER_DR->PAPER_Name IS NOT NULL AND NOK.NOK_PAPER_DR->PAPER_Name2 IS NOT NULL))
+                                        ORDER BY NOK_PAPMI_ParRef Desc  `;           
+                    statement.executeQuery(query, function (
+                      err: any,
+                      resultset: any
+                    ) {
+                      if (err) {
+                        reject(err);
+                      } else {
+                        resultset.toObjArray(function (
+                          err: any,
+                          results: any
+                        ) {
+                          resolve(results);
+                        });
+                      }
+                    });
+                  }
+                });
+              }
+            });
+            repos.release(connObj, function (err: any) {
+              if (err) {
+                console.log(err);
+              }
+            });
+          }
+        });
+      });
+      repos = di.get("repos")
+      let query_1 = `REPLACE INTO Screening.Patient_Emergency SET ? `
+      await result.map(async (d: any) => {
+        repos.query(query_1, d,function(err:any, results:any) {
+          if (err) {
+            return console.error(err.message);
+          }
+        });
+        
+        
+      });
+      
+      let query_2 = `UPDATE Screening.Patient_Emergency pe
+          SET pe.Subdistrict = (SELECT ca1.ID FROM Registration.CT_CityArea_1 ca1 WHERE ca1.Desc_TH = 
+          (SELECT ca.Desc_TH FROM Registration.CT_CityArea ca WHERE ca.ID = pe.Subdistrict limit 1) AND ca1.Zip_Code = pe.Postcode limit 1)
+          WHERE pe.HN = '${HN}'`
+          repos.query(query_2, function(err:any, results:any) {
+            if (err) {
+              return console.error(err.message);
+            }
+          });
+  }
+  async postParentByHN(HN: any){
       let repos = di.get("cache");
       let result: any = await new Promise((resolve, reject) => {
         repos.reserve((err: any, connObj: any) => {
@@ -252,216 +1379,6 @@ class screeningRoute {
                   if (err) {
                     reject(err);
                   } else {
-                    const query = `SELECT	PAPMI_No "HN",
-                    PAPMI_Title_DR->TTL_RowId "Title",
-                    PAPMI_Name "Firstname",
-                    PAPMI_Name2 "Lastname",
-                    PAPMI_Name5 "FirstnameEn",
-                    PAPMI_Name7 "LastnameEn",
-                    tochar(PAPER_Dob, 'YYYY-MM-DD') "DOB",
-                    PAPMI_Sex_DR "Gender",
-                    PAPER_Nation_DR "Nationality",
-                    PAPER_Religion_DR "Religion",
-                  PAPER_PrefLanguage_DR "PreferredLanguage",
-                    PAPMI_Email "Email",
-                    PAPER_ID "NationalID",
-                    PAPER_PassportNumber "Passport",
-                    SUBSTRING(PAPER_Marital_DR->CTMAR_Desc, CHARINDEX('(', PAPER_Marital_DR->CTMAR_Desc)+1, (LENGTH(PAPER_Marital_DR->CTMAR_Desc)-CHARINDEX('(', PAPER_Marital_DR->CTMAR_Desc))-1) "MaritalStatus",
-                    PAPER_SocialStatus_DR->SS_Desc "Occupation",
-                    PAPER_MobPhone "PhoneNo",
-                    PAPER_TelH "Homephone" ,
-              CASE
-                    WHEN PAPMI_Title_DR LIKE '%e%' THEN 'en'
-                    ELSE 'th'
-              END "DefaultLanguage",
-              CASE
-                  WHEN PAPER_AgeYr > 15 THEN 0
-                   ELSE 1
-              END "type"
-                FROM PA_PatMas
-                LEFT JOIN PA_Person ON PA_PatMas.PAPMI_PAPER_DR = PA_Person.PAPER_RowId
-                WHERE PAPMI_No IS NOT NULL AND PAPER_UpdateDate BETWEEN TO_DATE(CURRENT_DATE - 1) AND CURRENT_DATE`;           
-                    statement.executeQuery(query, function (
-                      err: any,
-                      resultset: any
-                    ) {
-                      if (err) {
-                        reject(err);
-                      } else {
-                        resultset.toObjArray(function (
-                          err: any,
-                          results: any
-                        ) {
-                          resolve(results);
-                        });
-                      }
-                    });
-                  }
-                });
-              }
-            });
-            repos.release(connObj, function (err: any) {
-              if (err) {
-                console.log(err);
-              }
-            });
-          }
-        });
-      });
-      repos = di.get("repos")
-      let query_1 = `REPLACE INTO Screening.Patient_Info SET ? `
-      
-      await result.map((d: any) => {
-        repos.query(query_1, d,function(err:any, results:any) {
-          if (err) {
-            return console.error(err.message);
-          }
-        });
-        
-        let query_2 = `REPLACE INTO Screening.Patient_Financial (HN) VALUES ('${d.HN}') `
-        repos.query(query_2, d,function(err:any, results:any) {
-          if (err) {
-            return console.error(err.message);
-          }
-        }); 
-        let query_3 = `REPLACE INTO Screening.Patient_History (HN) VALUES ('${d.HN}') `
-        repos.query(query_3, d,function(err:any, results:any) {
-          if (err) {
-            return console.error(err.message);
-          }
-        }); 
-      })
-      let query = `UPDATE Screening.Patient_Financial pf1 
-      INNER JOIN Screening.Patient_Info pi1 ON pf1.HN = pi1.HN
-      INNER JOIN Registration.Patient_Info pi2 ON pi1.NationalID = pi2.NationalID 
-      INNER JOIN Registration.Patient_Financial pf2 ON pf2.PatientID = pi2.ID 
-      SET pf1.SelfPay = pf2.SelfPay,
-          pf1.CompanyContact = pf2.CompanyContact,
-          pf1.Insurance = pf2.Insurance,
-          pf1.CompanyDesc = pf2.CompanyDesc,
-          pf1.InsuranceDesc = pf2.InsuranceDesc,
-          pf1.PaymentAs = pf2.PaymentAs,
-          pf1.Title = pf2.Title,
-          pf1.Firstname = pf2.Firstname,
-          pf1.Lastname = pf2.Lastname,
-          pf1.DOB = pf2.DOB,
-          pf1.Aforemention = pf2.Aforemention
-      WHERE pi1.NationalID IS NOT NULL AND pf1.Createdate BETWEEN ADDDATE(CURDATE(),-1) AND CURDATE()  `
-      await  repos.query(query)
-      query = `UPDATE Screening.Patient_Financial pf1 
-      INNER JOIN Screening.Patient_Info pi1 ON pf1.HN = pi1.HN
-      INNER JOIN Registration.Patient_Info pi2 ON pi1.Firstname = pi2.Firstname AND pi1.Lastname = pi2.Lastname AND pi1.DOB = pi2.DOB 
-      INNER JOIN Registration.Patient_Financial pf2 ON pf2.PatientID = pi2.ID 
-      SET pf1.SelfPay = pf2.SelfPay,
-          pf1.CompanyContact = pf2.CompanyContact,
-          pf1.Insurance = pf2.Insurance,
-          pf1.CompanyDesc = pf2.CompanyDesc,
-          pf1.InsuranceDesc = pf2.InsuranceDesc,
-          pf1.PaymentAs = pf2.PaymentAs,
-          pf1.Title = pf2.Title,
-          pf1.Firstname = pf2.Firstname,
-          pf1.Lastname = pf2.Lastname,
-          pf1.DOB = pf2.DOB,
-          pf1.Aforemention = pf2.Aforemention
-      WHERE pi1.NationalID IS NULL AND pf1.Createdate BETWEEN ADDDATE(CURDATE(),-1) AND CURDATE() `
-      await  repos.query(query)
-      
-      query = `UPDATE Screening.Patient_History ph1 
-      INNER JOIN Screening.Patient_Info pi1 ON ph1.HN = pi1.HN
-      INNER JOIN Registration.Patient_Info pi2 ON pi1.NationalID = pi2.NationalID 
-      INNER JOIN Registration.Patient_History ph2 ON ph2.PatientID = pi2.ID 
-      SET ph1.MaritalStatus = ph2.MaritalStatus,
-          ph1.Children = ph2.Children,
-          ph1.Diseases = ph2.Diseases,
-          ph1.Medication = ph2.Medication,
-          ph1.CommentMedication = ph2.CommentMedication,
-          ph1.Hospitalization = ph2.Hospitalization,
-          ph1.CommentHospitalization = ph2.CommentHospitalization,
-          ph1.Physical = ph2.Physical,
-          ph1.CommentPhysical = ph2.CommentPhysical,
-          ph1.Exercise = ph2.Exercise,
-          ph1.Pregnant = ph2.Pregnant,
-          ph1.CommentPregnant = ph2.CommentPregnant,
-          ph1.Giver = ph2.Giver,
-          ph1.CommentGiver = ph2.CommentGiver,
-          ph1.AbsenceFromWork = ph2.AbsenceFromWork,
-          ph1.Reimbursement = ph2.Reimbursement,
-          ph1.GovernmentReimbursement = ph2.GovernmentReimbursement,
-          ph1.StateEnterprise = ph2.StateEnterprise,
-          ph1.Authorize = ph2.Authorize,
-          ph1.CommentAuthorize = ph2.CommentAuthorize,
-          ph1.Spiritual = ph2.Spiritual,
-          ph1.CommentSpiritual = ph2.CommentSpiritual,
-          ph1.Allergies = ph2.Allergies,
-          ph1.CommentAllergies = ph2.CommentAllergies,
-          ph1.Alcohol = ph2.Alcohol,
-          ph1.DrugAbuse = ph2.DrugAbuse,
-          ph1.Smoke = ph2.Smoke,
-          ph1.FatherAlive = ph2.FatherAlive,
-          ph1.FatherAge = ph2.FatherAge,
-          ph1.CauseFather = ph2.CauseFather,
-          ph1.MotherAlive = ph2.MotherAlive,
-          ph1.MotherAge = ph2.MotherAge,
-          ph1.CauseMother = ph2.CauseMother 
-      WHERE pi1.NationalID IS NOT NULL AND ph1.Createdate BETWEEN ADDDATE(CURDATE(),-1) AND CURDATE()  `
-      await  repos.query(query)
-      query = `UPDATE Screening.Patient_History ph1 
-      INNER JOIN Screening.Patient_Info pi1 ON ph1.HN = pi1.HN
-      INNER JOIN Registration.Patient_Info pi2 ON pi1.Firstname = pi2.Firstname AND pi1.Lastname = pi2.Lastname AND pi1.DOB = pi2.DOB 
-      INNER JOIN Registration.Patient_History ph2 ON ph2.PatientID = pi2.ID 
-      SET ph1.MaritalStatus = ph2.MaritalStatus,
-          ph1.Children = ph2.Children,
-          ph1.Diseases = ph2.Diseases,
-          ph1.Medication = ph2.Medication,
-          ph1.CommentMedication = ph2.CommentMedication,
-          ph1.Hospitalization = ph2.Hospitalization,
-          ph1.CommentHospitalization = ph2.CommentHospitalization,
-          ph1.Physical = ph2.Physical,
-          ph1.CommentPhysical = ph2.CommentPhysical,
-          ph1.Exercise = ph2.Exercise,
-          ph1.Pregnant = ph2.Pregnant,
-          ph1.CommentPregnant = ph2.CommentPregnant,
-          ph1.Giver = ph2.Giver,
-          ph1.CommentGiver = ph2.CommentGiver,
-          ph1.AbsenceFromWork = ph2.AbsenceFromWork,
-          ph1.Reimbursement = ph2.Reimbursement,
-          ph1.GovernmentReimbursement = ph2.GovernmentReimbursement,
-          ph1.StateEnterprise = ph2.StateEnterprise,
-          ph1.Authorize = ph2.Authorize,
-          ph1.CommentAuthorize = ph2.CommentAuthorize,
-          ph1.Spiritual = ph2.Spiritual,
-          ph1.CommentSpiritual = ph2.CommentSpiritual,
-          ph1.Allergies = ph2.Allergies,
-          ph1.CommentAllergies = ph2.CommentAllergies,
-          ph1.Alcohol = ph2.Alcohol,
-          ph1.DrugAbuse = ph2.DrugAbuse,
-          ph1.Smoke = ph2.Smoke,
-          ph1.FatherAlive = ph2.FatherAlive,
-          ph1.FatherAge = ph2.FatherAge,
-          ph1.CauseFather = ph2.CauseFather,
-          ph1.MotherAlive = ph2.MotherAlive,
-          ph1.MotherAge = ph2.MotherAge,
-          ph1.CauseMother = ph2.CauseMother 
-      WHERE pi1.NationalID IS NULL AND ph1.Createdate BETWEEN ADDDATE(CURDATE(),-1) AND CURDATE() `
-      await  repos.query(query)
-      
-      console.log("Get Patent Info Success at " + new Date())
-      
-      console.log("Get Patent Emergenct at " + new Date())
-      repos = di.get("cache");
-      result = await new Promise((resolve, reject) => {
-        repos.reserve((err: any, connObj: any) => {
-          if (connObj) {
-            let conn = connObj.conn;
-            
-            conn.createStatement((err: any, statement: any) => {
-              if (err) {
-                reject(err);
-              } else {
-                statement.setFetchSize(100, function (err: any) {
-                  if (err) {
-                    reject(err);
-                  } else {
                     const query = `SELECT	NOK_PAPMI_ParRef->PAPMI_No "HN",
                     NOK.NOK_Name "Firstname", 
                     NOK.NOK_Name2 "Lastname",
@@ -484,97 +1401,7 @@ class screeningRoute {
                     NOK.NOK_StNameLine1 "Address",
                     NOK.NOK_Province_DR "Province",
                     '0' "sameAddress"FROM PA_Nok Nok
-                    Where NOK_PAPMI_ParRef->PAPMI_No IS NOT NULL AND NOK_ContactType_DR = 1 AND NOK_UpdateDate BETWEEN TO_DATE(CURRENT_DATE - 1) AND CURRENT_DATE 
-                    AND Nok.NOK_Name is not null AND Nok.NOK_Name2 is not null 
-                    AND NOK_PAPMI_ParRef->PAPMI_RowId->PAPER_AgeYr > 15
-                    ORDER BY NOK_PAPMI_ParRef Desc `;           
-                    statement.executeQuery(query, function (
-                      err: any,
-                      resultset: any
-                    ) {
-                      if (err) {
-                        reject(err);
-                      } else {
-                        resultset.toObjArray(function (
-                          err: any,
-                          results: any
-                        ) {
-                          resolve(results);
-                        });
-                      }
-                    });
-                  }
-                });
-              }
-            });
-            repos.release(connObj, function (err: any) {
-              if (err) {
-                console.log(err);
-              }
-            });
-          }
-        });
-      });
-      repos = di.get("repos")
-      query_1 = `REPLACE INTO Screening.Patient_Emergency SET ? `
-      result.map((d: any) => {
-        repos.query(query_1, d,function(err:any, results:any) {
-          if (err) {
-            return console.error(err.message);
-          }
-        });
-        
-      });
-      
-      let query_3 = `UPDATE Screening.Patient_Emergency pe
-        SET pe.Subdistrict = (SELECT ca1.ID FROM Registration.CT_CityArea_1 ca1 WHERE ca1.Desc_TH = 
-        (SELECT ca.Desc_TH FROM Registration.CT_CityArea ca WHERE ca.ID = pe.Subdistrict limit 1) AND ca1.Zip_Code = pe.Postcode limit 1)
-        WHERE pe.Createdate BETWEEN ADDDATE(CURDATE(),-1) AND CURDATE() `
-        repos.query(query_3, function(err:any, results:any) {
-          if (err) {
-            return console.error(err.message);
-          }
-        });
-      console.log("Get Patent Emergenct Success at " + new Date())
-      
-      console.log("Get Patent Parent at " + new Date())
-      repos = di.get("cache");
-      result = await new Promise((resolve, reject) => {
-        repos.reserve((err: any, connObj: any) => {
-          if (connObj) {
-            let conn = connObj.conn;
-            
-            conn.createStatement((err: any, statement: any) => {
-              if (err) {
-                reject(err);
-              } else {
-                statement.setFetchSize(100, function (err: any) {
-                  if (err) {
-                    reject(err);
-                  } else {
-                    const query = `SELECT	NOK_PAPMI_ParRef->PAPMI_No "HN",
-                    NOK.NOK_Name "Firstname", 
-                    NOK.NOK_Name2 "Lastname",
-                    NOK.NOK_Relation_DR "Relation",
-                    NOK.NOK_Email "Email",
-                    CASE
-                        WHEN NOK.NOK_MobPhone IS NOT NULL THEN Nok_TelH
-                        ELSE NOK.NOK_TelH
-                    END "PhoneNo",
-                    CASE 
-                         WHEN Nok.NOK_Country_DR->CTCOU_RowId IS NULL 
-                           AND ((Nok.NOK_Zip_DR->CTZIP_Code NOT IN ('900001', '12500', '40001', '74111', '80516', 'JAN-64', 'AUG-43', '11-JAN', '8-JAN', '7-FEB', '900000', '999999') AND NOK_PAPMI_ParRef->PAPMI_RowId->PAPER_Zip_DR->CTZIP_Code IS NOT NULL) 
-                          OR (NOK_PAPMI_ParRef->PAPMI_RowId->PAPER_Zip_DR->CTZIP_Province_DR->PROV_RowId NOT IN ('77', '78') AND NOK_Zip_DR->CTZIP_Province_DR->PROV_RowId IS NOT NULL)
-                           OR (NOK_Zip_DR->CTZIP_CITY_DR->CTCIT_RowId NOT IN ('1116', '936') AND NOK_Zip_DR->CTZIP_CITY_DR->CTCIT_RowId IS NOT NULL)) THEN 2
-                         ELSE NOK_Country_DR->CTCOU_RowId
-                      END "Country",
-                    NOK.NOK_Zip_DR->CTZIP_Code "Postcode",
-                    NOK.NOK_CityArea_DR "Subdistrict",
-                    NOK.NOK_CityCode_DR "District",
-                    NOK.NOK_StNameLine1 "Address",
-                    NOK.NOK_Province_DR "Province",
-                    '0' "sameAddress"FROM PA_Nok Nok
-                    Where NOK_PAPMI_ParRef->PAPMI_No IS NOT NULL AND NOK_UpdateDate BETWEEN TO_DATE(CURRENT_DATE - 1) AND CURRENT_DATE 
+                    Where NOK_PAPMI_ParRef->PAPMI_No = '${HN}' 
                     AND Nok.NOK_Name is not null AND Nok.NOK_Name2 is not null 
                     AND NOK_PAPMI_ParRef->PAPMI_RowId->PAPER_AgeYr <= 15
                     ORDER BY NOK_PAPMI_ParRef Desc `;           
@@ -606,19 +1433,28 @@ class screeningRoute {
         });
       });
       repos = di.get("repos")
-      query_1 = `REPLACE INTO Screening.Parent SET ? `
-      result.map((d: any) => {
-        repos.query(query_1, d,function(err:any, results:any) {
+      let query_1 = `REPLACE INTO Screening.Parent SET ? `
+      result.map(async (d: any) => {
+        await repos.query(query_1, d,function(err:any, results:any) {
+          if (err) {
+            return console.error(err.message);
+          }
+        });
+        let query_2 = `UPDATE Screening.Parent pr
+        SET pr.Subdistrict = (SELECT ca1.ID FROM Registration.CT_CityArea_1 ca1 WHERE ca1.Desc_TH = 
+        (SELECT ca.Desc_TH FROM Registration.CT_CityArea ca WHERE ca.ID = pr.Subdistrict limit 1) AND ca1.Zip_Code = pr.Postcode limit 1)
+        WHERE pr.HN = '${HN}' `
+        repos.query(query_2, function(err:any, results:any) {
           if (err) {
             return console.error(err.message);
           }
         });
       })
-      console.log("Get Patent Parent Success at " + new Date())
       
-      console.log("Get Patent Address at " + new Date())
-      repos = di.get("cache");
-      result = await new Promise((resolve, reject) => {
+  }
+  async postPatientAddressByHN(HN: any){
+      let repos = di.get("cache");
+      let result : any = await new Promise((resolve, reject) => {
         repos.reserve((err: any, connObj: any) => {
           if (connObj) {
             let conn = connObj.conn;
@@ -656,7 +1492,7 @@ class screeningRoute {
                             '0' "Type"
                       FROM PA_PatMas
                         INNER JOIN PA_Person ON PA_PatMas.PAPMI_PAPER_DR = PA_Person.PAPER_RowId
-                        WHERE PAPMI_No IS NOT NULL AND PAPER_UpdateDate BETWEEN TO_DATE(CURRENT_DATE - 1) AND CURRENT_DATE
+                        WHERE PAPMI_No = '${HN}'
                     `;           
                     statement.executeQuery(query, function (
                       err: any,
@@ -688,1370 +1524,177 @@ class screeningRoute {
       repos = di.get("repos")
       let query_del
 
-      result.map((d: any) => {
-        query_del = `DELETE FROM Screening.Patient_Address WHERE HN = '${d.HN}' AND Type = '${d.Type}' AND Type = 0 `
+      let query_1 = `INSERT INTO Screening.Patient_Address SET ? `
+      result.map(async (d: any) => {
+        query_del = `DELETE FROM Screening.Patient_Address WHERE HN = '${d.HN}' AND Type = '${d.Type}' `
         repos.query(query_del,function(err:any, results:any) {
           if (err) {
             return console.error(err.message);
           } 
-        });
-      });
-      
-      query_1 = `INSERT INTO Screening.Patient_Address SET ? `
-      result.map((d: any) => {
-        repos.query(query_1, d,function(err:any, results:any) {
-          if (err) {
-            return console.error(err.message);
-          }
-        });
-      });
-
-      
-      let query_2 = `UPDATE Screening.Patient_Address pa
-        SET pa.Subdistrict = (SELECT ca1.ID FROM Registration.CT_CityArea_1 ca1 WHERE ca1.Desc_TH = 
-        (SELECT ca.Desc_TH FROM Registration.CT_CityArea ca WHERE ca.ID = pa.Subdistrict limit 1) AND ca1.Zip_Code = pa.Postcode limit 1)
-        WHERE pa.Createdate BETWEEN ADDDATE(CURDATE(),-1) AND CURDATE() `
-        repos.query(query_2, function(err:any, results:any) {
-          if (err) {
-            return console.error(err.message);
-          }
+          repos.query(query_1, d,function(err:any, results:any) {
+            if (err) {
+              return console.error(err.message);
+            }
+            let query_2 = `UPDATE Screening.Patient_Address pa
+            SET pa.Subdistrict = (SELECT ca1.ID FROM Registration.CT_CityArea_1 ca1 WHERE ca1.Desc_TH = 
+            (SELECT ca.Desc_TH FROM Registration.CT_CityArea ca WHERE ca.ID = pa.Subdistrict limit 1) AND ca1.Zip_Code = pa.Postcode limit 1)
+            WHERE pa.HN = '${HN}' `
+            repos.query(query_2, function(err:any, results:any) {
+              if (err) {
+                return console.error(err.message);
+              }
+            });
+          });
         });
         
-      console.log("Get Patent Parent Success at " + new Date())
-      
-      console.log("Get Patent Family at " + new Date())
-      repos = di.get("cache");
-      result = await new Promise((resolve, reject) => {
-        repos.reserve((err: any, connObj: any) => {
-          if (connObj) {
-            let conn = connObj.conn;
-            
-            conn.createStatement((err: any, statement: any) => {
-              if (err) {
-                reject(err);
-              } else {
-                statement.setFetchSize(100, function (err: any) {
-                  if (err) {
-                    reject(err);
-                  } else {
-                    const query = `SELECT  FAM_PAPMI_ParRef->PAPMI_No "HN", 
-                    FAM_Relation_DR "Person",
-                    FAM_Desc "Disease"
-                    FROM PA_Family
-                    WHERE FAM_PAPMI_ParRef->PAPMI_No IS NOT NULL AND FAM_UpdateDate BETWEEN TO_DATE(CURRENT_DATE - 1) AND CURRENT_DATE `;           
-                    statement.executeQuery(query, function (
-                      err: any,
-                      resultset: any
-                    ) {
-                      if (err) {
-                        reject(err);
-                      } else {
-                        resultset.toObjArray(function (
-                          err: any,
-                          results: any
-                        ) {
-                          resolve(results);
-                        });
-                      }
-                    });
-                  }
-                });
-              }
-            });
-            repos.release(connObj, function (err: any) {
-              if (err) {
-                console.log(err);
-              }
-            });
-          }
-        });
-      });
-      repos = di.get("repos")
-      query_1 = `INSERT INTO Screening.Family_History SET ? `
-      result.map((d: any) => {
-        repos.query(query_1, d,function(err:any, results:any) {
-          if (err) {
-            return console.error(err.message);
-          }
-        });
-      })
-      console.log("Get Patent Family Success at " + new Date())
-      
-      console.log("Get Patent Social at " + new Date())
-      repos = di.get("cache");
-      result = await new Promise((resolve, reject) => {
-        repos.reserve((err: any, connObj: any) => {
-          if (connObj) {
-            let conn = connObj.conn;
-            
-            conn.createStatement((err: any, statement: any) => {
-              if (err) {
-                reject(err);
-              } else {
-                statement.setFetchSize(100, function (err: any) {
-                  if (err) {
-                    reject(err);
-                  } else {
-                    const query = `SELECT SCH_PAPMI_ParRef->PAPMI_No "HN", 
-                    SCH_Habits_DR->HAB_Desc "Habit",
-                    CASE WHEN SCH_HabitsQty_DR->QTY_desc = 'None' THEN NULL
-                      ELSE SCH_HabitsQty_DR->QTY_desc
-                    END "Quantity", 
-                    SCH_Desc "Comment",
-                    CASE WHEN SCH_HabitsQty_DR->QTY_desc IS NOT NULL AND SCH_HabitsQty_DR->QTY_desc = 'None' THEN 0
-                      ELSE 1
-                    END "Status",
-                    CASE
-                      WHEN SCH_DuratDays is not null THEN SCH_DuratDays
-                      WHEN SCH_DuratMonth is not null THEN SCH_DuratMonth
-                      WHEN SCH_DuratYear is not null THEN SCH_DuratYear
-                      ELSE NULL
-                    END "DurationQuantity",
-                    CASE
-                      WHEN SCH_DuratDays is not null THEN 'Days'
-                      WHEN SCH_DuratMonth is not null THEN 'Weeks'
-                      WHEN SCH_DuratYear is not null THEN 'Years'
-                      ELSE NULL
-                    END "DurationUnit"
-                    FROM PA_SocHist 
-                    WHERE SCH_PAPMI_ParRef->PAPMI_No IS NOT NULL AND SCH_UpdateDate BETWEEN TO_DATE(CURRENT_DATE - 1) AND CURRENT_DATE `;           
-                    statement.executeQuery(query, function (
-                      err: any,
-                      resultset: any
-                    ) {
-                      if (err) {
-                        reject(err);
-                      } else {
-                        resultset.toObjArray(function (
-                          err: any,
-                          results: any
-                        ) {
-                          resolve(results);
-                        });
-                      }
-                    });
-                  }
-                });
-              }
-            });
-            repos.release(connObj, function (err: any) {
-              if (err) {
-                console.log(err);
-              }
-            });
-          }
-        });
-      });
-      repos = di.get("repos")
-      query_1 = `INSERT INTO Screening.Patient_Social SET ? `
-      result.map((d: any) => {
-        query_del = `DELETE FROM Screening.Patient_Social WHERE HN = '${d.HN}' AND Habit = '${d.Habit}' `
-        repos.query(query_del,function(err:any, results:any) {
-          if (err) {
-            return console.error(err.message);
-          }
-        });
-      })
-      result.map((d: any) => {
-        repos.query(query_1, d,function(err:any, results:any) {
-          if (err) {
-            return console.error(err.message);
-          }
-        });
-      })
-      console.log("Get Patent Social Success at " + new Date())
-      console.log("Finished Get Screening Data at " + new Date())
-      
-      
-      
-    };
+        
+      });     
   }
-  async postScreeningByNationID(nation_id: any) {
-        console.log("Get Patent Info at " + new Date())
-        let repos = di.get("cache");
-        let result: any = await new Promise((resolve, reject) => {
-        repos.reserve((err: any, connObj: any) => {
-          if (connObj) {
-            let conn = connObj.conn;
-            
-            conn.createStatement((err: any, statement: any) => {
-              if (err) {
-                reject(err);
-              } else {
-                statement.setFetchSize(100, function (err: any) {
-                  if (err) {
-                    reject(err);
-                  } else {
-                    const query = `SELECT	PAPMI_No "HN",
-                    PAPMI_Title_DR->TTL_RowId "Title",
-                    PAPMI_Name "Firstname",
-                    PAPMI_Name2 "Lastname",
-                    PAPMI_Name5 "FirstnameEn",
-                    PAPMI_Name7 "LastnameEn",
-                    tochar(PAPER_Dob, 'YYYY-MM-DD') "DOB",
-                    PAPMI_Sex_DR "Gender",
-                    PAPER_Nation_DR "Nationality",
-                    PAPER_Religion_DR "Religion",
-                  PAPER_PrefLanguage_DR "PreferredLanguage",
-                    PAPMI_Email "Email",
-                    PAPER_ID "NationalID",
-                    PAPER_PassportNumber "Passport",
-                    SUBSTRING(PAPER_Marital_DR->CTMAR_Desc, CHARINDEX('(', PAPER_Marital_DR->CTMAR_Desc)+1, (LENGTH(PAPER_Marital_DR->CTMAR_Desc)-CHARINDEX('(', PAPER_Marital_DR->CTMAR_Desc))-1) "MaritalStatus",
-                    PAPER_SocialStatus_DR->SS_Desc "Occupation",
-                    PAPER_MobPhone "PhoneNo",
-                    PAPER_TelH "Homephone" ,
-              CASE
-                    WHEN PAPMI_Title_DR LIKE '%e%' THEN 'en'
-                    ELSE 'th'
-              END "DefaultLanguage",
-              CASE
-                  WHEN PAPER_AgeYr > 15 THEN 0
-                   ELSE 1
-              END "type"
-                FROM PA_PatMas
-                LEFT JOIN PA_Person ON PA_PatMas.PAPMI_PAPER_DR = PA_Person.PAPER_RowId
-                WHERE PAPMI_No IS NOT NULL AND PAPMI_ID = '${nation_id}' `;           
-                    statement.executeQuery(query, function (
-                      err: any,
-                      resultset: any
-                    ) {
-                      if (err) {
-                        reject(err);
-                      } else {
-                        resultset.toObjArray(function (
-                          err: any,
-                          results: any
-                        ) {
-                          resolve(results);
-                        });
-                      }
-                    });
-                  }
-                });
-              }
-            });
-            repos.release(connObj, function (err: any) {
-              if (err) {
-                console.log(err);
-              }
-            });
-          }
-        });
-      });
-      repos = di.get("repos")
-      let query_1 = `REPLACE INTO Screening.Patient_Info SET ? `
-      
-      await result.map((d: any) => {
-        repos.query(query_1, d,function(err:any, results:any) {
-          if (err) {
-            return console.error(err.message);
-          }
-        });
-        
-        let query_2 = `REPLACE INTO Screening.Patient_Financial (HN) VALUES ('${d.HN}') `
-        repos.query(query_2, d,function(err:any, results:any) {
-          if (err) {
-            return console.error(err.message);
-          }
-        }); 
-        let query_3 = `REPLACE INTO Screening.Patient_History (HN) VALUES ('${d.HN}') `
-        repos.query(query_3, d,function(err:any, results:any) {
-          if (err) {
-            return console.error(err.message);
-          }
-        }); 
-      })
-      console.log("Update Financial at " + new Date())
-      let query = `UPDATE Screening.Patient_Financial pf1 
-      INNER JOIN Screening.Patient_Info pi1 ON pf1.HN = pi1.HN
-      INNER JOIN Registration.Patient_Info pi2 ON pi1.NationalID = pi2.NationalID 
-      INNER JOIN Registration.Patient_Financial pf2 ON pf2.PatientID = pi2.ID 
-      SET pf1.SelfPay = pf2.SelfPay,
-          pf1.CompanyContact = pf2.CompanyContact,
-          pf1.Insurance = pf2.Insurance,
-          pf1.CompanyDesc = pf2.CompanyDesc,
-          pf1.InsuranceDesc = pf2.InsuranceDesc,
-          pf1.PaymentAs = pf2.PaymentAs,
-          pf1.Title = pf2.Title,
-          pf1.Firstname = pf2.Firstname,
-          pf1.Lastname = pf2.Lastname,
-          pf1.DOB = pf2.DOB,
-          pf1.Aforemention = pf2.Aforemention
-      WHERE  pi1.NationalID = '${nation_id}'  `
-      await  repos.query(query)
-      
-      console.log("Update History at " + new Date())
-      query = `UPDATE Screening.Patient_History ph1 
-      INNER JOIN Screening.Patient_Info pi1 ON ph1.HN = pi1.HN
-      INNER JOIN Registration.Patient_Info pi2 ON pi1.NationalID = pi2.NationalID 
-      INNER JOIN Registration.Patient_History ph2 ON ph2.PatientID = pi2.ID 
-      SET ph1.MaritalStatus = ph2.MaritalStatus,
-          ph1.Children = ph2.Children,
-          ph1.Diseases = ph2.Diseases,
-          ph1.Medication = ph2.Medication,
-          ph1.CommentMedication = ph2.CommentMedication,
-          ph1.Hospitalization = ph2.Hospitalization,
-          ph1.CommentHospitalization = ph2.CommentHospitalization,
-          ph1.Physical = ph2.Physical,
-          ph1.CommentPhysical = ph2.CommentPhysical,
-          ph1.Exercise = ph2.Exercise,
-          ph1.Pregnant = ph2.Pregnant,
-          ph1.CommentPregnant = ph2.CommentPregnant,
-          ph1.Giver = ph2.Giver,
-          ph1.CommentGiver = ph2.CommentGiver,
-          ph1.AbsenceFromWork = ph2.AbsenceFromWork,
-          ph1.Reimbursement = ph2.Reimbursement,
-          ph1.GovernmentReimbursement = ph2.GovernmentReimbursement,
-          ph1.StateEnterprise = ph2.StateEnterprise,
-          ph1.Authorize = ph2.Authorize,
-          ph1.CommentAuthorize = ph2.CommentAuthorize,
-          ph1.Spiritual = ph2.Spiritual,
-          ph1.CommentSpiritual = ph2.CommentSpiritual,
-          ph1.Allergies = ph2.Allergies,
-          ph1.CommentAllergies = ph2.CommentAllergies,
-          ph1.Alcohol = ph2.Alcohol,
-          ph1.DrugAbuse = ph2.DrugAbuse,
-          ph1.Smoke = ph2.Smoke,
-          ph1.FatherAlive = ph2.FatherAlive,
-          ph1.FatherAge = ph2.FatherAge,
-          ph1.CauseFather = ph2.CauseFather,
-          ph1.MotherAlive = ph2.MotherAlive,
-          ph1.MotherAge = ph2.MotherAge,
-          ph1.CauseMother = ph2.CauseMother 
-      WHERE pi1.NationalID = '${nation_id}'  `
-      await  repos.query(query)
-      
-      
-      console.log("Get Patent Info Success at " + new Date())
-      
-      console.log("Get Patent Emergenct at " + new Date())
-      repos = di.get("cache");
-      result = await new Promise((resolve, reject) => {
-        repos.reserve((err: any, connObj: any) => {
-          if (connObj) {
-            let conn = connObj.conn;
-            
-            conn.createStatement((err: any, statement: any) => {
-              if (err) {
-                reject(err);
-              } else {
-                statement.setFetchSize(100, function (err: any) {
-                  if (err) {
-                    reject(err);
-                  } else {
-                    const query = `SELECT	NOK_PAPMI_ParRef->PAPMI_No "HN",
-                    NOK.NOK_Name "Firstname", 
-                    NOK.NOK_Name2 "Lastname",
-                    NOK.NOK_Relation_DR "Relation",
-                    NOK.NOK_Email "Email",
-                    CASE
-                        WHEN NOK.NOK_MobPhone IS NOT NULL THEN Nok_TelH
-                        ELSE NOK.NOK_TelH
-                    END "PhoneNo",
-                    CASE 
-                         WHEN Nok.NOK_Country_DR->CTCOU_RowId IS NULL 
-                           AND ((Nok.NOK_Zip_DR->CTZIP_Code NOT IN ('900001', '12500', '40001', '74111', '80516', 'JAN-64', 'AUG-43', '11-JAN', '8-JAN', '7-FEB', '900000', '999999') AND NOK_PAPMI_ParRef->PAPMI_RowId->PAPER_Zip_DR->CTZIP_Code IS NOT NULL) 
-                          OR (NOK_PAPMI_ParRef->PAPMI_RowId->PAPER_Zip_DR->CTZIP_Province_DR->PROV_RowId NOT IN ('77', '78') AND NOK_Zip_DR->CTZIP_Province_DR->PROV_RowId IS NOT NULL)
-                           OR (NOK_Zip_DR->CTZIP_CITY_DR->CTCIT_RowId NOT IN ('1116', '936') AND NOK_Zip_DR->CTZIP_CITY_DR->CTCIT_RowId IS NOT NULL)) THEN 2
-                         ELSE NOK_Country_DR->CTCOU_RowId
-                      END "Country",
-                    NOK.NOK_Zip_DR->CTZIP_Code "Postcode",
-                    NOK.NOK_CityArea_DR "Subdistrict",
-                    NOK.NOK_CityCode_DR "District",
-                    NOK.NOK_StNameLine1 "Address",
-                    NOK.NOK_Province_DR "Province",
-                    '0' "sameAddress"FROM PA_Nok Nok
-                    Where NOK_PAPMI_ParRef->PAPMI_ID = '${nation_id}'
-                    AND Nok.NOK_Name is not null AND Nok.NOK_Name2 is not null 
-                    AND NOK_PAPMI_ParRef->PAPMI_RowId->PAPER_AgeYr > 15
-                    ORDER BY NOK_PAPMI_ParRef Desc `;           
-                    statement.executeQuery(query, function (
-                      err: any,
-                      resultset: any
-                    ) {
-                      if (err) {
-                        reject(err);
-                      } else {
-                        resultset.toObjArray(function (
-                          err: any,
-                          results: any
-                        ) {
-                          resolve(results);
-                        });
-                      }
-                    });
-                  }
-                });
-              }
-            });
-            repos.release(connObj, function (err: any) {
-              if (err) {
-                console.log(err);
-              }
-            });
-          }
-        });
-      });
-      repos = di.get("repos")
-      query_1 = `REPLACE INTO Screening.Patient_Emergency SET ? `
-      result.map((d: any) => {
-        repos.query(query_1, d,function(err:any, results:any) {
-          if (err) {
-            return console.error(err.message);
-          }
-        });
-        
-      });
-      let query_3 = `UPDATE Screening.Patient_Emergency pe
-      SET pe.Subdistrict = (SELECT ca1.ID FROM Registration.CT_CityArea_1 ca1 WHERE ca1.Desc_TH = 
-      (SELECT ca.Desc_TH FROM Registration.CT_CityArea ca WHERE ca.ID = pe.Subdistrict limit 1) AND ca1.Zip_Code = pe.Postcode limit 1)
-      WHERE pe.HN = (SELECT HN FROM Screening.Patient_Info WHERE NationalID = '${nation_id}' limit 1) `
-        repos.query(query_3, function(err:any, results:any) {
-          if (err) {
-            return console.error(err.message);
-          }
-        });
-      console.log("Get Patent Emergenct Success at " + new Date())
-      
-      console.log("Get Patent Parent at " + new Date())
-      repos = di.get("cache");
-      result = await new Promise((resolve, reject) => {
-        repos.reserve((err: any, connObj: any) => {
-          if (connObj) {
-            let conn = connObj.conn;
-            
-            conn.createStatement((err: any, statement: any) => {
-              if (err) {
-                reject(err);
-              } else {
-                statement.setFetchSize(100, function (err: any) {
-                  if (err) {
-                    reject(err);
-                  } else {
-                    const query = `SELECT	NOK_PAPMI_ParRef->PAPMI_No "HN",
-                    NOK.NOK_Name "Firstname", 
-                    NOK.NOK_Name2 "Lastname",
-                    NOK.NOK_Relation_DR "Relation",
-                    NOK.NOK_Email "Email",
-                    CASE
-                        WHEN NOK.NOK_MobPhone IS NOT NULL THEN Nok_TelH
-                        ELSE NOK.NOK_TelH
-                    END "PhoneNo",
-                    CASE 
-                         WHEN Nok.NOK_Country_DR->CTCOU_RowId IS NULL 
-                           AND ((Nok.NOK_Zip_DR->CTZIP_Code NOT IN ('900001', '12500', '40001', '74111', '80516', 'JAN-64', 'AUG-43', '11-JAN', '8-JAN', '7-FEB', '900000', '999999') AND NOK_PAPMI_ParRef->PAPMI_RowId->PAPER_Zip_DR->CTZIP_Code IS NOT NULL) 
-                          OR (NOK_PAPMI_ParRef->PAPMI_RowId->PAPER_Zip_DR->CTZIP_Province_DR->PROV_RowId NOT IN ('77', '78') AND NOK_Zip_DR->CTZIP_Province_DR->PROV_RowId IS NOT NULL)
-                           OR (NOK_Zip_DR->CTZIP_CITY_DR->CTCIT_RowId NOT IN ('1116', '936') AND NOK_Zip_DR->CTZIP_CITY_DR->CTCIT_RowId IS NOT NULL)) THEN 2
-                         ELSE NOK_Country_DR->CTCOU_RowId
-                      END "Country",
-                    NOK.NOK_Zip_DR->CTZIP_Code "Postcode",
-                    NOK.NOK_CityArea_DR "Subdistrict",
-                    NOK.NOK_CityCode_DR "District",
-                    NOK.NOK_StNameLine1 "Address",
-                    NOK.NOK_Province_DR "Province",
-                    '0' "sameAddress"FROM PA_Nok Nok
-                    Where NOK_PAPMI_ParRef->PAPMI_ID = '${nation_id}' 
-                    AND Nok.NOK_Name is not null AND Nok.NOK_Name2 is not null 
-                    AND NOK_PAPMI_ParRef->PAPMI_RowId->PAPER_AgeYr <= 15
-                    ORDER BY NOK_PAPMI_ParRef Desc `;           
-                    statement.executeQuery(query, function (
-                      err: any,
-                      resultset: any
-                    ) {
-                      if (err) {
-                        reject(err);
-                      } else {
-                        resultset.toObjArray(function (
-                          err: any,
-                          results: any
-                        ) {
-                          resolve(results);
-                        });
-                      }
-                    });
-                  }
-                });
-              }
-            });
-            repos.release(connObj, function (err: any) {
-              if (err) {
-                console.log(err);
-              }
-            });
-          }
-        });
-      });
-      repos = di.get("repos")
-      query_1 = `REPLACE INTO Screening.Parent SET ? `
-      result.map((d: any) => {
-        repos.query(query_1, d,function(err:any, results:any) {
-          if (err) {
-            return console.error(err.message);
-          }
-        });
-      })
-      query_3 = `UPDATE Screening.Parent pr
-      SET pr.Subdistrict = (SELECT ca1.ID FROM Registration.CT_CityArea_1 ca1 WHERE ca1.Desc_TH = 
-      (SELECT ca.Desc_TH FROM Registration.CT_CityArea ca WHERE ca.ID = pr.Subdistrict limit 1) AND ca1.Zip_Code = pr.Postcode limit 1)
-      WHERE pr.HN = (SELECT HN FROM Screening.Patient_Info WHERE NationalID = '${nation_id}' limit 1) `
-        repos.query(query_3, function(err:any, results:any) {
-          if (err) {
-            return console.error(err.message);
-          }
-        });
-      console.log("Get Patent Parent Success at " + new Date())
-      
-      console.log("Get Patent Address at " + new Date())
-      repos = di.get("cache");
-      result = await new Promise((resolve, reject) => {
-        repos.reserve((err: any, connObj: any) => {
-          if (connObj) {
-            let conn = connObj.conn;
-            
-            conn.createStatement((err: any, statement: any) => {
-              if (err) {
-                reject(err);
-              } else {
-                statement.setFetchSize(100, function (err: any) {
-                  if (err) {
-                    reject(err);
-                  } else {
-                    const query = `SELECT PAPMI_No "HN",
-                    CASE 
-                       WHEN PAPER_Country_DR IS NULL 
-                       AND ((PAPER_Zip_DR->CTZIP_Code NOT IN ('900001', '12500', '40001', '74111', '80516', 'JAN-64', 'AUG-43', '11-JAN', '8-JAN', '7-FEB', '900000', '999999') AND PAPER_Zip_DR->CTZIP_Code IS NOT NULL) 
-                       OR (PAPER_Zip_DR->CTZIP_Province_DR NOT IN ('77', '78') AND PAPER_Zip_DR->CTZIP_Province_DR IS NOT NULL)
-                       OR (PAPER_Zip_DR->CTZIP_CITY_DR NOT IN ('1116', '936') AND PAPER_Zip_DR->CTZIP_CITY_DR IS NOT NULL)) THEN 2
-                       ELSE PAPER_Country_DR
-                      END "Country",
-                      CASE
-                       WHEN PAPER_Zip_DR->CTZIP_Code IN ('900001', '12500', '40001', '74111', '80516', 'JAN-64', 'AUG-43', '11-JAN', '8-JAN', '7-FEB', '900000', '999999') THEN null
-                       ELSE  PAPER_Zip_DR->CTZIP_Code
-                      END "Postcode",
-                        CASE
-                       WHEN PAPER_Zip_DR->CTZIP_Province_DR IN ('77', '78') THEN null
-                       ELSE PAPER_Zip_DR->CTZIP_Province_DR
-                      END "Province",
-                      CASE
-                       WHEN PAPER_Zip_DR->CTZIP_CITY_DR IN ('1116', '936') THEN null
-                       ELSE  PAPER_Zip_DR->CTZIP_CITY_DR
-                      END "District",
-                      PAPER_CityArea_DR "Subdistrict",
-                      PAPER_StName "Address",
-                            '0' "Type"
-                      FROM PA_PatMas
-                        INNER JOIN PA_Person ON PA_PatMas.PAPMI_PAPER_DR = PA_Person.PAPER_RowId
-                        WHERE PAPMI_ID = '${nation_id}'
-                    `;           
-                    statement.executeQuery(query, function (
-                      err: any,
-                      resultset: any
-                    ) {
-                      if (err) {
-                        reject(err);
-                      } else {
-                        resultset.toObjArray(function (
-                          err: any,
-                          results: any
-                        ) {
-                          resolve(results);
-                        });
-                      }
-                    });
-                  }
-                });
-              }
-            });
-            repos.release(connObj, function (err: any) {
-              if (err) {
-                console.log(err);
-              }
-            });
-          }
-        });
-      });
-      repos = di.get("repos")
-      let query_del
-
-      // result.map((d: any) => {
-      //   query_del = `DELETE FROM Screening.Patient_Address WHERE HN = '${d.HN}' AND Type = '${d.Type}' AND Type = 0 `
-      //   repos.query(query_del,function(err:any, results:any) {
-      //     if (err) {
-      //       return console.error(err.message);
-      //     } 
-      //   });
-      // });
-      query_1 = `INSERT INTO Screening.Patient_Address SET ? `
-      result.map((d: any) => {
-        console.log(999)
-        repos.query(query_1, d,function(err:any, results:any) {
-          if (err) {
-            return console.error(err.message);
-          }
-        });
-      });
-
-      
-      let query_2 = `UPDATE Screening.Patient_Address pa
-      SET pa.Subdistrict = (SELECT ca1.ID FROM Registration.CT_CityArea_1 ca1 WHERE ca1.Desc_TH = 
-      (SELECT ca.Desc_TH FROM Registration.CT_CityArea ca WHERE ca.ID = pa.Subdistrict limit 1) AND ca1.Zip_Code = pa.Postcode limit 1)
-      WHERE pa.HN = (SELECT HN FROM Screening.Patient_Info WHERE NationalID = '${nation_id}' limit 1) `
-        repos.query(query_2, function(err:any, results:any) {
-          if (err) {
-            return console.error(err.message);
-          }
-        });
-        
-      console.log("Get Patent Parent Success at " + new Date())
-      
-      console.log("Get Patent Family at " + new Date())
-      repos = di.get("cache");
-      result = await new Promise((resolve, reject) => {
-        repos.reserve((err: any, connObj: any) => {
-          if (connObj) {
-            let conn = connObj.conn;
-            
-            conn.createStatement((err: any, statement: any) => {
-              if (err) {
-                reject(err);
-              } else {
-                statement.setFetchSize(100, function (err: any) {
-                  if (err) {
-                    reject(err);
-                  } else {
-                    const query = `SELECT  FAM_PAPMI_ParRef->PAPMI_No "HN", 
-                    FAM_Relation_DR "Person",
-                    FAM_Desc "Disease"
-                    FROM PA_Family
-                    WHERE FAM_PAPMI_ParRef->PAPMI_ID = '${nation_id}' `;           
-                    statement.executeQuery(query, function (
-                      err: any,
-                      resultset: any
-                    ) {
-                      if (err) {
-                        reject(err);
-                      } else {
-                        resultset.toObjArray(function (
-                          err: any,
-                          results: any
-                        ) {
-                          resolve(results);
-                        });
-                      }
-                    });
-                  }
-                });
-              }
-            });
-            repos.release(connObj, function (err: any) {
-              if (err) {
-                console.log(err);
-              }
-            });
-          }
-        });
-      });
-      repos = di.get("repos")
-      query_1 = `INSERT INTO Screening.Family_History SET ? `
-      await result.map((d: any) => {
-        repos.query(query_1, d,function(err:any, results:any) {
-          if (err) {
-            return console.error(err.message);
-          }
-        });
-      })
-      query_2 = `UPDATE Screening.Family_History fh
-      SET Disease = (SELECT ID FROM Registration.CT_Diseases WHERE DescEN = fh.Disease OR DescTH = fh.Disease limit 1)
-     WHERE fh.HN = (SELECT HN FROM Screening.Patient_Info WHERE NationalID = '${nation_id}' limit 1) `
-        repos.query(query_2, function(err:any, results:any) {
-          if (err) {
-            return console.error(err.message);
-          }
-        });
-      console.log("Get Patent Family Success at " + new Date())
-      
-      console.log("Get Patent Social at " + new Date())
-      repos = di.get("cache");
-      result = await new Promise((resolve, reject) => {
-        repos.reserve((err: any, connObj: any) => {
-          if (connObj) {
-            let conn = connObj.conn;
-            
-            conn.createStatement((err: any, statement: any) => {
-              if (err) {
-                reject(err);
-              } else {
-                statement.setFetchSize(100, function (err: any) {
-                  if (err) {
-                    reject(err);
-                  } else {
-                    const query = `SELECT SCH_PAPMI_ParRef->PAPMI_No "HN", 
-                    LOWER(REPLACE(SCH_Habits_DR->HAB_Desc,' ','')) "Habit",
-                    CASE WHEN SCH_HabitsQty_DR->QTY_desc = 'None' THEN NULL
-                      ELSE SCH_HabitsQty_DR->QTY_desc
-                    END"Quantity", 
-                    SCH_Desc "Comment",
-                    CASE WHEN SCH_HabitsQty_DR->QTY_desc IS NOT NULL AND SCH_HabitsQty_DR->QTY_desc = 'None' THEN 0
-                      ELSE 1
-                    END "Status",
-                    CASE
-                      WHEN SCH_DuratDays is not null THEN SCH_DuratDays
-                      WHEN SCH_DuratMonth is not null THEN SCH_DuratMonth
-                      WHEN SCH_DuratYear is not null THEN SCH_DuratYear
-                      ELSE NULL
-                    END "DurationQuantity",
-                    CASE
-                      WHEN SCH_DuratDays is not null THEN 'Days'
-                      WHEN SCH_DuratMonth is not null THEN 'Weeks'
-                      WHEN SCH_DuratYear is not null THEN 'Years'
-                      ELSE NULL
-                    END "DurationUnit"
-                    FROM PA_SocHist 
-                    WHERE SCH_PAPMI_ParRef->PAPMI_ID = '${nation_id}' `;           
-                    statement.executeQuery(query, function (
-                      err: any,
-                      resultset: any
-                    ) {
-                      if (err) {
-                        reject(err);
-                      } else {
-                        resultset.toObjArray(function (
-                          err: any,
-                          results: any
-                        ) {
-                          resolve(results);
-                        });
-                      }
-                    });
-                  }
-                });
-              }
-            });
-            repos.release(connObj, function (err: any) {
-              if (err) {
-                console.log(err);
-              }
-            });
-          }
-        });
-      });
-      repos = di.get("repos")
-      query_1 = `INSERT INTO Screening.Patient_Social SET ? `
-      await result.map((d: any) => {
-        console.log(d)
-        query_del = `DELETE FROM Screening.Patient_Social WHERE HN = '${d.HN}' AND Habit = '${d.Habit}' `
-        repos.query(query_del,function(err:any, results:any) {
-          if (err) {
-            return console.error(err.message);
-          }
-        });
-      })
-      await result.map((d: any) => {
-        console.log(d)
-        repos.query(query_1, d,function(err:any, results:any) {
-          if (err) {
-            return console.error(err.message);
-          }
-        });
-      })
-
-      console.log("Get Patent Social Success at " + new Date())
-      console.log("Finished Get Screening Data at " + new Date())
-      
-  }
-  async postScreeningByData(firstname: any, lastname: any, dateOfBirth: any) {
-    console.log("Get Patent Info at " + new Date())
+  async postPatientFamilyByHN(HN:any){
     let repos = di.get("cache");
     let result: any = await new Promise((resolve, reject) => {
-    repos.reserve((err: any, connObj: any) => {
-      if (connObj) {
-        let conn = connObj.conn;
-        
-        conn.createStatement((err: any, statement: any) => {
-          if (err) {
-            reject(err);
-          } else {
-            statement.setFetchSize(100, function (err: any) {
-              if (err) {
-                reject(err);
-              } else {
-                const query = `SELECT	PAPMI_No "HN",
-                PAPMI_Title_DR->TTL_RowId "Title",
-                PAPMI_Name "Firstname",
-                PAPMI_Name2 "Lastname",
-                PAPMI_Name5 "FirstnameEn",
-                PAPMI_Name7 "LastnameEn",
-                tochar(PAPER_Dob, 'YYYY-MM-DD') "DOB",
-                PAPMI_Sex_DR "Gender",
-                PAPER_Nation_DR "Nationality",
-                PAPER_Religion_DR "Religion",
-              PAPER_PrefLanguage_DR "PreferredLanguage",
-                PAPMI_Email "Email",
-                PAPER_ID "NationalID",
-                PAPER_PassportNumber "Passport",
-                SUBSTRING(PAPER_Marital_DR->CTMAR_Desc, CHARINDEX('(', PAPER_Marital_DR->CTMAR_Desc)+1, (LENGTH(PAPER_Marital_DR->CTMAR_Desc)-CHARINDEX('(', PAPER_Marital_DR->CTMAR_Desc))-1) "MaritalStatus",
-                PAPER_SocialStatus_DR->SS_Desc "Occupation",
-                PAPER_MobPhone "PhoneNo",
-                PAPER_TelH "Homephone" ,
-          CASE
-                WHEN PAPMI_Title_DR LIKE '%e%' THEN 'en'
-                ELSE 'th'
-          END "DefaultLanguage",
-          CASE
-              WHEN PAPER_AgeYr > 15 THEN 0
-               ELSE 1
-          END "type"
-            FROM PA_PatMas
-            LEFT JOIN PA_Person ON PA_PatMas.PAPMI_PAPER_DR = PA_Person.PAPER_RowId
-            WHERE PAPMI_No IS NOT NULL AND PAPMI_Name = '${firstname}' AND PAPMI_Name2 = '${lastname}' AND PAPMI_DOB = '${dateOfBirth}' `;           
-                statement.executeQuery(query, function (
-                  err: any,
-                  resultset: any
-                ) {
-                  if (err) {
-                    reject(err);
-                  } else {
-                    resultset.toObjArray(function (
-                      err: any,
-                      results: any
-                    ) {
-                      resolve(results);
-                    });
-                  }
-                });
-              }
-            });
-          }
-        });
-        repos.release(connObj, function (err: any) {
-          if (err) {
-            console.log(err);
-          }
-        });
-      }
+      repos.reserve((err: any, connObj: any) => {
+        if (connObj) {
+          let conn = connObj.conn;
+          
+          conn.createStatement((err: any, statement: any) => {
+            if (err) {
+              reject(err);
+            } else {
+              statement.setFetchSize(100, function (err: any) {
+                if (err) {
+                  reject(err);
+                } else {
+                  const query = `SELECT DISTINCT FAM_PAPMI_ParRef->PAPMI_No "HN", 
+                  FAM_Relation_DR "Person",
+                  FAM_Desc "Disease"
+                  FROM PA_Family
+                  WHERE FAM_PAPMI_ParRef->PAPMI_No = '${HN}' `;           
+                  statement.executeQuery(query, function (
+                    err: any,
+                    resultset: any
+                  ) {
+                    if (err) {
+                      reject(err);
+                    } else {
+                      resultset.toObjArray(function (
+                        err: any,
+                        results: any
+                      ) {
+                        resolve(results);
+                      });
+                    }
+                  });
+                }
+              });
+            }
+          });
+          repos.release(connObj, function (err: any) {
+            if (err) {
+              console.log(err);
+            }
+          });
+        }
+      });
     });
-  });
-  repos = di.get("repos")
-  let query_1 = `REPLACE INTO Screening.Patient_Info SET ? `
-  
-  await result.map((d: any) => {
-    repos.query(query_1, d,function(err:any, results:any) {
-      if (err) {
-        return console.error(err.message);
-      }
-    });
+    repos = di.get("repos")
+    let query_del = `DELETE FROM Screening.Family_History WHERE HN = '${HN}' `
+    await repos.query(query_del);
+      
+    let query_1 = `INSERT INTO Screening.Family_History SET ? `
     
-    let query_2 = `REPLACE INTO Screening.Patient_Financial (HN) VALUES ('${d.HN}') `
-    repos.query(query_2, d,function(err:any, results:any) {
-      if (err) {
-        return console.error(err.message);
-      }
-    }); 
-    let query_3 = `REPLACE INTO Screening.Patient_History (HN) VALUES ('${d.HN}') `
-    repos.query(query_3, d,function(err:any, results:any) {
-      if (err) {
-        return console.error(err.message);
-      }
-    }); 
-  })
-  console.log("Update Financial at " + new Date())
-  let query = `UPDATE Screening.Patient_Financial pf1 
-  INNER JOIN Screening.Patient_Info pi1 ON pf1.HN = pi1.HN
-  INNER JOIN Registration.Patient_Info pi2 ON pi1.Firstname = pi2.Firstname AND pi1.Lastname = pi2.Lastname AND pi1.DOB = pi2.DOB
-  INNER JOIN Registration.Patient_Financial pf2 ON pf2.PatientID = pi2.ID 
-  SET pf1.SelfPay = pf2.SelfPay,
-      pf1.CompanyContact = pf2.CompanyContact,
-      pf1.Insurance = pf2.Insurance,
-      pf1.CompanyDesc = pf2.CompanyDesc,
-      pf1.InsuranceDesc = pf2.InsuranceDesc,
-      pf1.PaymentAs = pf2.PaymentAs,
-      pf1.Title = pf2.Title,
-      pf1.Firstname = pf2.Firstname,
-      pf1.Lastname = pf2.Lastname,
-      pf1.DOB = pf2.DOB,
-      pf1.Aforemention = pf2.Aforemention
-  WHERE  pi1.Firstname = '${firstname}' AND  pi1.Lastname = '${lastname}' AND pi1.DOB = '${dateOfBirth}' `
-  await  repos.query(query)
-  
-  console.log("Update History at " + new Date())
-  query = `UPDATE Screening.Patient_History ph1 
-  INNER JOIN Screening.Patient_Info pi1 ON ph1.HN = pi1.HN
-  INNER JOIN Registration.Patient_Info pi2 ON pi1.Firstname = pi2.Firstname AND pi1.Lastname = pi2.Lastname AND pi1.DOB = pi2.DOB
-  INNER JOIN Registration.Patient_History ph2 ON ph2.PatientID = pi2.ID 
-  SET ph1.MaritalStatus = ph2.MaritalStatus,
-      ph1.Children = ph2.Children,
-      ph1.Diseases = ph2.Diseases,
-      ph1.Medication = ph2.Medication,
-      ph1.CommentMedication = ph2.CommentMedication,
-      ph1.Hospitalization = ph2.Hospitalization,
-      ph1.CommentHospitalization = ph2.CommentHospitalization,
-      ph1.Physical = ph2.Physical,
-      ph1.CommentPhysical = ph2.CommentPhysical,
-      ph1.Exercise = ph2.Exercise,
-      ph1.Pregnant = ph2.Pregnant,
-      ph1.CommentPregnant = ph2.CommentPregnant,
-      ph1.Giver = ph2.Giver,
-      ph1.CommentGiver = ph2.CommentGiver,
-      ph1.AbsenceFromWork = ph2.AbsenceFromWork,
-      ph1.Reimbursement = ph2.Reimbursement,
-      ph1.GovernmentReimbursement = ph2.GovernmentReimbursement,
-      ph1.StateEnterprise = ph2.StateEnterprise,
-      ph1.Authorize = ph2.Authorize,
-      ph1.CommentAuthorize = ph2.CommentAuthorize,
-      ph1.Spiritual = ph2.Spiritual,
-      ph1.CommentSpiritual = ph2.CommentSpiritual,
-      ph1.Allergies = ph2.Allergies,
-      ph1.CommentAllergies = ph2.CommentAllergies,
-      ph1.Alcohol = ph2.Alcohol,
-      ph1.DrugAbuse = ph2.DrugAbuse,
-      ph1.Smoke = ph2.Smoke,
-      ph1.FatherAlive = ph2.FatherAlive,
-      ph1.FatherAge = ph2.FatherAge,
-      ph1.CauseFather = ph2.CauseFather,
-      ph1.MotherAlive = ph2.MotherAlive,
-      ph1.MotherAge = ph2.MotherAge,
-      ph1.CauseMother = ph2.CauseMother 
-  WHERE pi1.Firstname = '${firstname}' AND  pi1.Lastname = '${lastname}' AND pi1.DOB = '${dateOfBirth}'  `
-  await  repos.query(query)
-  
-  
-  console.log("Get Patent Info Success at " + new Date())
-  
-  console.log("Get Patent Emergenct at " + new Date())
-  repos = di.get("cache");
-  result = await new Promise((resolve, reject) => {
-    repos.reserve((err: any, connObj: any) => {
-      if (connObj) {
-        let conn = connObj.conn;
-        
-        conn.createStatement((err: any, statement: any) => {
-          if (err) {
-            reject(err);
-          } else {
-            statement.setFetchSize(100, function (err: any) {
-              if (err) {
-                reject(err);
-              } else {
-                const query = `SELECT	NOK_PAPMI_ParRef->PAPMI_No "HN",
-                NOK.NOK_Name "Firstname", 
-                NOK.NOK_Name2 "Lastname",
-                NOK.NOK_Relation_DR "Relation",
-                NOK.NOK_Email "Email",
-                CASE
-                    WHEN NOK.NOK_MobPhone IS NOT NULL THEN Nok_TelH
-                    ELSE NOK.NOK_TelH
-                END "PhoneNo",
-                CASE 
-                     WHEN Nok.NOK_Country_DR->CTCOU_RowId IS NULL 
-                       AND ((Nok.NOK_Zip_DR->CTZIP_Code NOT IN ('900001', '12500', '40001', '74111', '80516', 'JAN-64', 'AUG-43', '11-JAN', '8-JAN', '7-FEB', '900000', '999999') AND NOK_PAPMI_ParRef->PAPMI_RowId->PAPER_Zip_DR->CTZIP_Code IS NOT NULL) 
-                      OR (NOK_PAPMI_ParRef->PAPMI_RowId->PAPER_Zip_DR->CTZIP_Province_DR->PROV_RowId NOT IN ('77', '78') AND NOK_Zip_DR->CTZIP_Province_DR->PROV_RowId IS NOT NULL)
-                       OR (NOK_Zip_DR->CTZIP_CITY_DR->CTCIT_RowId NOT IN ('1116', '936') AND NOK_Zip_DR->CTZIP_CITY_DR->CTCIT_RowId IS NOT NULL)) THEN 2
-                     ELSE NOK_Country_DR->CTCOU_RowId
-                  END "Country",
-                NOK.NOK_Zip_DR->CTZIP_Code "Postcode",
-                NOK.NOK_CityArea_DR "Subdistrict",
-                NOK.NOK_CityCode_DR "District",
-                NOK.NOK_StNameLine1 "Address",
-                NOK.NOK_Province_DR "Province",
-                '0' "sameAddress"FROM PA_Nok Nok
-                Where NOK_PAPMI_ParRef->PAPMI_Name = '${firstname}' AND NOK_PAPMI_ParRef->PAPMI_Name2 = '${lastname}' AND NOK_PAPMI_ParRef->PAPMI_DOB = '${dateOfBirth}' 
-                AND Nok.NOK_Name is not null AND Nok.NOK_Name2 is not null 
-                AND NOK_PAPMI_ParRef->PAPMI_RowId->PAPER_AgeYr > 15 THEN
-                ORDER BY NOK_PAPMI_ParRef Desc `;           
-                statement.executeQuery(query, function (
-                  err: any,
-                  resultset: any
-                ) {
-                  if (err) {
-                    reject(err);
-                  } else {
-                    resultset.toObjArray(function (
-                      err: any,
-                      results: any
-                    ) {
-                      resolve(results);
-                    });
-                  }
-                });
-              }
-            });
-          }
-        });
-        repos.release(connObj, function (err: any) {
-          if (err) {
-            console.log(err);
-          }
-        });
-      }
-    });
-  });
-  repos = di.get("repos")
-  query_1 = `REPLACE INTO Screening.Patient_Emergency SET ? `
-  result.map((d: any) => {
-    repos.query(query_1, d,function(err:any, results:any) {
-      if (err) {
-        return console.error(err.message);
-      }
-    });
     
-  });
-  let query_3 = `UPDATE Screening.Patient_Emergency pe
-  SET pe.Subdistrict = (SELECT ca1.ID FROM Registration.CT_CityArea_1 ca1 WHERE ca1.Desc_TH = 
-  (SELECT ca.Desc_TH FROM Registration.CT_CityArea ca WHERE ca.ID = pe.Subdistrict limit 1) AND ca1.Zip_Code = pe.Postcode limit 1)
-  WHERE pe.HN = (SELECT HN FROM Screening.Patient_Info WHERE Firstname = '${firstname}' AND  Lastname = '${lastname}' AND DOB = '${dateOfBirth}' limit 1) `
-    repos.query(query_3, function(err:any, results:any) {
-      if (err) {
-        return console.error(err.message);
-      }
-    });
-  console.log("Get Patent Emergenct Success at " + new Date())
-  
-  console.log("Get Patent Parent at " + new Date())
-  repos = di.get("cache");
-  result = await new Promise((resolve, reject) => {
-    repos.reserve((err: any, connObj: any) => {
-      if (connObj) {
-        let conn = connObj.conn;
-        
-        conn.createStatement((err: any, statement: any) => {
+    result.map(async(d: any) => {
+      
+      repos.query(query_1, d,function(err:any, results:any) {
+        if (err) {
+          return console.error(err.message);
+        } 
+        let query_2 = `UPDATE Screening.Family_History fh
+        SET Disease = (SELECT ID FROM Registration.CT_Diseases WHERE DescEN = fh.Disease OR DescTH = fh.Disease limit 1)
+        WHERE fh.HN = '${HN}' AND  fh.Person = '${d.Person}' AND Disease NOT IN (SELECT ID FROM Registration.CT_Diseases) `
+        repos.query(query_2, function(err:any, results:any) {
           if (err) {
-            reject(err);
-          } else {
-            statement.setFetchSize(100, function (err: any) {
-              if (err) {
-                reject(err);
-              } else {
-                const query = `SELECT	NOK_PAPMI_ParRef->PAPMI_No "HN",
-                NOK.NOK_Name "Firstname", 
-                NOK.NOK_Name2 "Lastname",
-                NOK.NOK_Relation_DR "Relation",
-                NOK.NOK_Email "Email",
-                CASE
-                    WHEN NOK.NOK_MobPhone IS NOT NULL THEN Nok_TelH
-                    ELSE NOK.NOK_TelH
-                END "PhoneNo",
-                CASE 
-                     WHEN Nok.NOK_Country_DR->CTCOU_RowId IS NULL 
-                       AND ((Nok.NOK_Zip_DR->CTZIP_Code NOT IN ('900001', '12500', '40001', '74111', '80516', 'JAN-64', 'AUG-43', '11-JAN', '8-JAN', '7-FEB', '900000', '999999') AND NOK_PAPMI_ParRef->PAPMI_RowId->PAPER_Zip_DR->CTZIP_Code IS NOT NULL) 
-                      OR (NOK_PAPMI_ParRef->PAPMI_RowId->PAPER_Zip_DR->CTZIP_Province_DR->PROV_RowId NOT IN ('77', '78') AND NOK_Zip_DR->CTZIP_Province_DR->PROV_RowId IS NOT NULL)
-                       OR (NOK_Zip_DR->CTZIP_CITY_DR->CTCIT_RowId NOT IN ('1116', '936') AND NOK_Zip_DR->CTZIP_CITY_DR->CTCIT_RowId IS NOT NULL)) THEN 2
-                     ELSE NOK_Country_DR->CTCOU_RowId
-                  END "Country",
-                NOK.NOK_Zip_DR->CTZIP_Code "Postcode",
-                NOK.NOK_CityArea_DR "Subdistrict",
-                NOK.NOK_CityCode_DR "District",
-                NOK.NOK_StNameLine1 "Address",
-                NOK.NOK_Province_DR "Province",
-                '0' "sameAddress"FROM PA_Nok Nok
-                Where NOK_PAPMI_ParRef->PAPMI_Name = '${firstname}' AND NOK_PAPMI_ParRef->PAPMI_Name2 = '${lastname}' AND NOK_PAPMI_ParRef->PAPMI_DOB = '${dateOfBirth}'
-                AND Nok.NOK_Name is not null AND Nok.NOK_Name2 is not null 
-                AND NOK_PAPMI_ParRef->PAPMI_RowId->PAPER_AgeYr <= 15
-                ORDER BY NOK_PAPMI_ParRef Desc `;           
-                statement.executeQuery(query, function (
-                  err: any,
-                  resultset: any
-                ) {
-                  if (err) {
-                    reject(err);
-                  } else {
-                    resultset.toObjArray(function (
-                      err: any,
-                      results: any
-                    ) {
-                      resolve(results);
-                    });
-                  }
-                });
-              }
-            });
+            return console.error(err.message);
           }
         });
-        repos.release(connObj, function (err: any) {
-          if (err) {
-            console.log(err);
-          }
-        });
-      }
-    });
-  });
-  repos = di.get("repos")
-  query_1 = `REPLACE INTO Screening.Parent SET ? `
-  result.map((d: any) => {
-    repos.query(query_1, d,function(err:any, results:any) {
-      if (err) {
-        return console.error(err.message);
-      }
-    });
-  })
-  query_3 = `UPDATE Screening.Parent pr
-  SET pr.Subdistrict = (SELECT ca1.ID FROM Registration.CT_CityArea_1 ca1 WHERE ca1.Desc_TH = 
-  (SELECT ca.Desc_TH FROM Registration.CT_CityArea ca WHERE ca.ID = pr.Subdistrict limit 1) AND ca1.Zip_Code = pr.Postcode limit 1)
-  WHERE pr.HN = (SELECT HN FROM Screening.Patient_Info WHERE Firstname = '${firstname}' AND  Lastname = '${lastname}' AND DOB = '${dateOfBirth}' limit 1) `
-    repos.query(query_3, function(err:any, results:any) {
-      if (err) {
-        return console.error(err.message);
-      }
-    });
-  console.log("Get Patent Parent Success at " + new Date())
-  
-  console.log("Get Patent Address at " + new Date())
-  repos = di.get("cache");
-  result = await new Promise((resolve, reject) => {
-    repos.reserve((err: any, connObj: any) => {
-      if (connObj) {
-        let conn = connObj.conn;
-        
-        conn.createStatement((err: any, statement: any) => {
-          if (err) {
-            reject(err);
-          } else {
-            statement.setFetchSize(100, function (err: any) {
-              if (err) {
-                reject(err);
-              } else {
-                const query = `SELECT PAPMI_No "HN",
-                CASE 
-                   WHEN PAPER_Country_DR IS NULL 
-                   AND ((PAPER_Zip_DR->CTZIP_Code NOT IN ('900001', '12500', '40001', '74111', '80516', 'JAN-64', 'AUG-43', '11-JAN', '8-JAN', '7-FEB', '900000', '999999') AND PAPER_Zip_DR->CTZIP_Code IS NOT NULL) 
-                   OR (PAPER_Zip_DR->CTZIP_Province_DR NOT IN ('77', '78') AND PAPER_Zip_DR->CTZIP_Province_DR IS NOT NULL)
-                   OR (PAPER_Zip_DR->CTZIP_CITY_DR NOT IN ('1116', '936') AND PAPER_Zip_DR->CTZIP_CITY_DR IS NOT NULL)) THEN 2
-                   ELSE PAPER_Country_DR
-                  END "Country",
-                  CASE
-                   WHEN PAPER_Zip_DR->CTZIP_Code IN ('900001', '12500', '40001', '74111', '80516', 'JAN-64', 'AUG-43', '11-JAN', '8-JAN', '7-FEB', '900000', '999999') THEN null
-                   ELSE  PAPER_Zip_DR->CTZIP_Code
-                  END "Postcode",
-                    CASE
-                   WHEN PAPER_Zip_DR->CTZIP_Province_DR IN ('77', '78') THEN null
-                   ELSE PAPER_Zip_DR->CTZIP_Province_DR
-                  END "Province",
-                  CASE
-                   WHEN PAPER_Zip_DR->CTZIP_CITY_DR IN ('1116', '936') THEN null
-                   ELSE  PAPER_Zip_DR->CTZIP_CITY_DR
-                  END "District",
-                  PAPER_CityArea_DR "Subdistrict",
-                  PAPER_StName "Address",
-                        '0' "Type"
-                  FROM PA_PatMas
-                    INNER JOIN PA_Person ON PA_PatMas.PAPMI_PAPER_DR = PA_Person.PAPER_RowId
-                    WHERE PAPMI_Name = '${firstname}' AND PAPMI_Name2 = '${lastname}' AND PAPMI_DOB = '${dateOfBirth}'
-                `;           
-                statement.executeQuery(query, function (
-                  err: any,
-                  resultset: any
-                ) {
-                  if (err) {
-                    reject(err);
-                  } else {
-                    resultset.toObjArray(function (
-                      err: any,
-                      results: any
-                    ) {
-                      resolve(results);
-                    });
-                  }
-                });
-              }
-            });
-          }
-        });
-        repos.release(connObj, function (err: any) {
-          if (err) {
-            console.log(err);
-          }
-        });
-      }
-    });
-  });
-  repos = di.get("repos")
-  let query_del
+      });
+      
+    })
 
-  // result.map((d: any) => {
-  //   query_del = `DELETE FROM Screening.Patient_Address WHERE HN = '${d.HN}' AND Type = '${d.Type}' AND Type = 0 `
-  //   repos.query(query_del,function(err:any, results:any) {
-  //     if (err) {
-  //       return console.error(err.message);
-  //     } 
-  //   });
-  // });
-  query_1 = `INSERT INTO Screening.Patient_Address SET ? `
-  result.map((d: any) => {
-    console.log(999)
-    repos.query(query_1, d,function(err:any, results:any) {
-      if (err) {
-        return console.error(err.message);
-      }
+  }
+  async postPatientSocialByHN(HN:any)
+  {
+    let repos = di.get("cache");
+    let result: any = await new Promise((resolve, reject) => {
+      repos.reserve((err: any, connObj: any) => {
+        if (connObj) {
+          let conn = connObj.conn;
+          
+          conn.createStatement((err: any, statement: any) => {
+            if (err) {
+              reject(err);
+            } else {
+              statement.setFetchSize(100, function (err: any) {
+                if (err) {
+                  reject(err);
+                } else {
+                  const query = `SELECT SCH_PAPMI_ParRef->PAPMI_No "HN", 
+                  LOWER(REPLACE(SCH_Habits_DR->HAB_Desc,' ','')) "Habit",
+                  CASE WHEN SCH_HabitsQty_DR->QTY_desc = 'None' THEN NULL
+                    ELSE SCH_HabitsQty_DR->QTY_desc
+                  END"Quantity", 
+                  SCH_Desc "Comment",
+                  CASE WHEN SCH_HabitsQty_DR->QTY_desc IS NOT NULL AND SCH_HabitsQty_DR->QTY_desc = 'None' THEN 0
+                    ELSE 1
+                  END "Status"
+                  FROM PA_SocHist 
+                  WHERE SCH_PAPMI_ParRef->PAPMI_No = '${HN}' `;           
+                  statement.executeQuery(query, function (
+                    err: any,
+                    resultset: any
+                  ) {
+                    if (err) {
+                      reject(err);
+                    } else {
+                      resultset.toObjArray(function (
+                        err: any,
+                        results: any
+                      ) {
+                        resolve(results);
+                      });
+                    }
+                  });
+                }
+              });
+            }
+          });
+          repos.release(connObj, function (err: any) {
+            if (err) {
+              console.log(err);
+            }
+          });
+        }
+      });
     });
-  });
-
-  
-  let query_2 = `UPDATE Screening.Patient_Address pa
-  SET pa.Subdistrict = (SELECT ca1.ID FROM Registration.CT_CityArea_1 ca1 WHERE ca1.Desc_TH = 
-  (SELECT ca.Desc_TH FROM Registration.CT_CityArea ca WHERE ca.ID = pa.Subdistrict limit 1) AND ca1.Zip_Code = pa.Postcode limit 1)
-  WHERE pa.HN = (SELECT HN FROM Screening.Patient_Info WHERE Firstname = '${firstname}' AND  Lastname = '${lastname}' AND DOB = '${dateOfBirth}' limit 1) `
-    repos.query(query_2, function(err:any, results:any) {
-      if (err) {
-        return console.error(err.message);
-      }
-    });
-    
-  console.log("Get Patent Parent Success at " + new Date())
-  
-  console.log("Get Patent Family at " + new Date())
-  repos = di.get("cache");
-  result = await new Promise((resolve, reject) => {
-    repos.reserve((err: any, connObj: any) => {
-      if (connObj) {
-        let conn = connObj.conn;
-        
-        conn.createStatement((err: any, statement: any) => {
+    repos = di.get("repos")
+    let query_1 = `INSERT INTO Screening.Patient_Social SET ? `
+    await result.map((d: any) => {
+      let query_del = `DELETE FROM Screening.Patient_Social WHERE HN = '${HN}' AND Habit = '${d.Habit}' `
+      repos.query(query_del,function(err:any, results:any) {
+        if (err) {
+          return console.error(err.message);
+        }
+        repos.query(query_1, d,function(err:any, results:any) {
           if (err) {
-            reject(err);
-          } else {
-            statement.setFetchSize(100, function (err: any) {
-              if (err) {
-                reject(err);
-              } else {
-                const query = `SELECT  FAM_PAPMI_ParRef->PAPMI_No "HN", 
-                FAM_Relation_DR "Person",
-                FAM_Desc "Disease"
-                FROM PA_Family
-                WHERE FAM_PAPMI_ParRef->PAPMI_Name = '${firstname}' AND FAM_PAPMI_ParRef->PAPMI_Name2 = '${lastname}' AND FAM_PAPMI_ParRef->PAPMI_DOB = '${dateOfBirth}' `;           
-                statement.executeQuery(query, function (
-                  err: any,
-                  resultset: any
-                ) {
-                  if (err) {
-                    reject(err);
-                  } else {
-                    resultset.toObjArray(function (
-                      err: any,
-                      results: any
-                    ) {
-                      resolve(results);
-                    });
-                  }
-                });
-              }
-            });
+            return console.error(err.message);
           }
         });
-        repos.release(connObj, function (err: any) {
-          if (err) {
-            console.log(err);
-          }
-        });
-      }
-    });
-  });
-  repos = di.get("repos")
-  query_1 = `INSERT INTO Screening.Family_History SET ? `
-  await result.map((d: any) => {
-    repos.query(query_1, d,function(err:any, results:any) {
-      if (err) {
-        return console.error(err.message);
-      }
-    });
-  })
-  query_2 = `UPDATE Screening.Family_History fh
-  SET Disease = (SELECT ID FROM Registration.CT_Diseases WHERE DescEN = fh.Disease OR DescTH = fh.Disease limit 1)
- WHERE fh.HN = (SELECT HN FROM Screening.Patient_Info WHERE Firstname = '${firstname}' AND  Lastname = '${lastname}' AND DOB = '${dateOfBirth}' limit 1) `
-    repos.query(query_2, function(err:any, results:any) {
-      if (err) {
-        return console.error(err.message);
-      }
-    });
-  console.log("Get Patent Family Success at " + new Date())
+      });
+    })
   
-  console.log("Get Patent Social at " + new Date())
-  repos = di.get("cache");
-  result = await new Promise((resolve, reject) => {
-    repos.reserve((err: any, connObj: any) => {
-      if (connObj) {
-        let conn = connObj.conn;
-        
-        conn.createStatement((err: any, statement: any) => {
-          if (err) {
-            reject(err);
-          } else {
-            statement.setFetchSize(100, function (err: any) {
-              if (err) {
-                reject(err);
-              } else {
-                const query = `SELECT SCH_PAPMI_ParRef->PAPMI_No "HN", 
-                LOWER(REPLACE(SCH_Habits_DR->HAB_Desc,' ','')) "Habit",
-                CASE WHEN SCH_HabitsQty_DR->QTY_desc = 'None' THEN NULL
-                  ELSE SCH_HabitsQty_DR->QTY_desc
-                END"Quantity", 
-                SCH_Desc "Comment",
-                CASE WHEN SCH_HabitsQty_DR->QTY_desc IS NOT NULL AND SCH_HabitsQty_DR->QTY_desc = 'None' THEN 0
-                  ELSE 1
-                END "Status",
-                CASE
-                  WHEN SCH_DuratDays is not null THEN SCH_DuratDays
-                  WHEN SCH_DuratMonth is not null THEN SCH_DuratMonth
-                  WHEN SCH_DuratYear is not null THEN SCH_DuratYear
-                  ELSE NULL
-                END "DurationQuantity",
-                CASE
-                  WHEN SCH_DuratDays is not null THEN 'Days'
-                  WHEN SCH_DuratMonth is not null THEN 'Weeks'
-                  WHEN SCH_DuratYear is not null THEN 'Years'
-                  ELSE NULL
-                END "DurationUnit"
-                FROM PA_SocHist 
-                WHERE SCH_PAPMI_ParRef->PAPMI_Name = '${firstname}' AND SCH_PAPMI_ParRef->PAPMI_Name2 = '${lastname}' AND SCH_PAPMI_ParRef->PAPMI_DOB = '${dateOfBirth}' `;           
-                statement.executeQuery(query, function (
-                  err: any,
-                  resultset: any
-                ) {
-                  if (err) {
-                    reject(err);
-                  } else {
-                    resultset.toObjArray(function (
-                      err: any,
-                      results: any
-                    ) {
-                      resolve(results);
-                    });
-                  }
-                });
-              }
-            });
-          }
-        });
-        repos.release(connObj, function (err: any) {
-          if (err) {
-            console.log(err);
-          }
-        });
-      }
-    });
-  });
-  repos = di.get("repos")
-  query_1 = `INSERT INTO Screening.Patient_Social SET ? `
-  await result.map((d: any) => {
-    console.log(d)
-    query_del = `DELETE FROM Screening.Patient_Social WHERE HN = '${d.HN}' AND Habit = '${d.Habit}' `
-    repos.query(query_del,function(err:any, results:any) {
-      if (err) {
-        return console.error(err.message);
-      }
-    });
-  })
-  await result.map((d: any) => {
-    console.log(d)
-    repos.query(query_1, d,function(err:any, results:any) {
-      if (err) {
-        return console.error(err.message);
-      }
-    });
-  })
-
-  console.log("Get Patent Social Success at " + new Date())
-  console.log("Finished Get Screening Data at " + new Date())
+  }
   
-}
   saveSignature() {
     return async (req: Request, res: Response) => {
       let { signatureHash, signatureImage, HN, signType,consent, consentText } = req.body;
@@ -2078,7 +1721,8 @@ class screeningRoute {
   
   getSearch() {
     return async (req: Request, res: Response) => {
-      let {id, firstname, lastname, phone_no, passport, national_id, dateOfBirth, page} = req.body;
+      let {firstname, lastname, phone_no, passport, national_id, dateOfBirth, page,id} = req.body;
+      
       let repos = di.get("repos");
       try {
         let startNum = (parseInt(page) * 15) - 15
@@ -2129,26 +1773,24 @@ class screeningRoute {
             queryCount += ` AND (PI.DOB = '${dateOfBirth}')`
           }
           queryCount += ` AND Confirm != 1`
-
-          let data = await repos.query(query)
-          let count = await repos.query(queryCount)
+          let data
+          let count
+          // let data = await repos.query(query)
+          // let count = await repos.query(queryCount)
           
-          if (data.length == 0)
+          // if (data.length == 0)
+          // {
+          if (!_.isEmpty(national_id) || !_.isEmpty(national_id) || !_.isEmpty(firstname) || !_.isEmpty(lastname) || !_.isEmpty(dateOfBirth))
           {
-            if (!_.isEmpty(national_id))
-            {
-              await this.postScreeningByNationID(national_id)
-              data = await repos.query(query)
-              count = await repos.query(queryCount)
-            }else if (!_.isEmpty(firstname) && !_.isEmpty(lastname) && !_.isEmpty(dateOfBirth))
-            {
-              await this.postScreeningByData(firstname,lastname,dateOfBirth)
-              data = await repos.query(query)
-              count = await repos.query(queryCount)
-            }
-            
+            await this.postScreeningFromTC(national_id,passport,firstname,lastname,dateOfBirth)
+            data = await repos.query(query)
+            count = await repos.query(queryCount)
           }
-
+          
+          
+          // }
+          if (!data) data = await repos.query(query)
+          if (!count) count = await repos.query(queryCount)
           await data.map((d: any) => {
             let encrypted = CryptoJS.AES.encrypt(d.HN, 'C36bJmRax7');
             return d.UID = encrypted.toString()
@@ -2532,14 +2174,14 @@ class screeningRoute {
   
   async handleConsent(data: any, hn: any) {
     let repos = di.get("repos")
-    let query_1 = `REPLACE INTO Screening.Consent (HN, Clause, Message, Agree) VALUES(${hn}, '1', '${data.consent_1.text}', ${data.consent_1.status})`
-    let query_2_1 = `REPLACE INTO Screening.Consent (HN, Clause, Message, Agree) VALUES(${hn}, '2_1', '${data.consent_2_1.text}', ${data.consent_2_1.status})`
-    let query_2_2 = `REPLACE INTO Screening.Consent (HN, Clause, Message, Agree) VALUES(${hn}, '2_2', '${data.consent_2_2.text}', ${data.consent_2_2.status})`
-    let query_2_3 = `REPLACE INTO Screening.Consent (HN, Clause, Message, Agree) VALUES(${hn}, '2_3', '${data.consent_2_3.text}', ${data.consent_2_3.status})`
-    let query_2_4 = `REPLACE INTO Screening.Consent (HN, Clause, Message, Agree) VALUES(${hn}, '2_4', '${data.consent_2_4.text}', ${data.consent_2_4.status})`
-    let query_2_5_1 = `REPLACE INTO Screening.Consent (HN, Clause, Message, Agree) VALUES(${hn}, '2_5_1', '${data.consent_2_5_1.text}', ${data.consent_2_5_1.status})`
-    let query_2_5_2 = `REPLACE INTO Screening.Consent (HN, Clause, Message, Agree) VALUES(${hn}, '2_5_2', '${data.consent_2_5_2.text}', ${data.consent_2_5_2.status})`
-    let query_2_5_3 = `REPLACE INTO Screening.Consent (HN, Clause, Message, Agree) VALUES(${hn}, '2_5_3', '${data.consent_2_5_3.text}', ${data.consent_2_5_3.status})`
+    let query_1 = `REPLACE INTO Screening.Consent (HN, Clause, Message, Agree) VALUES('${hn}', '1', '${data.consent_1.text}', ${data.consent_1.status})`
+    let query_2_1 = `REPLACE INTO Screening.Consent (HN, Clause, Message, Agree) VALUES('${hn}', '2_1', '${data.consent_2_1.text}', ${data.consent_2_1.status})`
+    let query_2_2 = `REPLACE INTO Screening.Consent (HN, Clause, Message, Agree) VALUES('${hn}', '2_2', '${data.consent_2_2.text}', ${data.consent_2_2.status})`
+    let query_2_3 = `REPLACE INTO Screening.Consent (HN, Clause, Message, Agree) VALUES('${hn}', '2_3', '${data.consent_2_3.text}', ${data.consent_2_3.status})`
+    let query_2_4 = `REPLACE INTO Screening.Consent (HN, Clause, Message, Agree) VALUES('${hn}', '2_4', '${data.consent_2_4.text}', ${data.consent_2_4.status})`
+    let query_2_5_1 = `REPLACE INTO Screening.Consent (HN, Clause, Message, Agree) VALUES('${hn}', '2_5_1', '${data.consent_2_5_1.text}', ${data.consent_2_5_1.status})`
+    let query_2_5_2 = `REPLACE INTO Screening.Consent (HN, Clause, Message, Agree) VALUES('${hn}', '2_5_2', '${data.consent_2_5_2.text}', ${data.consent_2_5_2.status})`
+    let query_2_5_3 = `REPLACE INTO Screening.Consent (HN, Clause, Message, Agree) VALUES('${hn}', '2_5_3', '${data.consent_2_5_3.text}', ${data.consent_2_5_3.status})`
     await repos.query(query_1)
     await repos.query(query_2_1)
     await repos.query(query_2_2)
