@@ -33,7 +33,8 @@ class ctRoute {
   getReligion() {
     return async (req: Request, res: Response) => {
       let repos = di.get('repos')
-      let query = `SELECT * FROM Registration_drivethru.CT_Religion WHERE ID != 10 `
+      let query = `SELECT * FROM Registration_drivethru.CT_Religion WHERE ID = 4 UNION 
+       SELECT * FROM Registration_drivethru.CT_Religion WHERE ID != 10 AND ID != 4 `
 
       let result = await repos.query(query)
       let response = result.map((d:any ) => {
