@@ -12,8 +12,7 @@ class ctRoute {
       
       let repos = di.get('repos')
       let query = `SELECT * FROM Registration_drivethru.CT_Title`
-      query += ` Where Code IN ('00008', '00010', '00116', '00117', '00118') UNION
-      SELECT * FROM Registration.CT_Title ct WHERE Code NOT LIKE '%E%' AND CODE NOT IN ('00008', '00010', '00116', '00117', '00118')`
+      query += ` Where Code IN ('00008', '00010', '00116', '00117', '00118', '00039')`
       
       let result = await repos.query(query)
       await result.map((d: any) => d.Desc = this.Capitalize(d.Desc.toLowerCase()))
