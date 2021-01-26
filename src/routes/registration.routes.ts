@@ -66,6 +66,26 @@ class registrationRoute {
         District: body.district,
         Subdistrict: body.subdistrict,
         Zipcode: body.zipcode,
+        CardPicture: body.id_card,
+        PaymentCash: body.payment_method.includes("Cash") ? 1 : 0,
+        PaymentCreditcard: body.payment_method.includes("Credit card") ? 1 : 0,
+        PaymentCompany: body.payment_method.includes("Company bill") ? 1 : 0,
+        PaymentMobile: body.payment_method.includes("Mobile") ? 1 : 0,
+        PaymentOther: body.payment_method.includes("Other") ? 1 : 0,
+        PaymentCompanyDesc: body.paymentCompany,
+        PaymentOtherDesc: body.paymentOther,
+        History14_1: body.following_history == "1" ? 1 : 0,
+        History14_2: body.following_history == "2" ? 1 : 0,
+        History14_3: body.following_history == "3" ? 1 : 0,
+        History14_Other: body.following_history == "Other" ? 1 : 0,
+        History14_OtherDesc: body.historyOther,
+        History30_1: body.following_history30 == "1" ? 1 : 0,
+        History30_2: body.following_history30 == "2" ? 1 : 0,
+        History30_3: body.following_history30 == "3" ? 1 : 0,
+        History30_4: body.following_history30 == "4" ? 1 : 0,
+        History30_5: body.following_history30 == "5" ? 1 : 0,
+        History30_Other: body.following_history30 == "Other" ? 1 : 0,
+        History30_OtherDesc: body.history30Other,
         IsMedical: 1
       }
       let queryInfo = `INSERT INTO Registration_drivethru.Patient_Data SET ?`
@@ -155,6 +175,93 @@ class registrationRoute {
       
     }
   }
+  // getSearch() {
+  //   return async (req: Request, res: Response) => {
+  //     let {id, firstname, lastname, phone_no, passport, dateOfBirth, national_id, site, page} = req.body;
+      
+  //     let repos = di.get("repos");
+  //     try {
+  //       let startNum = (parseInt(page) * 15) - 15
+  //       let LimitNum = 15
+  //       if (_.isEmpty(id) && !_.isNumber(id)) {
+  //         let query = `SELECT PI.*, CTS.Desc_EN Gender_Desc FROM Registration.Patient_Info PI`
+  //         query += ` LEFT JOIN Registration.CT_Sex CTS ON CTS.Id = PI.Gender`
+  //         query += ` WHERE 1 = 1`
+  //         if (!_.isEmpty(firstname)) {
+  //           query += ` AND (PI.Firstname LIKE '%${firstname}%')`
+  //         }
+  //         if (!_.isEmpty(lastname)) {
+  //           query += ` AND (PI.Lastname LIKE '%${lastname}%')`
+  //         }
+  //         if (!_.isEmpty(phone_no)) {
+  //           query += ` AND PI.PhoneNo = '${phone_no}'`
+  //         }
+  //         if (!_.isEmpty(passport)) {
+  //           query += ` AND PI.Passport = '${passport}'`
+  //         }
+  //         if (!_.isEmpty(national_id)) {
+  //           query += ` AND PI.NationalID = '${national_id}'`
+  //         }
+  //         if (!_.isEmpty(dateOfBirth)) {
+  //           query += ` AND (PI.DOB = '${dateOfBirth}')`
+  //         }
+          
+  //         query += ` AND Confirm != 1`
+  //         query += ` AND Site IN ('${site}')`
+  //         query += ` ORDER BY ID DESC LIMIT ${startNum},${LimitNum}`
+  //         let queryCount = `SELECT COUNT(PI.ID) as count FROM Registration.Patient_Info PI`
+  //         queryCount += ` WHERE 1 = 1`
+  //         if (!_.isEmpty(firstname)) {
+  //           queryCount += ` AND (PI.Firstname LIKE '%${firstname}%')`
+  //         }
+  //         if (!_.isEmpty(lastname)) {
+  //           queryCount += ` AND (PI.Lastname LIKE '%${lastname}%')`
+  //         }
+  //         if (!_.isEmpty(phone_no)) {
+  //           queryCount += ` AND PI.PhoneNo = '${phone_no}'`
+  //         }
+  //         if (!_.isEmpty(passport)) {
+  //           queryCount += ` AND PI.Passport = '${passport}'`
+  //         }
+  //         if (!_.isEmpty(national_id)) {
+  //           queryCount += ` AND PI.NationalID = '${national_id}'`
+  //         }
+          
+  //         if (!_.isEmpty(dateOfBirth)) {
+  //           queryCount += ` AND (PI.DOB = '${dateOfBirth}')`
+  //         }
+          
+  //         queryCount += ` AND Confirm != 1`
+  //         queryCount += ` AND Site IN ('${site}')`
+
+  //         let count = await repos.query(queryCount)
+  //         let data = await repos.query(query)
+  //         await data.map((d: any) => {
+  //           let encrypted = CryptoJS.AES.encrypt(d.UID, 'C36bJmRax7');
+  //           return d.UID = encrypted.toString()
+  //         })
+  //         const result = {
+  //           pagination:{
+  //             currentPage: parseInt(page),
+  //             totalPage: Math.ceil(count[0].count/20),
+  //             totalResult: count[0].count
+  //           },
+  //           result: data
+  //         }
+  //         res.send(result)
+  //       } else {
+  //         let decrypted = await CryptoJS.AES.decrypt(id, "C36bJmRax7")
+  //         let uid = decrypted.toString(CryptoJS.enc.Utf8)
+  //         let data = await this.getPatientByIdFromDB(uid)
+  //         res.send(data)
+          
+  //       }
+  //     } catch (error) {
+  //       console.log(error);
+  //       res.status(404).json([])
+  //     }
+  //   }
+  // }
   getTitle() {
     return async (req: Request, res: Response) => {
       
@@ -271,6 +378,7 @@ const route = new registrationRoute()
 
 router
   .post("/", route.postRegister())
+  // .get("/search", route.getSearch())
 
   
   
