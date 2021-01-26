@@ -10,7 +10,9 @@ class registrationRoute {
   }
   postRegister() {
     return async (req: Request, res: Response) => {
+      console.log("1111")
       let body = req.body
+      console.log(body)
       let repos = di.get('repos')
       let queryReligion = `SELECT * FROM Registration.CT_Religion Where ID = ${body.religion}`
     let queryGender = `SELECT * FROM Registration.CT_Sex Where ID = ${body.gender}`
@@ -51,7 +53,7 @@ class registrationRoute {
       dob.setHours(dob.getHours() + 7)
       let Religion = await repos.query(queryReligion)
       let Gender = await repos.query(queryGender)
-
+      console.log("AAA")
       let dataInfo = {
         Title: body.title,
         FirstName: body.firstname,
@@ -88,6 +90,7 @@ class registrationRoute {
         History30_OtherDesc: body.history30Other,
         IsMedical: 1
       }
+      console.log(dataInfo)
       let queryInfo = `INSERT INTO Registration_drivethru.Patient_Data SET ?`
       let insertInfo = await repos.query(queryInfo, dataInfo);
 
