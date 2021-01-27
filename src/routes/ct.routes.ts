@@ -62,13 +62,14 @@ class ctRoute {
       let { provinceid } = req.query
       let repos = di.get('repos')
       let query = ''
-      query = `SELECT ca.* FROM Registration_drivethru.CT_City ca 
-                
-              WHERE ca.Province_ID = '${provinceid}' `
+      query = `SELECT ca.* FROM Registration_drivethru.CT_City ca `
       
+      if(!_.isEmpty(provinceid) && provinceid !== 'undefined')
+      query +=`WHERE ca.Province_ID = '${provinceid}' `
+
+      console.log(query)
       let result = await repos.query(query)
       let response: any
-
       response = await result.map((d: any) => {
         return {
           ID: d.ID,
@@ -85,10 +86,11 @@ class ctRoute {
       let repos = di.get('repos')
       let query = ''
       
-      query = `SELECT ca.* FROM Registration_drivethru.CT_Cityarea ca 
-                
-              WHERE ca.City_ID = '${cityid}'`
-
+      query = `SELECT ca.* FROM Registration_drivethru.CT_Cityarea ca `
+      
+      if(!_.isEmpty(cityid) && cityid !== 'undefined')
+      query +=`WHERE ca.City_ID = '${cityid}'`
+              
       let result = await repos.query(query)
       let response: any
       response = await result.map((d: any) => {
@@ -105,8 +107,10 @@ class ctRoute {
       let { provinceid, cityid, cityareaid } = req.query
       let repos = di.get('repos')
       let query = ''
-      query = `SELECT *  FROM Registration_drivethru.CT_Zip 
-              Where Province_ID = '${provinceid}' AND City_ID = '${cityid}' AND Cityarea_ID = '${cityareaid}' `
+      query = `SELECT *  FROM Registration_drivethru.CT_Zip `
+
+      if(!_.isEmpty(provinceid) && !_.isEmpty(cityid) && !_.isEmpty(cityareaid))
+      query +=`Where Province_ID = '${provinceid}' AND City_ID = '${cityid}' AND Cityarea_ID = '${cityareaid}' `
               
       let result = await repos.query(query)
       res.send(result) 

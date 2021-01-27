@@ -10,9 +10,7 @@ class registrationRoute {
   }
   postRegister() {
     return async (req: Request, res: Response) => {
-      console.log("1111")
       let body = req.body
-      console.log(body)
       let repos = di.get('repos')
       let queryReligion = `SELECT * FROM Registration.CT_Religion Where ID = ${body.religion}`
     let queryGender = `SELECT * FROM Registration.CT_Sex Where ID = ${body.gender}`
@@ -53,7 +51,7 @@ class registrationRoute {
       dob.setHours(dob.getHours() + 7)
       let Religion = await repos.query(queryReligion)
       let Gender = await repos.query(queryGender)
-      console.log("AAA")
+
       let dataInfo = {
         Title: body.title,
         FirstName: body.firstname,
@@ -76,21 +74,12 @@ class registrationRoute {
         PaymentOther: body.payment_method.includes("Other") ? 1 : 0,
         PaymentCompanyDesc: body.paymentCompany,
         PaymentOtherDesc: body.paymentOther,
-        History14_1: body.following_history == "1" ? 1 : 0,
-        History14_2: body.following_history == "2" ? 1 : 0,
-        History14_3: body.following_history == "3" ? 1 : 0,
-        History14_Other: body.following_history == "Other" ? 1 : 0,
+        History14: body.following_history,
         History14_OtherDesc: body.historyOther,
-        History30_1: body.following_history30 == "1" ? 1 : 0,
-        History30_2: body.following_history30 == "2" ? 1 : 0,
-        History30_3: body.following_history30 == "3" ? 1 : 0,
-        History30_4: body.following_history30 == "4" ? 1 : 0,
-        History30_5: body.following_history30 == "5" ? 1 : 0,
-        History30_Other: body.following_history30 == "Other" ? 1 : 0,
+        History30: body.following_history30,
         History30_OtherDesc: body.history30Other,
-        IsMedical: 1
+        IsMedical: body.IsMedical == "yes" ? 1 : 0,
       }
-      console.log(dataInfo)
       let queryInfo = `INSERT INTO Registration_drivethru.Patient_Data SET ?`
       let insertInfo = await repos.query(queryInfo, dataInfo);
 
@@ -178,93 +167,111 @@ class registrationRoute {
       
     }
   }
-  // getSearch() {
-  //   return async (req: Request, res: Response) => {
-  //     let {id, firstname, lastname, phone_no, passport, dateOfBirth, national_id, site, page} = req.body;
-      
-  //     let repos = di.get("repos");
-  //     try {
-  //       let startNum = (parseInt(page) * 15) - 15
-  //       let LimitNum = 15
-  //       if (_.isEmpty(id) && !_.isNumber(id)) {
-  //         let query = `SELECT PI.*, CTS.Desc_EN Gender_Desc FROM Registration.Patient_Info PI`
-  //         query += ` LEFT JOIN Registration.CT_Sex CTS ON CTS.Id = PI.Gender`
-  //         query += ` WHERE 1 = 1`
-  //         if (!_.isEmpty(firstname)) {
-  //           query += ` AND (PI.Firstname LIKE '%${firstname}%')`
-  //         }
-  //         if (!_.isEmpty(lastname)) {
-  //           query += ` AND (PI.Lastname LIKE '%${lastname}%')`
-  //         }
-  //         if (!_.isEmpty(phone_no)) {
-  //           query += ` AND PI.PhoneNo = '${phone_no}'`
-  //         }
-  //         if (!_.isEmpty(passport)) {
-  //           query += ` AND PI.Passport = '${passport}'`
-  //         }
-  //         if (!_.isEmpty(national_id)) {
-  //           query += ` AND PI.NationalID = '${national_id}'`
-  //         }
-  //         if (!_.isEmpty(dateOfBirth)) {
-  //           query += ` AND (PI.DOB = '${dateOfBirth}')`
-  //         }
+  getSearch() {
+    return async (req: Request, res: Response) => {
+      let {id, firstname, lastname, phone_no, passport, dateOfBirth, national_id, site, page} = req.body;
+      let repos = di.get("repos");
+      try {
+        let startNum = (parseInt(page) * 15) - 15
+        let LimitNum = 15
+        if (_.isEmpty(id) && !_.isNumber(id)) {
+          let query = `SELECT PD.*, CTS.Desc AS Gender_Desc FROM Registration_drivethru.Patient_Data PD`
+          query += ` LEFT JOIN Registration_drivethru.CT_Sex CTS ON CTS.Id = PD.Gender`
+          // if (!_.isEmpty(firstname)) {
+          //   query += ` AND (PI.Firstname LIKE '%${firstname}%')`
+          // }
+          // if (!_.isEmpty(lastname)) {
+          //   query += ` AND (PI.Lastname LIKE '%${lastname}%')`
+          // }
+          // if (!_.isEmpty(phone_no)) {
+          //   query += ` AND PI.PhoneNo = '${phone_no}'`
+          // }
+          // if (!_.isEmpty(passport)) {
+          //   query += ` AND PI.Passport = '${passport}'`
+          // }
+          // if (!_.isEmpty(national_id)) {
+          //   query += ` AND PI.NationalID = '${national_id}'`
+          // }
+          // if (!_.isEmpty(dateOfBirth)) {
+          //   query += ` AND (PI.DOB = '${dateOfBirth}')`
+          // }
           
-  //         query += ` AND Confirm != 1`
-  //         query += ` AND Site IN ('${site}')`
-  //         query += ` ORDER BY ID DESC LIMIT ${startNum},${LimitNum}`
-  //         let queryCount = `SELECT COUNT(PI.ID) as count FROM Registration.Patient_Info PI`
-  //         queryCount += ` WHERE 1 = 1`
-  //         if (!_.isEmpty(firstname)) {
-  //           queryCount += ` AND (PI.Firstname LIKE '%${firstname}%')`
-  //         }
-  //         if (!_.isEmpty(lastname)) {
-  //           queryCount += ` AND (PI.Lastname LIKE '%${lastname}%')`
-  //         }
-  //         if (!_.isEmpty(phone_no)) {
-  //           queryCount += ` AND PI.PhoneNo = '${phone_no}'`
-  //         }
-  //         if (!_.isEmpty(passport)) {
-  //           queryCount += ` AND PI.Passport = '${passport}'`
-  //         }
-  //         if (!_.isEmpty(national_id)) {
-  //           queryCount += ` AND PI.NationalID = '${national_id}'`
-  //         }
-          
-  //         if (!_.isEmpty(dateOfBirth)) {
-  //           queryCount += ` AND (PI.DOB = '${dateOfBirth}')`
-  //         }
-          
-  //         queryCount += ` AND Confirm != 1`
-  //         queryCount += ` AND Site IN ('${site}')`
+          query += ` ORDER BY PD.ID DESC LIMIT ${startNum},${LimitNum}`
+          let queryCount = `SELECT COUNT(PD.ID) as count FROM Registration_drivethru.Patient_Data PD`
 
-  //         let count = await repos.query(queryCount)
-  //         let data = await repos.query(query)
-  //         await data.map((d: any) => {
-  //           let encrypted = CryptoJS.AES.encrypt(d.UID, 'C36bJmRax7');
-  //           return d.UID = encrypted.toString()
-  //         })
-  //         const result = {
-  //           pagination:{
-  //             currentPage: parseInt(page),
-  //             totalPage: Math.ceil(count[0].count/20),
-  //             totalResult: count[0].count
-  //           },
-  //           result: data
-  //         }
-  //         res.send(result)
-  //       } else {
-  //         let decrypted = await CryptoJS.AES.decrypt(id, "C36bJmRax7")
-  //         let uid = decrypted.toString(CryptoJS.enc.Utf8)
-  //         let data = await this.getPatientByIdFromDB(uid)
-  //         res.send(data)
+          let count = await repos.query(queryCount)
+          let data = await repos.query(query)
           
-  //       }
-  //     } catch (error) {
-  //       console.log(error);
-  //       res.status(404).json([])
-  //     }
-  //   }
-  // }
+          await data.map((d: any) => {
+            //let encrypted = CryptoJS.AES.encrypt(d.UID, 'C36bJmRax7');
+            //return d.UID = encrypted.toString()
+          })
+          const result = {
+            pagination:{
+              currentPage: parseInt(page),
+              totalPage: Math.ceil(count[0].count/20),
+              totalResult: count[0].count
+            },
+            result: data
+          }
+          res.send(result)
+        } else {
+          // let decrypted = await CryptoJS.AES.decrypt(id, "C36bJmRax7")
+          // let uid = decrypted.toString(CryptoJS.enc.Utf8)
+          let data = await this.getPatientByIdFromDB(id)
+          res.send(data)
+          
+        }
+      } catch (error) {
+        console.log(error);
+        res.status(404).json([])
+      }
+    }
+  }
+  async getPatientByIdFromDB(id: string) {
+    let repos = di.get("repos");
+    let query = `SELECT PD.* FROM Registration_drivethru.Patient_Data PD`
+    query += ` WHERE PD.ID = '${id}'`
+    let data = await repos.query(query)
+
+    let payment = []
+    if (data[0].PaymentCash == 1) payment.push('Cash')
+    if (data[0].PaymentCreditcard == 1) payment.push('Credit card')
+    if (data[0].PaymentCompany == 1) payment.push('Company bill')
+    if (data[0].PaymentMobile == 1) payment.push('Mobile')
+    if (data[0].PaymentOther == 1) payment.push('Other')
+      
+    let result = {
+      Title: data[0].Title,
+      Firstname: data[0].FirstName,
+      Lastname: data[0].LastName,
+      DOB: data[0].DOB,
+      NationalID: data[0].NationalID,
+      Religion: data[0].Religion,
+      PhoneNo: data[0].PhoneNo,
+      Province: data[0].Province,
+      District: data[0].District,
+      Subdistrict: data[0].SubDistrict,
+      Zipcode: data[0].ZipCode,
+      Address: data[0].Address,
+      Payment_method: payment,
+      CardPicture: data[0].CardPicture,
+      ShowPaymentCompany: data[0].PaymentCompany == 1 ? true : false,
+      ShowPaymentOther: data[0].PaymentOther == 1 ? true : false,
+      PaymentCompanyDesc: data[0].PaymentCompanyDesc,
+      PaymentOtherDesc: data[0].PaymentOtherDesc,
+      History14: data[0].History14,
+      History14Other: data[0].History14_OtherDesc,
+      ShowHistory14Other: data[0].History14 == "Other" ? true : false,
+      History30: data[0].History30,
+      History30Other: data[0].History30_OtherDesc,
+      ShowHistory30Other: data[0].History30 == "Other" ? true : false,
+      IsMedical: data[0].IsMedical == 1 ? "yes" : "no",
+    }
+      
+    return result
+    
+  }
   getTitle() {
     return async (req: Request, res: Response) => {
       
@@ -381,7 +388,7 @@ const route = new registrationRoute()
 
 router
   .post("/", route.postRegister())
-  // .get("/search", route.getSearch())
+  .post("/search", route.getSearch())
 
   
   
