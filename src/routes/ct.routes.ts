@@ -67,7 +67,6 @@ class ctRoute {
       if(!_.isEmpty(provinceid) && provinceid !== 'undefined')
       query +=`WHERE ca.Province_ID = '${provinceid}' `
 
-      console.log(query)
       let result = await repos.query(query)
       let response: any
       response = await result.map((d: any) => {

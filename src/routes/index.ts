@@ -1,4 +1,5 @@
 import { ct } from "./ct.routes";
+import { auth } from "./auth.routes"
 import { registration } from "./registration.routes";
 export class Routes {
   constructor(private app: any) {
@@ -7,6 +8,7 @@ export class Routes {
 
   setRoutes() {
     const prefix = "/api/v1";
+    this.app.use(prefix + "/auth", auth);
     this.app.use(prefix + "/ct", ct);
     this.app.use(prefix + "/registration", registration);
   }
