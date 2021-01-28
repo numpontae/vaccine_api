@@ -12,6 +12,7 @@ class registrationRoute {
     return async (req: Request, res: Response) => {
       let body = req.body
       let repos = di.get('repos')
+      try {
       let queryReligion = `SELECT * FROM Registration.CT_Religion Where ID = ${body.religion}`
     let queryGender = `SELECT * FROM Registration.CT_Sex Where ID = ${body.gender}`
       let Subdistrict = async (id: any) => {
@@ -163,8 +164,12 @@ class registrationRoute {
           delete axios.defaults.baseURL
           axios.post(`http://10.105.10.50:8700/api/CpoeRegister/registerCpoe`, { path, filename, data: rpa  })
           
-      res.send({message: 'Sucess'})
-      
+      res.send({message: 'Sucess', status: '200'})
+    } catch (error) {
+      console.log(error);
+      res.send({message: 'Error', status: '404'})
+      console.log("error")
+    }
     }
   }
   getSearch() {
