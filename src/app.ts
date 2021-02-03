@@ -72,4 +72,35 @@ app.listen(port, async () => {
     });
     di.set("cache", cachedb)
   }
+  // var mqtt = require('mqtt');
+
+  // const MQTT_SERVER = "broker.hivemq.com";
+  // const MQTT_PORT = "1883";
+  // //if your server don't have username and password let blank.
+  // const MQTT_USER = ""; 
+  // const MQTT_PASSWORD = "";
+
+  // // Connect MQTT
+  // var client = mqtt.connect({
+  //     host: MQTT_SERVER,
+  //     port: MQTT_PORT,
+  //     username: MQTT_USER,
+  //     password: MQTT_PASSWORD
+  // });
+
+  // client.on('connect', function () {
+  //     // Subscribe any topic
+  //     console.log("MQTT Connect");
+  //     client.subscribe('test', function (err: any) {
+  //         if (err) {
+  //             console.log(err);
+  //         }
+  //     });
+  // });
+
+
+  // setInterval(() => {
+  //     client.publish("preregdrive", "hello from NodeJS");
+  //     console.log("111")
+  // }, 5000);
 });

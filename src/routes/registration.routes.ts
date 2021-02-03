@@ -72,14 +72,18 @@ class registrationRoute {
         PaymentCreditcard: body.payment_method.includes("Credit card") ? 1 : 0,
         PaymentCompany: body.payment_method.includes("Company bill") ? 1 : 0,
         PaymentMobile: body.payment_method.includes("Mobile") ? 1 : 0,
+        paymentInsurance: body.payment_method.includes("Insurance") ? 1 : 0,
         PaymentOther: body.payment_method.includes("Other") ? 1 : 0,
         PaymentCompanyDesc: body.paymentCompany,
+        PaymentInsuranceDesc: body.paymentInsurance,
         PaymentOtherDesc: body.paymentOther,
-        History14: body.following_history,
-        History14_OtherDesc: body.historyOther,
-        History30: body.following_history30,
-        History30_OtherDesc: body.history30Other,
-        IsMedical: body.IsMedical == "yes" ? 1 : 0,
+        Fever14: body.fever14 == "yes" ? 1 : 0,
+        //Symptom14: [],
+        Travelscourgecovid30: body.travelscourgecovid30 == "yes" ? 1 : 0,
+        Staycovid30: body.staycovid30 == "yes" ? 1 : 0,
+        Workcovid30: body.workcovid30 == "yes" ? 1 : 0,
+        Traveldoubtcovid30: body.traveldoubtcovid30 == "yes" ? 1 : 0,
+        IsMedical: body.is_medical == "yes" ? 1 : 0,
       }
       let queryInfo = `INSERT INTO Registration_drivethru.Patient_Data SET ?`
       let insertInfo = await repos.query(queryInfo, dataInfo);
