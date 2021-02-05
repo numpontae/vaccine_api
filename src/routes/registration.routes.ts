@@ -33,7 +33,6 @@ class registrationRoute {
         if (!provice.length) return ''
         return provice[0].Desc
       }
-      
       let Title = async (id: any) => {
         let queryTitle = `SELECT * FROM Registration.CT_Title Where ID = ${id}`
         let title = await repos.query(queryTitle)
@@ -52,7 +51,6 @@ class registrationRoute {
       dob.setHours(dob.getHours() + 7)
       let Religion = await repos.query(queryReligion)
       let Gender = await repos.query(queryGender)
-
       let dataInfo = {
         Title: body.title,
         FirstName: body.firstname,
@@ -78,7 +76,15 @@ class registrationRoute {
         PaymentInsuranceDesc: body.paymentInsurance,
         PaymentOtherDesc: body.paymentOther,
         Fever14: body.fever14 == "yes" ? 1 : 0,
-        //Symptom14: [],
+        Symptom14_Cough: body.symptom14.includes("Cough") ? 1 : 0,
+        Symptom14_RunnyNose: body.symptom14.includes("Runn nose") ? 1 : 0,
+        Symptom14_SoreThroat: body.symptom14.includes("Sore throat") ? 1 : 0,
+        Symptom14_RapidBreathing: body.symptom14.includes("Rapid breathing") ? 1 : 0,
+        Symptom14_DifficultyBreathing: body.symptom14.includes("Difficulty breathing") ? 1 : 0,
+        Symptom14_NoseDoesNotSmell: body.symptom14.includes("Nose does not smell") ? 1 : 0,
+        Symptom14_TiredBreathing: body.symptom14.includes("Tired breathing") ? 1 : 0,
+        Symptom14_TonguesArePerceivedWrong: body.symptom14.includes("Tongues are perceived wrong") ? 1 : 0,
+        Symptom14_NoneOfTheAbove: body.symptom14.includes("None of the above") ? 1 : 0,
         Travelscourgecovid30: body.travelscourgecovid30 == "yes" ? 1 : 0,
         Staycovid30: body.staycovid30 == "yes" ? 1 : 0,
         Workcovid30: body.workcovid30 == "yes" ? 1 : 0,
@@ -175,16 +181,19 @@ class registrationRoute {
       console.log("error")
     }
     }
-  }
+  } 
   getSearch() {
     return async (req: Request, res: Response) => {
+      
       let {id, firstname, lastname, phone_no, passport, dateOfBirth, national_id, site, page} = req.body;
+      
       let repos = di.get("repos");
       try {
+        
         let startNum = (parseInt(page) * 15) - 15
         let LimitNum = 15
         if (_.isEmpty(id) && !_.isNumber(id)) {
-          let query = `SELECT PD.*, CTS.Desc AS Gender_Desc FROM Registration_drivethru.Patient_Data PD`
+          let query = `SELECT PD.ID, PD.FirstName, PD.LastName, PD.DOB,PD.NationalID, PD.CardPicture, CTS.Desc AS Gender_Desc FROM Registration_drivethru.Patient_Data PD`
           query += ` LEFT JOIN Registration_drivethru.CT_Sex CTS ON CTS.Id = PD.Gender`
           // if (!_.isEmpty(firstname)) {
           //   query += ` AND (PI.Firstname LIKE '%${firstname}%')`
@@ -218,7 +227,7 @@ class registrationRoute {
           const result = {
             pagination:{
               currentPage: parseInt(page),
-              totalPage: Math.ceil(count[0].count/20),
+              totalPage: Math.ceil(count[0].count/15),
               totalResult: count[0].count
             },
             result: data
@@ -249,6 +258,17 @@ class registrationRoute {
     if (data[0].PaymentCompany == 1) payment.push('Company bill')
     if (data[0].PaymentMobile == 1) payment.push('Mobile')
     if (data[0].PaymentOther == 1) payment.push('Other')
+
+    let symptom14 = []
+    if (data[0].Symptom14_Cough == 1) symptom14.push('Cough')
+    if (data[0].Symptom14_RunnyNose == 1) symptom14.push('Runn nose')
+    if (data[0].Symptom14_SoreThroat == 1) symptom14.push('Sore throat')
+    if (data[0].Symptom14_RapidBreathing == 1) symptom14.push('Rapid breathing')
+    if (data[0].Symptom14_DifficultyBreathing == 1) symptom14.push('Difficulty breathing')
+    if (data[0].Symptom14_NoseDoesNotSmell == 1) symptom14.push('Nose does not smell')
+    if (data[0].Symptom14_TiredBreathing == 1) symptom14.push('Tired breathing')
+    if (data[0].Symptom14_TonguesArePerceivedWrong == 1) symptom14.push('Tongues are perceived wrong')
+    if (data[0].Symptom14_NoneOfTheAbove == 1) symptom14.push('None of the above')
       
     let result = {
       Title: data[0].Title,
@@ -266,15 +286,17 @@ class registrationRoute {
       Payment_method: payment,
       CardPicture: data[0].CardPicture,
       ShowPaymentCompany: data[0].PaymentCompany == 1 ? true : false,
+      ShowPaymentInsurance: data[0].PaymentInsurance == 1 ? true : false,
       ShowPaymentOther: data[0].PaymentOther == 1 ? true : false,
       PaymentCompanyDesc: data[0].PaymentCompanyDesc,
+      PaymentInsuranceDesc: data[0].PaymentInsuranceDesc,
       PaymentOtherDesc: data[0].PaymentOtherDesc,
-      History14: data[0].History14,
-      History14Other: data[0].History14_OtherDesc,
-      ShowHistory14Other: data[0].History14 == "Other" ? true : false,
-      History30: data[0].History30,
-      History30Other: data[0].History30_OtherDesc,
-      ShowHistory30Other: data[0].History30 == "Other" ? true : false,
+      Symptom14: symptom14,
+      Fever14: data[0].Fever14 == 1 ? "yes" : "no",
+      Travelscourgecovid30: data[0].Travelscourgecovid30 == 1 ? "yes" : "no",
+      Staycovid30: data[0].Staycovid30 == 1 ? "yes" : "no",
+      Workcovid30: data[0].Workcovid30 == 1 ? "yes" : "no",
+      Traveldoubtcovid30: data[0].Traveldoubtcovid30== 1 ? "yes" : "no",
       IsMedical: data[0].IsMedical == 1 ? "yes" : "no",
     }
       
