@@ -75,9 +75,9 @@ class registrationRoute {
         PaymentCompanyDesc: body.paymentCompany,
         PaymentInsuranceDesc: body.paymentInsurance,
         PaymentOtherDesc: body.paymentOther,
-        Fever14: body.fever14 == "yes" ? 1 : 0,
+        Fever14: body.fever14 == "yes" ? 1 : 0, 
         Symptom14_Cough: body.symptom14.includes("Cough") ? 1 : 0,
-        Symptom14_RunnyNose: body.symptom14.includes("Runn nose") ? 1 : 0,
+        Symptom14_RunnyNose: body.symptom14.includes("Runny nose") ? 1 : 0,
         Symptom14_SoreThroat: body.symptom14.includes("Sore throat") ? 1 : 0,
         Symptom14_RapidBreathing: body.symptom14.includes("Rapid breathing") ? 1 : 0,
         Symptom14_DifficultyBreathing: body.symptom14.includes("Difficulty breathing") ? 1 : 0,
@@ -90,6 +90,7 @@ class registrationRoute {
         Workcovid30: body.workcovid30 == "yes" ? 1 : 0,
         Traveldoubtcovid30: body.traveldoubtcovid30 == "yes" ? 1 : 0,
         IsMedical: body.is_medical == "yes" ? 1 : 0,
+        PublicIP: body.publicip,
       }
       let queryInfo = `INSERT INTO Registration_drivethru.Patient_Data SET ?`
       let insertInfo = await repos.query(queryInfo, dataInfo);
@@ -182,6 +183,20 @@ class registrationRoute {
     }
     }
   } 
+  getCardPicture() {
+    return async (req: Request, res: Response) => {
+      let { id } = req.query
+      let repos = di.get('repos')
+      let query = ''
+      
+      query = `SELECT CardPicture FROM Registration_drivethru.Patient_Data WHERE ID = '${id}'  `
+
+              
+      let result = await repos.query(query)
+
+      res.send(result) 
+    }
+  }
   getSearch() {
     return async (req: Request, res: Response) => {
       
@@ -193,7 +208,7 @@ class registrationRoute {
         let startNum = (parseInt(page) * 15) - 15
         let LimitNum = 15
         if (_.isEmpty(id) && !_.isNumber(id)) {
-          let query = `SELECT PD.ID, PD.FirstName, PD.LastName, PD.DOB,PD.NationalID, PD.CardPicture, CTS.Desc AS Gender_Desc FROM Registration_drivethru.Patient_Data PD`
+          let query = `SELECT PD.ID, PD.FirstName, PD.LastName, PD.DOB,PD.NationalID, CTS.Desc AS Gender_Desc FROM Registration_drivethru.Patient_Data PD`
           query += ` LEFT JOIN Registration_drivethru.CT_Sex CTS ON CTS.Id = PD.Gender`
           // if (!_.isEmpty(firstname)) {
           //   query += ` AND (PI.Firstname LIKE '%${firstname}%')`
@@ -237,6 +252,7 @@ class registrationRoute {
           // let decrypted = await CryptoJS.AES.decrypt(id, "C36bJmRax7")
           // let uid = decrypted.toString(CryptoJS.enc.Utf8)
           let data = await this.getPatientByIdFromDB(id)
+          
           res.send(data)
           
         }
@@ -269,7 +285,7 @@ class registrationRoute {
     if (data[0].Symptom14_TiredBreathing == 1) symptom14.push('Tired breathing')
     if (data[0].Symptom14_TonguesArePerceivedWrong == 1) symptom14.push('Tongues are perceived wrong')
     if (data[0].Symptom14_NoneOfTheAbove == 1) symptom14.push('None of the above')
-      
+    data[0].DOB.setHours(data[0].DOB.getHours() + 7)
     let result = {
       Title: data[0].Title,
       Firstname: data[0].FirstName,
@@ -420,6 +436,7 @@ const route = new registrationRoute()
 router
   .post("/", route.postRegister())
   .post("/search", route.getSearch())
+  .get("/cardpicture", route.getCardPicture())
 
   
   
