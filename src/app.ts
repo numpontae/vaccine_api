@@ -65,17 +65,17 @@ app.listen(port, async () => {
     console.log(`mysql connected`);
     di.set('repos', pool);
   });
-  // if (!cacheInit) {
-  //   cachedb.initialize(function(err: any) {
-  //     if (err) {
-  //       console.log(err);
-  //     } else {
-  //       console.log('cache connect');
-  //       cacheInit = true;
-  //     }
-  //   });
-  //   di.set("cache", cachedb)
-  // }
+  if (!cacheInit) {
+    cachedb.initialize(function(err: any) {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log('cache connect');
+        cacheInit = true;
+      }
+    });
+    di.set("cache", cachedb)
+  }
   // var mqtt = require('mqtt');
 
   // const MQTT_SERVER = "broker.hivemq.com";
