@@ -5,7 +5,8 @@
   "main": "app.ts",
   "private": true,
   "scripts": {
-    "build": "rm -rf dist | node_modules/.bin/tsc",
+
+    "build": "tsc -P tsconfig.json",
     "serve": "nodemon --exec ts-node src/app.ts"
   },
   "dependencies": {

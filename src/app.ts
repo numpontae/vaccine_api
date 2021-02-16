@@ -9,6 +9,10 @@ const JDBC = require("jdbc");
 
 const app = express();
 const port = 30020;
+
+app.get("/", function(req, res) {
+  res.send("Hello Worlxxxxd!");
+});
 app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
 app.use(bodyParser.json({ limit: "100mb" }));
 app.use((req, res, next) => {
@@ -61,17 +65,17 @@ app.listen(port, async () => {
     console.log(`mysql connected`);
     di.set('repos', pool);
   });
-  if (!cacheInit) {
-    cachedb.initialize(function(err: any) {
-      if (err) {
-        console.log(err);
-      } else {
-        console.log('cache connect');
-        cacheInit = true;
-      }
-    });
-    di.set("cache", cachedb)
-  }
+  // if (!cacheInit) {
+  //   cachedb.initialize(function(err: any) {
+  //     if (err) {
+  //       console.log(err);
+  //     } else {
+  //       console.log('cache connect');
+  //       cacheInit = true;
+  //     }
+  //   });
+  //   di.set("cache", cachedb)
+  // }
   // var mqtt = require('mqtt');
 
   // const MQTT_SERVER = "broker.hivemq.com";

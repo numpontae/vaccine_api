@@ -277,7 +277,7 @@ class registrationRoute {
 
     let symptom14 = []
     if (data[0].Symptom14_Cough == 1) symptom14.push('Cough')
-    if (data[0].Symptom14_RunnyNose == 1) symptom14.push('Runn nose')
+    if (data[0].Symptom14_RunnyNose == 1) symptom14.push('Runny nose')
     if (data[0].Symptom14_SoreThroat == 1) symptom14.push('Sore throat')
     if (data[0].Symptom14_RapidBreathing == 1) symptom14.push('Rapid breathing')
     if (data[0].Symptom14_DifficultyBreathing == 1) symptom14.push('Difficulty breathing')
