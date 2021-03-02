@@ -1,5 +1,5 @@
 {
-  "name": "preregistration_thru_api",
+  "name": "onetrust_consent_api",
   "version": "1.0.0",
   "description": "",
   "main": "app.ts",

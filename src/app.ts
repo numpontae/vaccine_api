@@ -58,24 +58,24 @@ let cachedb = new JDBC(cache);
 
 app.listen(port, async () => {
   console.log(`server start with port ${port}`);
-  const pool = await mysql.createPool(registerConfig);
-  pool.getConnection();
-  pool.query('SELECT 1', function (error: any, results: any, fields: any) {
-    if (error) throw error;
-    console.log(`mysql connected`);
-    di.set('repos', pool);
-  });
-  if (!cacheInit) {
-    cachedb.initialize(function(err: any) {
-      if (err) {
-        console.log(err);
-      } else {
-        console.log('cache connect');
-        cacheInit = true;
-      }
-    });
-    di.set("cache", cachedb)
-  }
+  // const pool = await mysql.createPool(registerConfig);
+  // pool.getConnection();
+  // pool.query('SELECT 1', function (error: any, results: any, fields: any) {
+  //   if (error) throw error;
+  //   console.log(`mysql connected`);
+  //   di.set('repos', pool);
+  // });
+  // if (!cacheInit) {
+  //   cachedb.initialize(function(err: any) {
+  //     if (err) {
+  //       console.log(err);
+  //     } else {
+  //       console.log('cache connect');
+  //       cacheInit = true;
+  //     }
+  //   });
+  //   di.set("cache", cachedb)
+  // }
   // var mqtt = require('mqtt');
 
   // const MQTT_SERVER = "broker.hivemq.com";

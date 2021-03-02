@@ -2,6 +2,8 @@ import { Request, Response, Router } from 'express'
 import { di } from '../di'
 import * as _ from 'lodash'
 import axios from 'axios'
+const FormData = require('form-data');
+const fs = require('fs');
 
 class registrationRoute {
   Capitalize = (s: any ) => {
@@ -200,62 +202,107 @@ class registrationRoute {
   getSearch() {
     return async (req: Request, res: Response) => {
       
-      let {id, firstname, lastname, phone_no, passport, dateOfBirth, national_id, site, page} = req.body;
+      let {national_id, site, language} = req.body;
+
       
       let repos = di.get("repos");
       try {
-        
-        let startNum = (parseInt(page) * 15) - 15
-        let LimitNum = 15
-        if (_.isEmpty(id) && !_.isNumber(id)) {
-          let query = `SELECT PD.ID, PD.FirstName, PD.LastName, PD.DOB,PD.NationalID, CTS.Desc AS Gender_Desc FROM Registration_drivethru.Patient_Data PD`
-          query += ` LEFT JOIN Registration_drivethru.CT_Sex CTS ON CTS.Id = PD.Gender`
-          // if (!_.isEmpty(firstname)) {
-          //   query += ` AND (PI.Firstname LIKE '%${firstname}%')`
-          // }
-          // if (!_.isEmpty(lastname)) {
-          //   query += ` AND (PI.Lastname LIKE '%${lastname}%')`
-          // }
-          // if (!_.isEmpty(phone_no)) {
-          //   query += ` AND PI.PhoneNo = '${phone_no}'`
-          // }
-          // if (!_.isEmpty(passport)) {
-          //   query += ` AND PI.Passport = '${passport}'`
-          // }
-          // if (!_.isEmpty(national_id)) {
-          //   query += ` AND PI.NationalID = '${national_id}'`
-          // }
-          // if (!_.isEmpty(dateOfBirth)) {
-          //   query += ` AND (PI.DOB = '${dateOfBirth}')`
-          // }
-          
-          query += ` ORDER BY PD.ID DESC LIMIT ${startNum},${LimitNum}`
-          let queryCount = `SELECT COUNT(PD.ID) as count FROM Registration_drivethru.Patient_Data PD`
+        let client_id = "146225c2b8904dfb91c350c618f772c5"
+        let client_secret = "c2NlaAIpZ9HRKMIc2Mr0NNw58C0UiSOa"
+        let grant_type = "client_credentials"
+        var bodyFormData = new FormData();
+        bodyFormData.append('client_id', '146225c2b8904dfb91c350c618f772c5');
+        bodyFormData.append('client_secret', 'c2NlaAIpZ9HRKMIc2Mr0NNw58C0UiSOa');
+        bodyFormData.append('grant_type', 'client_credentials');
+        let token:any
+        delete axios.defaults.baseURL
+        await axios({method: 'post',url:`https://trial.onetrust.com/api/access/v1/oauth/token`, data: bodyFormData, headers: { "Content-Type": `multipart/form-data; boundary=${bodyFormData._boundary}` }})
+        .then(function (response) {
+          token = response.data.access_token
+        })
+        console.log(token)
+        let organization:any
+        await axios({method: 'get',url:`https://trial.onetrust.com/api/access/v1/external/organizations`, headers: { 'Authorization': `Bearer ${token}` }})
+        .then(function (response) {
+          organization = response.data.children
+        })
+        let organizationID
+        await organization.map((d: any) => {
+          if(d.name == site) organizationID = d.organizationId
+        })
+        let purposeId:any
+        await axios({method: 'get',url:`https://trial.onetrust.com/api/consentmanager/v2/purposes?latestVersion=true&organization=${organizationID}`, headers: { 'Authorization': `Bearer ${token}` }})
+        .then(function (response) {
+          purposeId = response.data.content
+        })
 
-          let count = await repos.query(queryCount)
-          let data = await repos.query(query)
+        let purposeDataSubject:any
+        
+
+        await axios({method: 'get',url:`https://trial.onetrust.com/api/consentmanager/v1/datasubjects/profiles?properties=ignoreCount&identifier=${national_id}`, headers: { 'Authorization': `Bearer ${token}` }})
+        .then(function (response) {
+          purposeDataSubject = response.data.content[0].Purposes
+          // response.data.content[0].Purposes.map((p1: any) => {
+          //   purposeId.map(async(p2: any) => {
+          //     if(p1.Id == p2.purposeId)
+          //     {
+                
+          //       await axios({method: 'get',url:`https://trial.onetrust.com/api/consentmanager/v2/purposes/${p1.Id}`, headers: { 'Authorization': `Bearer ${token}` }})
+          //       .then(function (response) {
+          //         console.log(response.data.languages)
+          //         console.log(p1.CustomPreferences[0].Options)
+          //         response.data.languages.map
+          //       });
+          //     }
           
-          await data.map((d: any) => {
-            //let encrypted = CryptoJS.AES.encrypt(d.UID, 'C36bJmRax7');
-            //return d.UID = encrypted.toString()
-          })
-          const result = {
-            pagination:{
-              currentPage: parseInt(page),
-              totalPage: Math.ceil(count[0].count/15),
-              totalResult: count[0].count
-            },
-            result: data
-          }
-          res.send(result)
-        } else {
-          // let decrypted = await CryptoJS.AES.decrypt(id, "C36bJmRax7")
-          // let uid = decrypted.toString(CryptoJS.enc.Utf8)
-          let data = await this.getPatientByIdFromDB(id)
+          //   })
+          // })
+        })
+        //console.log(purposeDataSubject)
+        let arr:any = []
+        await Promise.all(purposeDataSubject.map(async (p1: any): Promise<any> => {
+          await Promise.all(purposeId.map(async (p2: any): Promise<any> => {
+                if(p1.Id == p2.purposeId)
+                {
+                  
+                  await axios({method: 'get',url:`https://trial.onetrust.com/api/consentmanager/v2/purposes/${p1.Id}`, headers: { 'Authorization': `Bearer ${token}` }})
+                  .then(async function (response) {
+                    await Promise.all(response.data.languages.map(async (l1: any): Promise<any> => {
+                      if(l1.language == language)
+                        arr.push({
+                          name: l1.name,
+                          description: l1.description,
+                          agreement: p1.CustomPreferences[0].Options[0].Name
+                      })
+                    }))
+                  });
+                }
+            
+              }))
+        }));
+
+        console.log(arr)
+        res.send(arr)
+        // purposeDataSubject.map((p1: any) => {
+        //   purposeId.map(async(p2: any) => {
+        //     if(p1.Id == p2.purposeId)
+        //     {
+              
+        //       await axios({method: 'get',url:`https://trial.onetrust.com/api/consentmanager/v2/purposes/${p1.Id}`, headers: { 'Authorization': `Bearer ${token}` }})
+        //       .then(function (response) {
+        //         console.log(response.data.languages)
+        //         console.log(p1.CustomPreferences[0].Options)
+        //         response.data.languages.map
+        //       });
+        //     }
+        
+        //   })
+        // })
+
+
+        
           
-          res.send(data)
           
-        }
       } catch (error) {
         console.log(error);
         res.status(404).json([])
@@ -440,4 +487,4 @@ router
 
   
   
-export const registration = router
+export const consent = router
