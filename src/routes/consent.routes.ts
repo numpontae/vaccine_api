@@ -205,84 +205,88 @@ class registrationRoute {
       let {national_id, site, language} = req.body;
 
       
+      
       let repos = di.get("repos");
       try {
-        let client_id = "146225c2b8904dfb91c350c618f772c5"
-        let client_secret = "c2NlaAIpZ9HRKMIc2Mr0NNw58C0UiSOa"
-        let grant_type = "client_credentials"
-        var bodyFormData = new FormData();
-        bodyFormData.append('client_id', '146225c2b8904dfb91c350c618f772c5');
-        bodyFormData.append('client_secret', 'c2NlaAIpZ9HRKMIc2Mr0NNw58C0UiSOa');
-        bodyFormData.append('grant_type', 'client_credentials');
-        let token:any
-        delete axios.defaults.baseURL
-        await axios({method: 'post',url:`https://trial.onetrust.com/api/access/v1/oauth/token`, data: bodyFormData, headers: { "Content-Type": `multipart/form-data; boundary=${bodyFormData._boundary}` }})
-        .then(function (response) {
-          token = response.data.access_token
-        })
-        console.log(token)
-        let organization:any
-        await axios({method: 'get',url:`https://trial.onetrust.com/api/access/v1/external/organizations`, headers: { 'Authorization': `Bearer ${token}` }})
-        .then(function (response) {
-          organization = response.data.children
-        })
-        let organizationID
-        await organization.map((d: any) => {
-          if(d.name == site) organizationID = d.organizationId
-        })
-        let purposeId:any
-        await axios({method: 'get',url:`https://trial.onetrust.com/api/consentmanager/v2/purposes?latestVersion=true&organization=${organizationID}`, headers: { 'Authorization': `Bearer ${token}` }})
-        .then(function (response) {
-          purposeId = response.data.content
-        })
+        let test = axios({method: 'post',url:`http://10.105.10.29:1881/onetrust_consent`, data:  {national_id, site, language}})
+      .then(function (response) {
+        res.send(response.data)
+      })
 
-        let purposeDataSubject:any
+        // let client_id = "146225c2b8904dfb91c350c618f772c5"
+        // let client_secret = "c2NlaAIpZ9HRKMIc2Mr0NNw58C0UiSOa"
+        // let grant_type = "client_credentials"
+        // var bodyFormData = new FormData();
+        // bodyFormData.append('client_id', '146225c2b8904dfb91c350c618f772c5');
+        // bodyFormData.append('client_secret', 'c2NlaAIpZ9HRKMIc2Mr0NNw58C0UiSOa');
+        // bodyFormData.append('grant_type', 'client_credentials');
+        // let token:any
+        // delete axios.defaults.baseURL
+        // await axios({method: 'post',url:`https://trial.onetrust.com/api/access/v1/oauth/token`, data: bodyFormData, headers: { "Content-Type": `multipart/form-data; boundary=${bodyFormData._boundary}` }})
+        // .then(function (response) {
+        //   token = response.data.access_token
+        // })
+        // console.log(token)
+        // let organization:any
+        // await axios({method: 'get',url:`https://trial.onetrust.com/api/access/v1/external/organizations`, headers: { 'Authorization': `Bearer ${token}` }})
+        // .then(function (response) {
+        //   organization = response.data.children
+        // })
+        // let organizationID
+        // await organization.map((d: any) => {
+        //   if(d.name == site) organizationID = d.organizationId
+        // })
+        // let purposeId:any
+        // await axios({method: 'get',url:`https://trial.onetrust.com/api/consentmanager/v2/purposes?latestVersion=true&organization=${organizationID}`, headers: { 'Authorization': `Bearer ${token}` }})
+        // .then(function (response) {
+        //   purposeId = response.data.content
+        // })
+
+        // let purposeDataSubject:any
         
 
-        await axios({method: 'get',url:`https://trial.onetrust.com/api/consentmanager/v1/datasubjects/profiles?properties=ignoreCount&identifier=${national_id}`, headers: { 'Authorization': `Bearer ${token}` }})
-        .then(function (response) {
-          purposeDataSubject = response.data.content[0].Purposes
-          // response.data.content[0].Purposes.map((p1: any) => {
-          //   purposeId.map(async(p2: any) => {
-          //     if(p1.Id == p2.purposeId)
-          //     {
+        // await axios({method: 'get',url:`https://trial.onetrust.com/api/consentmanager/v1/datasubjects/profiles?properties=ignoreCount&identifier=${national_id}`, headers: { 'Authorization': `Bearer ${token}` }})
+        // .then(function (response) {
+        //   purposeDataSubject = response.data.content[0].Purposes
+        //   // response.data.content[0].Purposes.map((p1: any) => {
+        //   //   purposeId.map(async(p2: any) => {
+        //   //     if(p1.Id == p2.purposeId)
+        //   //     {
                 
-          //       await axios({method: 'get',url:`https://trial.onetrust.com/api/consentmanager/v2/purposes/${p1.Id}`, headers: { 'Authorization': `Bearer ${token}` }})
-          //       .then(function (response) {
-          //         console.log(response.data.languages)
-          //         console.log(p1.CustomPreferences[0].Options)
-          //         response.data.languages.map
-          //       });
-          //     }
+        //   //       await axios({method: 'get',url:`https://trial.onetrust.com/api/consentmanager/v2/purposes/${p1.Id}`, headers: { 'Authorization': `Bearer ${token}` }})
+        //   //       .then(function (response) {
+        //   //         console.log(response.data.languages)
+        //   //         console.log(p1.CustomPreferences[0].Options)
+        //   //         response.data.languages.map
+        //   //       });
+        //   //     }
           
-          //   })
-          // })
-        })
-        //console.log(purposeDataSubject)
-        let arr:any = []
-        await Promise.all(purposeDataSubject.map(async (p1: any): Promise<any> => {
-          await Promise.all(purposeId.map(async (p2: any): Promise<any> => {
-                if(p1.Id == p2.purposeId)
-                {
-                  
-                  await axios({method: 'get',url:`https://trial.onetrust.com/api/consentmanager/v2/purposes/${p1.Id}`, headers: { 'Authorization': `Bearer ${token}` }})
-                  .then(async function (response) {
-                    await Promise.all(response.data.languages.map(async (l1: any): Promise<any> => {
-                      if(l1.language == language)
-                        arr.push({
-                          name: l1.name,
-                          description: l1.description,
-                          agreement: p1.CustomPreferences[0].Options[0].Name
-                      })
-                    }))
-                  });
-                }
-            
-              }))
-        }));
+        //   //   })
+        //   // })
+        // })
+        // //console.log(purposeDataSubject)
+        // let arr:any = []
+        // await Promise.all(purposeDataSubject.map(async (p1: any): Promise<any> => {
+        //   await Promise.all(purposeId.map(async (p2: any): Promise<any> => {
+        //     if(p1.Id == p2.purposeId)
+        //     {
+        //       await axios({method: 'get',url:`https://trial.onetrust.com/api/consentmanager/v2/purposes/${p1.Id}`, headers: { 'Authorization': `Bearer ${token}` }})
+        //       .then(async function (response) {
+        //         await Promise.all(response.data.languages.map(async (l1: any): Promise<any> => {
+        //           if(l1.language == language)
+        //             arr.push({
+        //               name: l1.name,
+        //               description: l1.description,
+        //               agreement: p1.CustomPreferences[0].Options[0].Name
+        //           })
+        //         }))
+        //       });
+        //     }
+        //   }))
+        // }));
 
-        console.log(arr)
-        res.send(arr)
+        // console.log(arr)
+        // res.send(arr)
         // purposeDataSubject.map((p1: any) => {
         //   purposeId.map(async(p2: any) => {
         //     if(p1.Id == p2.purposeId)
