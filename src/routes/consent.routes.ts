@@ -181,7 +181,6 @@ class registrationRoute {
     } catch (error) {
       console.log(error);
       res.send({message: 'Error', status: '404'})
-      console.log("error")
     }
     }
   } 
@@ -199,6 +198,31 @@ class registrationRoute {
       res.send(result) 
     }
   }
+  postConsent() {
+    return async (req: Request, res: Response) => {
+      
+      let {national_id, site, consentData} = req.body;
+      
+      
+      let repos = di.get("repos");
+      try {
+        let test = axios({method: 'post',url:`http://10.105.10.29:1881/onetrust_consent_post`, data:  {national_id, site, consentData}})
+      .then(function (response) {
+        console.log(response)
+        res.send({status: 200})
+      }).catch(function (error) {
+        res.send({status: 404})
+        //res.send(response.data)
+      })
+      
+        
+      } catch (error) {
+        console.log(error);
+        res.status(404).json([])
+      }
+    }
+  }
+
   getSearch() {
     return async (req: Request, res: Response) => {
       
@@ -211,8 +235,11 @@ class registrationRoute {
         let test = axios({method: 'post',url:`http://10.105.10.29:1881/onetrust_consent`, data:  {national_id, site, language}})
       .then(function (response) {
         res.send(response.data)
+      }).catch(function (error) {
+        res.send([])
+        //res.send(response.data)
       })
-
+      
         // let client_id = "146225c2b8904dfb91c350c618f772c5"
         // let client_secret = "c2NlaAIpZ9HRKMIc2Mr0NNw58C0UiSOa"
         // let grant_type = "client_credentials"
@@ -486,6 +513,7 @@ const route = new registrationRoute()
 
 router
   .post("/", route.postRegister())
+  .post("/postConsent", route.postConsent())
   .post("/search", route.getSearch())
   .get("/cardpicture", route.getCardPicture())
 
