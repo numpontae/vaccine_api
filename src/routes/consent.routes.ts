@@ -208,7 +208,6 @@ class registrationRoute {
       try {
         let test = axios({method: 'post',url:`http://10.105.10.29:1881/onetrust_consent_post`, data:  {national_id, site, consentData}})
       .then(function (response) {
-        console.log(response)
         res.send({status: 200})
       }).catch(function (error) {
         res.send({status: 404})
