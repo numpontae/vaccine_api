@@ -13,7 +13,6 @@ class ctRoute {
       let repos = di.get('repos')
       let query = `SELECT * FROM Registration_drivethru.CT_Title`
       query += ` Where Code IN ('00008', '00010', '00116', '00117', '00118', '00039')`
-      
       let result = await repos.query(query)
       await result.map((d: any) => d.Desc = this.Capitalize(d.Desc.toLowerCase()))
       
@@ -115,6 +114,41 @@ class ctRoute {
       res.send(result) 
     }
   }
+  getNationality() {
+    return async (req: Request, res: Response) => {
+      let { language, id } = req.query
+      let repos = di.get('repos')
+      let query = `SELECT * FROM Registration.CT_Nation `
+      if (id && id !== 'undefined' && id != null) query += ` Where ID = ${id}`
+      query += ` ORDER BY CASE WHEN Desc_EN = 'THAI' THEN '1' ELSE Desc_EN END ASC`
+      let result = await repos.query(query)
+      let response = result.map((d:any ) => {
+        return {
+          "ID": d.ID,
+          "Code": d.Code,
+          "Desc": language == 'th' ? d.Desc_TH : d.Desc_EN,
+        }
+      })
+      res.send(response) 
+    }
+  }
+  getCountry() {
+    return async (req: Request, res: Response) => {
+      let { language, id } = req.query
+      let repos = di.get('repos')
+      let query = `SELECT * FROM Registration.CT_Country Where Active = 'Y'`
+      if (id && id !== 'undefined' && id != null) query += ` And ID = ${id}`
+      let result = await repos.query(query)
+      let response = result.map((d:any ) => {
+        return {
+          "ID": d.ID,
+          "Code": d.Code,
+          "Desc": language == 'th' ? d.Desc_TH : d.Desc_EN,
+        }
+      })
+      res.send(response) 
+    }
+  }
   
   
   
@@ -131,6 +165,8 @@ router
   .get("/province", route.getProvince())
   .get("/city", route.getCity())
   .get("/cityarea", route.getCityArea())
+  .get("/nationality", route.getNationality())
+  .get("/country", route.getCountry())
   
   
 export const ct = router
