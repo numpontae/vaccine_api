@@ -5,7 +5,6 @@
   "main": "app.ts",
   "private": true,
   "scripts": {
-
     "build": "tsc -P tsconfig.json",
     "serve": "nodemon --exec ts-node src/app.ts"
   },

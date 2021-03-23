@@ -13,7 +13,7 @@ export const
     PORT: env.PORT,
     USER: env.USER,
     PASSWORD: env.PASSWORD,
-    DATABASE_NAME: env.DATABASENAME,
+    //DATABASE_NAME: env.DATABASENAME,
   },
   rpaSetting = {
     SERVER: env.SERVER,
