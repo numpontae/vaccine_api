@@ -219,6 +219,7 @@ class ctRoute {
           let hash = CryptoJS.algo.SHA256.create();
           hash.update(d.TC_RowId);
           d.TC_RowIdHash = hash.finalize().toString();
+          console.log(hash.finalize().toString())
           console.log(d.TC_RowId)
           console.log(d.TC_RowIdHash)
           let queryInfo = `REPLACE INTO consent_management.Patient_Data SET ?`
