@@ -31,7 +31,7 @@ class ctRoute {
                     if (err) {
                       reject(err);
                     } else {
-                      const query = `SELECT PAPMI_RowId "TC_RowID",'' "TC_RowIDHash", PAPMI_No "HN", PAPER_PassportNumber "Passport",
+                      const query = `SELECT PAPMI_RowId "TC_RowId",'' "TC_RowIdHash", PAPMI_No "HN", PAPER_PassportNumber "Passport",
                       PAPMI_ID "NationalID",  PAPMI_Title_DR "Title", PAPMI_Name "FirstName", PAPMI_Name2 "LastName",
                       tochar(PAPER_Dob, 'YYYY-MM-DD') "DOB",
                       PAPMI_Sex_DR "Gender",
@@ -96,83 +96,23 @@ class ctRoute {
     return async (req: Request, res: Response) => {
       let { rowIdHash } = req.query
       let repos = di.get('repos')
-      let query = `SELECT TC_RowId FROM Consent_Send_Email.Patient_Data WHERE TC_RowIdHash = '${rowIdHash}'`
-      let result1 = await repos.query(query)
-      let rowId = result1[0].TC_RowId
 
-      repos = di.get("cache");
-        let result: any = await new Promise((resolve, reject) => {
-          repos.reserve((err: any, connObj: any) => {
-            if (connObj) {
-              let conn = connObj.conn;
-              
-              conn.createStatement((err: any, statement: any) => {
-                if (err) {
-                  reject(err);
-                } else {
-                  statement.setFetchSize(100, function (err: any) {
-                    if (err) {
-                      reject(err);
-                    } else {
-                      const query = `SELECT PAPMI_RowId "RowID", PAPMI_No "HN", PAPER_PassportNumber "Passport",
-                      PAPMI_ID "NationalID",  PAPMI_Title_DR "Title", PAPMI_Name "FirstName", PAPMI_Name2 "LastName",
-                      tochar(PAPER_Dob, 'YYYY-MM-DD') "DOB",
-                      PAPMI_Sex_DR "Gender",
-                      PAPER_Nation_DR "Nationality",
-                      PAPER_Religion_DR "Religion",
-                      CASE 
-                        WHEN PAPER_Country_DR IS NULL 
-                          AND ((PAPER_Zip_DR->CTZIP_Code NOT IN ('900001', '12500', '40001', '74111', '80516', 'JAN-64', 'AUG-43', '11-JAN', '8-JAN', '7-FEB', '900000', '999999') AND PAPER_Zip_DR->CTZIP_Code IS NOT NULL) 
-                          OR (PAPER_Zip_DR->CTZIP_Province_DR NOT IN ('77', '78') AND PAPER_Zip_DR->CTZIP_Province_DR IS NOT NULL)
-                          OR (PAPER_Zip_DR->CTZIP_CITY_DR NOT IN ('1116', '936') AND PAPER_Zip_DR->CTZIP_CITY_DR IS NOT NULL)) THEN 2
-                        ELSE PAPER_Country_DR 
-                      END "Country",
-                      CASE
-                        WHEN PAPER_Zip_DR->CTZIP_Code IN ('900001', '12500', '40001', '74111', '80516', 'JAN-64', 'AUG-43', '11-JAN', '8-JAN', '7-FEB', '900000', '999999') THEN null
-                        ELSE  PAPER_Zip_DR->CTZIP_Code
-                      END "Postcode",
-                      CASE
-                        WHEN PAPER_Zip_DR->CTZIP_Province_DR IN ('77', '78') THEN null
-                        ELSE PAPER_Zip_DR->CTZIP_Province_DR
-                      END "Province",
-                      CASE
-                        WHEN PAPER_Zip_DR->CTZIP_CITY_DR IN ('1116', '936') THEN null
-                        ELSE  PAPER_Zip_DR->CTZIP_CITY_DR
-                      END "District",
-                      PAPER_CityArea_DR "Subdistrict",
-                      PAPER_StName "Address"
-                      FROM PA_PatMas
-                      INNER JOIN PA_Person ON PA_PatMas.PAPMI_PAPER_DR = PA_Person.PAPER_RowId
-                      WHERE PAPMI_RowId = ${rowId} `;           
-                      statement.executeQuery(query, function (
-                        err: any,
-                        resultset: any
-                      ) {
-                        if (err) {
-                          reject(err);
-                        } else {
-                          resultset.toObjArray(function (
-                            err: any,
-                            results: any
-                          ) {
-                            resolve(results);
-                          });
-                        }
-                      });
-                    }
-                  });
-                }
-              });
-              repos.release(connObj, function (err: any) {
-                if (err) {
-                  console.log(err);
-                }
-              });
-            }
-          });
-        });
-      res.send(result[0]) 
-      // res.send(result1) 
+      let hash = CryptoJS.algo.SHA256.create();
+          hash.update('2116614');
+          console.log(hash.finalize().toString());
+      
+        console.log('111')
+        let query = `SELECT * FROM consent_management.Patient_Data WHERE TC_RowIdHash = '${rowIdHash}'`
+        let result = await repos.query(query)
+        if(result.length > 0)
+        {
+          res.send(result[0])
+        }
+      
+      
+      
+
+       
     }
   }
   getGender() {
@@ -277,8 +217,10 @@ class ctRoute {
       try {
         await data.map((d:any) => {
           let hash = CryptoJS.algo.SHA256.create();
-          hash.update(d.TC_RowID);
-          d.TC_RowIDHash = hash.finalize().toString();
+          hash.update(d.TC_RowId);
+          d.TC_RowIdHash = hash.finalize().toString();
+          console.log(d.TC_RowId)
+          console.log(d.TC_RowIdHash)
           let queryInfo = `REPLACE INTO consent_management.Patient_Data SET ?`
           repos.query(queryInfo, d);
         })
