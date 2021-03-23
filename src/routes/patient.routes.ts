@@ -98,7 +98,7 @@ class ctRoute {
       let repos = di.get('repos')
 
       let hash = CryptoJS.algo.SHA256.create();
-          hash.update('2116614');
+          hash.update("2116376");
           console.log(hash.finalize().toString());
       
         console.log('111')
@@ -217,11 +217,8 @@ class ctRoute {
       try {
         await data.map((d:any) => {
           let hash = CryptoJS.algo.SHA256.create();
-          hash.update(d.TC_RowId);
+          hash.update(d.TC_RowId.toString());
           d.TC_RowIdHash = hash.finalize().toString();
-          console.log(hash.finalize().toString())
-          console.log(d.TC_RowId)
-          console.log(d.TC_RowIdHash)
           let queryInfo = `REPLACE INTO consent_management.Patient_Data SET ?`
           repos.query(queryInfo, d);
         })
