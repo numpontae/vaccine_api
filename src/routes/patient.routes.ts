@@ -10,8 +10,7 @@ class ctRoute {
   }
   getPatientList() {
     return async (req: Request, res: Response) => {
-
-      //let { rowIdHash } = req.query
+      let { id } = req.query
       let repos = di.get('repos')
       //let query = `SELECT TC_RowId FROM Consent_Send_Email.Patient_Data WHERE TC_RowIdHash = '${rowIdHash}'`
       //let result1 = await repos.query(query)
@@ -37,6 +36,7 @@ class ctRoute {
                       PAPMI_Sex_DR "Gender",
                       PAPER_Nation_DR "Nationality",
                       PAPER_Religion_DR "Religion",
+                      PAPMI_Email "Email",
                       CASE 
                         WHEN PAPER_Country_DR IS NULL 
                           AND ((PAPER_Zip_DR->CTZIP_Code NOT IN ('900001', '12500', '40001', '74111', '80516', 'JAN-64', 'AUG-43', '11-JAN', '8-JAN', '7-FEB', '900000', '999999') AND PAPER_Zip_DR->CTZIP_Code IS NOT NULL) 
@@ -60,7 +60,7 @@ class ctRoute {
                       PAPER_StName "Address"
                       FROM PA_PatMas
                       INNER JOIN PA_Person ON PA_PatMas.PAPMI_PAPER_DR = PA_Person.PAPER_RowId
-                      WHERE PAPMI_RowId = 2116376 OR PAPMI_RowId = 2116614`;           
+                      WHERE PAPMI_RowId = ${id}`;           
                       statement.executeQuery(query, function (
                         err: any,
                         resultset: any
@@ -118,7 +118,7 @@ class ctRoute {
   getGender() {
     return async (req: Request, res: Response) => {
       let repos = di.get('repos')
-      let query = `SELECT * FROM Registration_drivethru.CT_Sex`
+      let query = `SELECT * FROM preregistration_drivethru.CT_Sex`
       let result = await repos.query(query)
       res.send(result) 
     }
@@ -126,8 +126,8 @@ class ctRoute {
   getReligion() {
     return async (req: Request, res: Response) => {
       let repos = di.get('repos')
-      let query = `SELECT * FROM Registration_drivethru.CT_Religion WHERE ID = 4 UNION 
-       SELECT * FROM Registration_drivethru.CT_Religion WHERE ID != 10 AND ID != 4 `
+      let query = `SELECT * FROM preregistration_drivethru.CT_Religion WHERE ID = 4 UNION 
+       SELECT * FROM preregistration_drivethru.CT_Religion WHERE ID != 10 AND ID != 4 `
 
       let result = await repos.query(query)
       let response = result.map((d:any ) => {
@@ -143,7 +143,7 @@ class ctRoute {
     return async (req: Request, res: Response) => {
       let repos = di.get('repos')
       let query = ''
-      query = `SELECT * FROM Registration_drivethru.CT_Province WHERE Code NOT IN ('999', '900') `
+      query = `SELECT * FROM preregistration_drivethru.CT_Province WHERE Code NOT IN ('999', '900') `
       
       let result = await repos.query(query)
       res.send(result) 
@@ -156,7 +156,7 @@ class ctRoute {
       let { provinceid } = req.query
       let repos = di.get('repos')
       let query = ''
-      query = `SELECT ca.* FROM Registration_drivethru.CT_City ca `
+      query = `SELECT ca.* FROM preregistration_drivethru.CT_City ca `
       
       if(!_.isEmpty(provinceid) && provinceid !== 'undefined')
       query +=`WHERE ca.Province_ID = '${provinceid}' `
@@ -179,7 +179,7 @@ class ctRoute {
       let repos = di.get('repos')
       let query = ''
       
-      query = `SELECT ca.* FROM Registration_drivethru.CT_Cityarea ca `
+      query = `SELECT ca.* FROM preregistration_drivethru.CT_Cityarea ca `
       
       if(!_.isEmpty(cityid) && cityid !== 'undefined')
       query +=`WHERE ca.City_ID = '${cityid}'`
@@ -200,7 +200,7 @@ class ctRoute {
       let { provinceid, cityid, cityareaid } = req.query
       let repos = di.get('repos')
       let query = ''
-      query = `SELECT *  FROM Registration_drivethru.CT_Zip `
+      query = `SELECT *  FROM preregistration_drivethru.CT_Zip `
 
       if(!_.isEmpty(provinceid) && !_.isEmpty(cityid) && !_.isEmpty(cityareaid))
       query +=`Where Province_ID = '${provinceid}' AND City_ID = '${cityid}' AND Cityarea_ID = '${cityareaid}' `

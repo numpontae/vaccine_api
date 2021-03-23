@@ -15,34 +15,34 @@ class registrationRoute {
       let body = req.body
       let repos = di.get('repos')
       try {
-      let queryReligion = `SELECT * FROM Registration.CT_Religion Where ID = ${body.religion}`
-    let queryGender = `SELECT * FROM Registration.CT_Sex Where ID = ${body.gender}`
+      let queryReligion = `SELECT * FROM preregistration_drivethru.CT_Religion Where ID = ${body.religion}`
+    let queryGender = `SELECT * FROM preregistration_drivethru.CT_Sex Where ID = ${body.gender}`
       let Subdistrict = async (id: any) => {
-        let querySubdistrict = `SELECT * FROM Registration_drivethru.CT_Cityarea WHERE ID = ${id}`
+        let querySubdistrict = `SELECT * FROM preregistration_drivethru.CT_Cityarea WHERE ID = ${id}`
         let subdistrict = await repos.query(querySubdistrict)
         if (!subdistrict.length) return null
         return subdistrict[0].Desc
       }
       let District = async (id: any) => {
-        let queryDistrict = `SELECT * FROM Registration_drivethru.CT_City WHERE ID = ${id}`
+        let queryDistrict = `SELECT * FROM preregistration_drivethru.CT_City WHERE ID = ${id}`
         let district = await repos.query(queryDistrict)
         if (!district.length) return ''
         return district[0].Desc
       }
       let Province = async (id: any) => {
-        let queryProvince = `SELECT * FROM Registration_drivethru.CT_Province WHERE ID = ${id}`
+        let queryProvince = `SELECT * FROM preregistration_drivethru.CT_Province WHERE ID = ${id}`
         let provice = await repos.query(queryProvince)
         if (!provice.length) return ''
         return provice[0].Desc
       }
       let Title = async (id: any) => {
-        let queryTitle = `SELECT * FROM Registration.CT_Title Where ID = ${id}`
+        let queryTitle = `SELECT * FROM preregistration_drivethru.CT_Title Where ID = ${id}`
         let title = await repos.query(queryTitle)
         if (!title.length) return null
         return title[0].Desc
       }
       let Zipcode = async (id: any) => {
-        let queryTitle = `SELECT * FROM Registration.CT_Zip Where ID = ${id}`
+        let queryTitle = `SELECT * FROM preregistration_drivethru.CT_Zip Where ID = ${id}`
         let title = await repos.query(queryTitle)
         if (!title.length) return null
         return title[0].Zip_Code
@@ -94,7 +94,7 @@ class registrationRoute {
         IsMedical: body.is_medical == "yes" ? 1 : 0,
         PublicIP: body.publicip,
       }
-      let queryInfo = `INSERT INTO Registration_drivethru.Patient_Data SET ?`
+      let queryInfo = `INSERT INTO preregistration_drivethru.Patient_Data SET ?`
       let insertInfo = await repos.query(queryInfo, dataInfo);
 
       let rpa:any = {
@@ -190,7 +190,7 @@ class registrationRoute {
       let repos = di.get('repos')
       let query = ''
       
-      query = `SELECT CardPicture FROM Registration_drivethru.Patient_Data WHERE ID = '${id}'  `
+      query = `SELECT CardPicture FROM preregistration_drivethru.Patient_Data WHERE ID = '${id}'  `
 
               
       let result = await repos.query(query)
@@ -341,7 +341,7 @@ class registrationRoute {
   }
   async getPatientByIdFromDB(id: string) {
     let repos = di.get("repos");
-    let query = `SELECT PD.* FROM Registration_drivethru.Patient_Data PD`
+    let query = `SELECT PD.* FROM preregistration_drivethru.Patient_Data PD`
     query += ` WHERE PD.ID = '${id}'`
     let data = await repos.query(query)
 
@@ -400,9 +400,9 @@ class registrationRoute {
     return async (req: Request, res: Response) => {
       
       let repos = di.get('repos')
-      let query = `SELECT * FROM Registration_drivethru.CT_Title`
+      let query = `SELECT * FROM preregistration_drivethru.CT_Title`
       query += ` Where Code IN ('00008', '00010', '00116', '00117', '00118') UNION
-      SELECT * FROM Registration.CT_Title ct WHERE Code NOT LIKE '%E%' AND CODE NOT IN ('00008', '00010', '00116', '00117', '00118')`
+      SELECT * FROM preregistration_drivethru.CT_Title ct WHERE Code NOT LIKE '%E%' AND CODE NOT IN ('00008', '00010', '00116', '00117', '00118')`
       
       let result = await repos.query(query)
       await result.map((d: any) => d.Desc = this.Capitalize(d.Desc.toLowerCase()))
@@ -414,7 +414,7 @@ class registrationRoute {
   getGender() {
     return async (req: Request, res: Response) => {
       let repos = di.get('repos')
-      let query = `SELECT * FROM Registration_drivethru.CT_Sex`
+      let query = `SELECT * FROM preregistration_drivethru.CT_Sex`
       let result = await repos.query(query)
       res.send(result) 
     }
@@ -422,8 +422,8 @@ class registrationRoute {
   getReligion() {
     return async (req: Request, res: Response) => {
       let repos = di.get('repos')
-      let query = `SELECT * FROM Registration_drivethru.CT_Religion WHERE ID = 4 UNION 
-       SELECT * FROM Registration_drivethru.CT_Religion WHERE ID != 10 AND ID != 4 `
+      let query = `SELECT * FROM preregistration_drivethru.CT_Religion WHERE ID = 4 UNION 
+       SELECT * FROM preregistration_drivethru.CT_Religion WHERE ID != 10 AND ID != 4 `
 
       let result = await repos.query(query)
       let response = result.map((d:any ) => {
@@ -439,7 +439,7 @@ class registrationRoute {
     return async (req: Request, res: Response) => {
       let repos = di.get('repos')
       let query = ''
-      query = `SELECT * FROM Registration_drivethru.CT_Province WHERE Code NOT IN ('999', '900') `
+      query = `SELECT * FROM preregistration_drivethru.CT_Province WHERE Code NOT IN ('999', '900') `
       
       let result = await repos.query(query)
       res.send(result) 
@@ -452,7 +452,7 @@ class registrationRoute {
       let { provinceid } = req.query
       let repos = di.get('repos')
       let query = ''
-      query = `SELECT ca.* FROM Registration_drivethru.CT_City ca 
+      query = `SELECT ca.* FROM preregistration_drivethru.CT_City ca 
                 
               WHERE ca.Province_ID = '${provinceid}' `
       
@@ -475,7 +475,7 @@ class registrationRoute {
       let repos = di.get('repos')
       let query = ''
       
-      query = `SELECT ca.* FROM Registration_drivethru.CT_Cityarea ca 
+      query = `SELECT ca.* FROM preregistration_drivethru.CT_Cityarea ca 
                 
               WHERE ca.City_ID = '${cityid}'`
 
@@ -495,7 +495,7 @@ class registrationRoute {
       let { provinceid, cityid, cityareaid } = req.query
       let repos = di.get('repos')
       let query = ''
-      query = `SELECT *  FROM Registration_drivethru.CT_Zip 
+      query = `SELECT *  FROM preregistration_drivethru.CT_Zip 
               Where Province_ID = '${provinceid}' AND City_ID = '${cityid}' AND Cityarea_ID = '${cityareaid}' `
               
       let result = await repos.query(query)
