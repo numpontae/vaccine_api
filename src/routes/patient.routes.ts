@@ -2,6 +2,8 @@ import { Request, Response, Router } from 'express'
 import { di } from '../di'
 import * as _ from 'lodash'
 import CryptoJS from "crypto-js";
+import moment from 'moment-timezone';
+moment.tz.setDefault('Asia/Bangkok');
 
 class ctRoute {
   Capitalize = (s: any ) => {
@@ -57,7 +59,8 @@ class ctRoute {
                         ELSE  PAPER_Zip_DR->CTZIP_CITY_DR
                       END "District",
                       PAPER_CityArea_DR "Subdistrict",
-                      PAPER_StName "Address"
+                      PAPER_StName "Address",
+                      '' "LinkExpireDate"
                       FROM PA_PatMas
                       INNER JOIN PA_Person ON PA_PatMas.PAPMI_PAPER_DR = PA_Person.PAPER_RowId
                       WHERE PAPMI_RowId = ${id}`;           
@@ -96,18 +99,27 @@ class ctRoute {
     return async (req: Request, res: Response) => {
       let { rowIdHash } = req.query
       let repos = di.get('repos')
-
+      let date1 = new Date()
+      console.log(date1)
+      date1.setDate(date1.getDate() + 7)
+      console.log(date1)
+      console.log(new Date().setDate(20))
       let hash = CryptoJS.algo.SHA256.create();
           hash.update("2116376");
           console.log(hash.finalize().toString());
-      
+          let date = new Date().toLocaleString('en-us',{ timeZone: 'Asia/Bangkok' })
+          console.log(new Date(date).getHours())
+          console.log(new Date().toLocaleString('en-us',{ timeZone: 'Asia/Bangkok' }));
+        console.log(new Date().getDate())
+        console.log(("0" + (new Date().getMonth()+1)).slice(0,2))
+        console.log(new Date().getFullYear())
         console.log('111')
-        let query = `SELECT * FROM consent_management.Patient_Data WHERE TC_RowIdHash = '${rowIdHash}'`
-        let result = await repos.query(query)
-        if(result.length > 0)
-        {
-          res.send(result[0])
-        }
+        // let query = `SELECT * FROM consent_management.Patient_Data WHERE TC_RowIdHash = '${rowIdHash}' AND LinkExpireDate < '2021-03-23'`
+        // let result = await repos.query(query)
+        // if(result.length > 0)
+        // {
+        //   res.send(result[0])
+        // }
       
       
       
@@ -219,6 +231,7 @@ class ctRoute {
           let hash = CryptoJS.algo.SHA256.create();
           hash.update(d.TC_RowId.toString());
           d.TC_RowIdHash = hash.finalize().toString();
+          d.LinkExpireDate = new Date().setDate(new Date().getDate() + 7)
           let queryInfo = `REPLACE INTO consent_management.Patient_Data SET ?`
           repos.query(queryInfo, d);
         })
