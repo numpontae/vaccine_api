@@ -99,21 +99,10 @@ class ctRoute {
     return async (req: Request, res: Response) => {
       let { rowIdHash } = req.query
       let repos = di.get('repos')
-      let date1 = new Date()
-      console.log(date1)
-      date1.setDate(date1.getDate() + 7)
-      console.log(date1)
-      console.log(new Date().setDate(20))
-      let hash = CryptoJS.algo.SHA256.create();
-          hash.update("2116376");
-          console.log(hash.finalize().toString());
-          let date = new Date().toLocaleString('en-us',{ timeZone: 'Asia/Bangkok' })
-          console.log(new Date(date).getHours())
-          console.log(new Date().toLocaleString('en-us',{ timeZone: 'Asia/Bangkok' }));
-        console.log(new Date().getDate())
-        console.log(("0" + (new Date().getMonth()+1)).slice(0,2))
-        console.log(new Date().getFullYear())
-        console.log('111')
+      let date = new Date(1995, 11, 17)
+      console.log(date)
+      let linkexpiredate = date.getFullYear() + "-" + ("0" + (date.getMonth() + 1)).slice(-2) + "-" + date.getDate()
+      console.log(linkexpiredate)
         // let query = `SELECT * FROM consent_management.Patient_Data WHERE TC_RowIdHash = '${rowIdHash}' AND LinkExpireDate < '2021-03-23'`
         // let result = await repos.query(query)
         // if(result.length > 0)
@@ -228,10 +217,13 @@ class ctRoute {
       let repos = di.get('repos')
       try {
         await data.map((d:any) => {
+          let linkexpiredate = new Date()
+          linkexpiredate.setDate(linkexpiredate.getDate() + 7)
+          d.LinkExpireDate = linkexpiredate
           let hash = CryptoJS.algo.SHA256.create();
-          hash.update(d.TC_RowId.toString());
+          hash.update(d.TC_RowId.toString() + linkexpiredate.toString());
           d.TC_RowIdHash = hash.finalize().toString();
-          d.LinkExpireDate = new Date().setDate(new Date().getDate() + 7)
+          
           let queryInfo = `REPLACE INTO consent_management.Patient_Data SET ?`
           repos.query(queryInfo, d);
         })
