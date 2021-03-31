@@ -12,8 +12,10 @@ class ctRoute {
   }
   getPatientList() {
     return async (req: Request, res: Response) => {
-      let { query } = req.query
+      let { query, id } = req.query
       let repos = di.get('repos')
+      console.log(query)
+      console.log(id)
       //let query = `SELECT TC_RowId FROM Consent_Send_Email.Patient_Data WHERE TC_RowIdHash = '${rowIdHash}'`
       //let result1 = await repos.query(query)
       //let rowId = result1[0].TC_RowId
