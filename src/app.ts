@@ -56,8 +56,6 @@ if (!jinst.isJvmCreated()) {
 let cacheInit = false;
 let cachedb = new JDBC(cache);
 
-var moment = require('moment-timezone');
-moment().tz("Asia/Bangkok").format();
 
 app.listen(port, async () => {
   console.log(`server start with port ${port}`);
