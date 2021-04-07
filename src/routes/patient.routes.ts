@@ -224,7 +224,9 @@ class ctRoute {
           hash.update(d.TC_RowId.toString() + linkexpiredate.toString());
           d.TC_RowIdHash = hash.finalize().toString();
           
-          let queryInfo = `REPLACE INTO consent_management.Patient_Data SET ?`
+          //let queryInfo = `REPLACE INTO consent_management.Patient_Data SET ?`
+          let queryInfo = `REPLACE INTO Consent_Send_Email_Prepare.Patient_Data SET ?`
+
           repos.query(queryInfo, d);
         })
       } catch (error) {
