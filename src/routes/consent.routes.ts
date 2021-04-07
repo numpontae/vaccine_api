@@ -15,9 +15,9 @@ class registrationRoute {
       let body = req.body
       let repos = di.get('repos')
       try {
-      let queryReligion = `SELECT * FROM preregistration_drivethru.CT_Religion Where ID = ${body.religion}`
-    let queryGender = `SELECT * FROM preregistration_drivethru.CT_Sex Where ID = ${body.gender}`
-      let Subdistrict = async (id: any) => {
+        let queryReligion = `SELECT * FROM preregistration_drivethru.CT_Religion Where ID = ${body.religion}`
+        let queryGender = `SELECT * FROM preregistration_drivethru.CT_Sex Where ID = ${body.gender}`
+        let Subdistrict = async (id: any) => {
         let querySubdistrict = `SELECT * FROM preregistration_drivethru.CT_Cityarea WHERE ID = ${id}`
         let subdistrict = await repos.query(querySubdistrict)
         if (!subdistrict.length) return null
@@ -209,6 +209,34 @@ class registrationRoute {
         let test = axios({method: 'post',url:`http://10.105.10.29:1881/onetrust_consent_post`, data:  {national_id, site, consentData}})
       .then(function (response) {
         res.send({status: 200})
+      }).catch(function (error) {
+        res.send({status: 404})
+        //res.send(response.data)
+      })
+      
+        
+      } catch (error) {
+        console.log(error);
+        res.status(404).json([])
+      }
+    }
+  }
+
+  postConsentWord() {
+    return async (req: Request, res: Response) => {
+      
+      let {language} = req.body;
+      
+      
+      let repos = di.get("repos");
+      try {
+        let data
+        axios({method: 'post',url:`http://10.105.10.29:1881/consent_word`, data:  {language}})
+      .then(function (response) {
+        //console.log(response.data)
+        
+        res.send(response.data)
+        //res.send({status: 200})
       }).catch(function (error) {
         res.send({status: 404})
         //res.send(response.data)
@@ -513,6 +541,7 @@ const route = new registrationRoute()
 router
   .post("/", route.postRegister())
   .post("/postConsent", route.postConsent())
+  .post("/postConsentWord", route.postConsentWord())
   .post("/search", route.getSearch())
   .get("/cardpicture", route.getCardPicture())
 
