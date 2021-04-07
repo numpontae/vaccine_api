@@ -34,7 +34,7 @@ class ctRoute {
                     } else {
                        
 
-                      const query = `SELECT PAPMI_RowId "TC_RowId",'' "TC_RowIdHash", PAPMI_No "HN", PAPER_PassportNumber "Passport",
+                      const query = `SELECT DISTINCT  PAPMI_RowId "TC_RowId",'' "TC_RowIdHash", PAPMI_No "HN", PAPER_PassportNumber "Passport",
                       PAPMI_ID "NationalID",  PAPMI_Title_DR "Title", PAPMI_Name "FirstName", PAPMI_Name2 "LastName",
                       tochar(PAPER_Dob, 'YYYY-MM-DD') "DOB",
                       PAPMI_Sex_DR "Gender",
@@ -65,7 +65,8 @@ class ctRoute {
                       '' "LinkExpireDate"
                       FROM PA_PatMas
                       INNER JOIN PA_Person ON PA_PatMas.PAPMI_PAPER_DR = PA_Person.PAPER_RowId
-                      WHERE PAPMI_RowId = 2116376`;           
+                      INNER JOIN PA_Adm ON PA_PatMas.PAPMI_RowId = PA_Adm.PAADM_PAPMI_DR
+                      WHERE YEAR(PAADM_AdmDate) BETWEEN 2018 AND 2021 AND PAADM_AdmNo IS NOT NULL AND PAADM_VisitStatus <> 'C' AND PAADM_VisitStatus <> 'Cancelled'`;           
                       statement.executeQuery(query, function (
                         err: any,
                         resultset: any
@@ -220,9 +221,9 @@ class ctRoute {
           let linkexpiredate = new Date()
           linkexpiredate.setDate(linkexpiredate.getDate() + 7)
           d.LinkExpireDate = linkexpiredate
-          let hash = CryptoJS.algo.SHA256.create();
-          hash.update(d.TC_RowId.toString() + linkexpiredate.toString());
-          d.TC_RowIdHash = hash.finalize().toString();
+          // let hash = CryptoJS.algo.SHA256.create();
+          // hash.update(d.TC_RowId.toString() + linkexpiredate.toString());
+          // d.TC_RowIdHash = hash.finalize().toString();
           
           //let queryInfo = `REPLACE INTO consent_management.Patient_Data SET ?`
           let queryInfo = `REPLACE INTO Consent_Send_Email_Prepare.patient_data SET ?`
