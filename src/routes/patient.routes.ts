@@ -32,7 +32,7 @@ class ctRoute {
                     if (err) {
                       reject(err);
                     } else {
-                       
+                       console.log('1111')
 
                       const query = `SELECT DISTINCT  PAPMI_RowId "TC_RowId",'' "TC_RowIdHash", PAPMI_No "HN", PAPER_PassportNumber "Passport",
                       PAPMI_ID "NationalID",  PAPMI_Title_DR "Title", PAPMI_Name "FirstName", PAPMI_Name2 "LastName",
@@ -66,7 +66,7 @@ class ctRoute {
                       FROM PA_PatMas
                       INNER JOIN PA_Person ON PA_PatMas.PAPMI_PAPER_DR = PA_Person.PAPER_RowId
                       INNER JOIN PA_Adm ON PA_PatMas.PAPMI_RowId = PA_Adm.PAADM_PAPMI_DR
-                      WHERE YEAR(PAADM_AdmDate) BETWEEN 2018 AND 2021 AND PAADM_AdmNo IS NOT NULL AND PAADM_VisitStatus <> 'C' AND PAADM_VisitStatus <> 'Cancelled'`;           
+                      WHERE YEAR(PAADM_AdmDate) BETWEEN 2018 AND 2018 AND PAADM_AdmNo IS NOT NULL AND PAADM_VisitStatus <> 'C' AND PAADM_VisitStatus <> 'Cancelled'`;           
                       statement.executeQuery(query, function (
                         err: any,
                         resultset: any
@@ -94,6 +94,7 @@ class ctRoute {
             }
           });
         });
+      console.log('2222')
       res.send(result) 
       // res.send(result1) 
     }
