@@ -34,12 +34,13 @@ class ctRoute {
                     } else {
                        console.log('1111')
 
-                      const query = `SELECT DISTINCT  PAPMI_RowId "TC_RowId",'' "TC_RowIdHash", PAPMI_No "HN", PAPER_PassportNumber "Passport",
+                      const query = `SELECT DISTINCT PAPMI_RowId "TC_RowId",'' "TC_RowIdHash", PAPMI_No "HN", PAPER_PassportNumber "Passport",
                       PAPMI_ID "NationalID",  PAPMI_Title_DR "Title", PAPMI_Name "FirstName", PAPMI_Name2 "LastName",
                       tochar(PAPER_Dob, 'YYYY-MM-DD') "DOB",
                       PAPMI_Sex_DR "Gender",
                       PAPER_Nation_DR "Nationality",
                       PAPER_Religion_DR "Religion",
+                      PAPMI_MobPhone "MobilePhone",
                       PAPMI_Email "Email",
                       CASE 
                         WHEN PAPER_Country_DR IS NULL 
@@ -66,7 +67,7 @@ class ctRoute {
                       FROM PA_PatMas
                       INNER JOIN PA_Person ON PA_PatMas.PAPMI_PAPER_DR = PA_Person.PAPER_RowId
                       INNER JOIN PA_Adm ON PA_PatMas.PAPMI_RowId = PA_Adm.PAADM_PAPMI_DR
-                      WHERE YEAR(PAADM_AdmDate) BETWEEN 2018 AND 2018 AND PAADM_AdmNo IS NOT NULL AND PAADM_VisitStatus <> 'C' AND PAADM_VisitStatus <> 'Cancelled'`;           
+                      WHERE YEAR(PAADM_AdmDate) BETWEEN 2021 AND 2021 AND PAADM_AdmNo IS NOT NULL AND PAADM_VisitStatus <> 'C' AND PAADM_VisitStatus <> 'Cancelled'`;           
                       statement.executeQuery(query, function (
                         err: any,
                         resultset: any
@@ -95,7 +96,26 @@ class ctRoute {
           });
         });
       console.log('2222')
-      res.send(result) 
+      //res.send(result) 
+      repos = di.get('repos')
+      await result.map((d:any) => {
+        //let linkexpiredate = new Date()
+        //linkexpiredate.setDate(linkexpiredate.getDate() + 7)
+        //d.LinkExpireDate = linkexpiredate
+        d.LinkExpireDate = null
+
+        // let hash = CryptoJS.algo.SHA256.create();
+        // hash.update(d.TC_RowId.toString() + linkexpiredate.toString());
+        // d.TC_RowIdHash = hash.finalize().toString();
+        
+        //let queryInfo = `REPLACE INTO consent_management.Patient_Data SET ?`
+        let queryInfo = `REPLACE INTO Consent_Send_Email_Prepare.patient_data SET ?`
+
+        repos.query(queryInfo, d);
+        //res.send({status: 200})
+      })
+      console.log('3333')
+
       // res.send(result1) 
     }
   }
@@ -218,10 +238,13 @@ class ctRoute {
       let data = req.body
       let repos = di.get('repos')
       try {
-        await data.map((d:any) => {
+        console.log('3333')
+        console.log(req.body)
+        await req.body.map((d:any) => {
           let linkexpiredate = new Date()
           linkexpiredate.setDate(linkexpiredate.getDate() + 7)
           d.LinkExpireDate = linkexpiredate
+          console.log(d)
           // let hash = CryptoJS.algo.SHA256.create();
           // hash.update(d.TC_RowId.toString() + linkexpiredate.toString());
           // d.TC_RowIdHash = hash.finalize().toString();
@@ -230,6 +253,7 @@ class ctRoute {
           let queryInfo = `REPLACE INTO Consent_Send_Email_Prepare.patient_data SET ?`
 
           repos.query(queryInfo, d);
+          res.send({status: 200})
         })
       } catch (error) {
         res.send({status: 404})
@@ -239,7 +263,7 @@ class ctRoute {
 
       
       
-      res.send({status: 200})
+      
       
       // let repos = di.get("repos");
       // try {

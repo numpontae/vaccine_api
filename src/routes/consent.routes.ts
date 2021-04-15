@@ -198,7 +198,79 @@ class registrationRoute {
       res.send(result) 
     }
   }
-  postConsent() {
+  
+  getConsentDataFromOnetrust() {
+    return async (req: Request, res: Response) => {
+      let { national_id, site } = req.query
+      let repos = di.get('repos')
+
+      try {
+        let test = axios({method: 'post',url:`http://10.105.10.29:1881/onetrust_consent_data`, data:  {national_id, site}})
+      .then(function (response) {
+
+        res.send(response.data)
+      }).catch(function (error) {
+        res.send([])
+        //res.send(response.data)
+      })
+      
+        
+      } catch (error) {
+        console.log(error);
+        res.status(404).json([])
+      }
+
+    }
+  }
+  postConsentDataToOnetrust() {
+    return async (req: Request, res: Response) => {
+      
+      let {national_id, site, consentData} = req.body;
+
+      
+      let repos = di.get("repos");
+      try {
+        let test = axios({method: 'post',url:`http://10.105.10.29:1881/onetrust_consent_post`, data:  {national_id, site, consentData}})
+      .then(function (response) {
+        res.send({status: 200})
+      }).catch(function (error) {
+        res.send({status: 404})
+        //res.send(response.data)
+      })
+      
+        
+      } catch (error) {
+        console.log(error);
+        res.status(404).json([])
+      }
+    }
+  }
+
+  changeConsentDataToOnetrust() {
+    return async (req: Request, res: Response) => {
+      
+      let {national_id, site, consentData} = req.body;
+
+      
+      let repos = di.get("repos");
+      try {
+        let test = axios({method: 'post',url:`http://10.105.10.29:1881/onetrust_consent_change`, data:  {national_id, site, consentData}})
+      .then(function (response) {
+        res.send({status: 200})
+      }).catch(function (error) {
+        res.send({status: 404})
+        //res.send(response.data)
+      })
+      
+        
+      } catch (error) {
+        console.log(error);
+        res.status(404).json([])
+      }
+    }
+  }
+
+  withdrawnConsentDataToOnetrust() {
     return async (req: Request, res: Response) => {
       
       let {national_id, site, consentData} = req.body;
@@ -206,7 +278,7 @@ class registrationRoute {
       
       let repos = di.get("repos");
       try {
-        let test = axios({method: 'post',url:`http://10.105.10.29:1881/onetrust_consent_post`, data:  {national_id, site, consentData}})
+        let test = axios({method: 'post',url:`http://10.105.10.29:1881/onetrust_consent_withdrawn`, data:  {national_id, site, consentData}})
       .then(function (response) {
         res.send({status: 200})
       }).catch(function (error) {
@@ -227,11 +299,13 @@ class registrationRoute {
       
       let {language} = req.body;
       
-      
+      let national_id = '1341400135163'
+      let site = 'SVNH'
       let repos = di.get("repos");
       try {
         let data
         axios({method: 'post',url:`http://10.105.10.29:1881/consent_word`, data:  {language}})
+        //axios({method: 'post',url:`http://10.105.10.29:1881/onetrust_consent`, data:  {national_id, site,language}})
       .then(function (response) {
         //console.log(response.data)
         
@@ -249,6 +323,7 @@ class registrationRoute {
       }
     }
   }
+
 
   getSearch() {
     return async (req: Request, res: Response) => {
@@ -540,11 +615,14 @@ const route = new registrationRoute()
 
 router
   .post("/", route.postRegister())
-  .post("/postConsent", route.postConsent())
   .post("/postConsentWord", route.postConsentWord())
+  .post("/postConsentData", route.postConsentDataToOnetrust())
+  .post("/changeConsentData", route.changeConsentDataToOnetrust())
+  .post("/withdrawnConsentData", route.withdrawnConsentDataToOnetrust())
+  .get("/getConsentData", route.getConsentDataFromOnetrust())
   .post("/search", route.getSearch())
   .get("/cardpicture", route.getCardPicture())
-
+  
   
   
 export const consent = router
