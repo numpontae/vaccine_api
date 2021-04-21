@@ -4,6 +4,7 @@ import * as _ from 'lodash'
 import CryptoJS from "crypto-js";
 import moment from 'moment-timezone';
 moment.tz.setDefault('Asia/Bangkok');
+import axios from 'axios'
 
 class ctRoute {
   Capitalize = (s: any ) => {
@@ -42,27 +43,7 @@ class ctRoute {
                       PAPER_Religion_DR "Religion",
                       PAPMI_MobPhone "MobilePhone",
                       PAPMI_Email "Email",
-                      CASE 
-                        WHEN PAPER_Country_DR IS NULL 
-                          AND ((PAPER_Zip_DR->CTZIP_Code NOT IN ('900001', '12500', '40001', '74111', '80516', 'JAN-64', 'AUG-43', '11-JAN', '8-JAN', '7-FEB', '900000', '999999') AND PAPER_Zip_DR->CTZIP_Code IS NOT NULL) 
-                          OR (PAPER_Zip_DR->CTZIP_Province_DR NOT IN ('77', '78') AND PAPER_Zip_DR->CTZIP_Province_DR IS NOT NULL)
-                          OR (PAPER_Zip_DR->CTZIP_CITY_DR NOT IN ('1116', '936') AND PAPER_Zip_DR->CTZIP_CITY_DR IS NOT NULL)) THEN 2
-                        ELSE PAPER_Country_DR 
-                      END "Country",
-                      CASE
-                        WHEN PAPER_Zip_DR->CTZIP_Code IN ('900001', '12500', '40001', '74111', '80516', 'JAN-64', 'AUG-43', '11-JAN', '8-JAN', '7-FEB', '900000', '999999') THEN null
-                        ELSE  PAPER_Zip_DR->CTZIP_Code
-                      END "Postcode",
-                      CASE
-                        WHEN PAPER_Zip_DR->CTZIP_Province_DR IN ('77', '78') THEN null
-                        ELSE PAPER_Zip_DR->CTZIP_Province_DR
-                      END "Province",
-                      CASE
-                        WHEN PAPER_Zip_DR->CTZIP_CITY_DR IN ('1116', '936') THEN null
-                        ELSE  PAPER_Zip_DR->CTZIP_CITY_DR
-                      END "District",
-                      PAPER_CityArea_DR "Subdistrict",
-                      PAPER_StName "Address",
+                      PAPMI_PrefLanguage_DR "Language",
                       '' "LinkExpireDate"
                       FROM PA_PatMas
                       INNER JOIN PA_Person ON PA_PatMas.PAPMI_PAPER_DR = PA_Person.PAPER_RowId
@@ -282,10 +263,184 @@ class ctRoute {
       // }
     }
   }
+
+  verifyPatientData() {
+    return async (req: Request, res: Response) => {
+      let data = req.body
+      let repos = di.get('repos')
+      try {
+        // repos = di.get("cache");
+        // let result: any = await new Promise((resolve, reject) => {
+        //   repos.reserve((err: any, connObj: any) => {
+        //     if (connObj) {
+        //       let conn = connObj.conn;
+              
+        //       conn.createStatement((err: any, statement: any) => {
+        //         if (err) {
+        //           reject(err);
+        //         } else {
+        //           statement.setFetchSize(100, function (err: any) {
+        //             if (err) {
+        //               reject(err);
+        //             } else {
+        //                console.log('1111')
+
+        //               const query = `SELECT DISTINCT PAPMI_RowId "TC_RowId",'' "TC_RowIdHash", PAPMI_No "HN", PAPER_PassportNumber "Passport",
+        //               PAPMI_ID "NationalID",  PAPMI_Title_DR "Title", PAPMI_Name "FirstName", PAPMI_Name2 "LastName",
+        //               tochar(PAPER_Dob, 'YYYY-MM-DD') "DOB",
+        //               PAPMI_Sex_DR "Gender",
+        //               PAPER_Nation_DR "Nationality",
+        //               PAPER_Religion_DR "Religion",
+        //               PAPMI_MobPhone "MobilePhone",
+        //               PAPMI_Email "Email",
+        //               PAPMI_PrefLanguage_DR "Language",
+        //               '' "LinkExpireDate"
+        //               FROM PA_PatMas
+        //               INNER JOIN PA_Person ON PA_PatMas.PAPMI_PAPER_DR = PA_Person.PAPER_RowId
+        //               INNER JOIN PA_Adm ON PA_PatMas.PAPMI_RowId = PA_Adm.PAADM_PAPMI_DR
+        //               WHERE YEAR(PAADM_AdmDate) BETWEEN 2021 AND 2021 AND PAADM_AdmNo IS NOT NULL AND PAADM_VisitStatus <> 'C' AND PAADM_VisitStatus <> 'Cancelled'`;           
+        //               statement.executeQuery(query, function (
+        //                 err: any,
+        //                 resultset: any
+        //               ) {
+        //                 if (err) {
+        //                   reject(err);
+        //                 } else {
+        //                   resultset.toObjArray(function (
+        //                     err: any,
+        //                     results: any
+        //                   ) {
+        //                     resolve(results);
+        //                   });
+        //                 }
+        //               });
+        //             }
+        //           });
+        //         }
+        //       });
+        //       repos.release(connObj, function (err: any) {
+        //         if (err) {
+        //           console.log(err);
+        //         }
+        //       });
+        //     }
+        //   });
+        // });
+        console.log(2222)
+        console.log(req.body)
+      //   let mail_to = "numpontae09@gmail.com"
+      //   let mail_subject = "Test Test"
+      //   let mail_body = "Test Test Body"
+      //   console.log(req.body)
+      //   let test = axios({method: 'post',url:`http://10.105.10.29:1881/getmaildata`, data:  {mail_to, mail_subject, mail_body}})
+      // .then(function (response) {
+      //   res.send(response.data)
+      // }).catch(function (error) {
+      //   res.send([])
+      // })
+
+        // repos = di.get("cache");
+        // let result: any = await new Promise((resolve, reject) => {
+        //   repos.reserve((err: any, connObj: any) => {
+        //     if (connObj) {
+        //       let conn = connObj.conn;
+              
+        //       conn.createStatement((err: any, statement: any) => {
+        //         if (err) {
+        //           reject(err);
+        //         } else {
+        //           statement.setFetchSize(100, function (err: any) {
+        //             if (err) {
+        //               reject(err);
+        //             } else {
+        //                console.log('1111')
+
+        //               const query = `SELECT DISTINCT PAPMI_RowId "TC_RowId",'' "TC_RowIdHash", PAPMI_No "HN", PAPER_PassportNumber "Passport",
+        //               PAPMI_ID "NationalID",  PAPMI_Title_DR "Title", PAPMI_Name "FirstName", PAPMI_Name2 "LastName",
+        //               tochar(PAPER_Dob, 'YYYY-MM-DD') "DOB",
+        //               PAPMI_Sex_DR "Gender",
+        //               PAPER_Nation_DR "Nationality",
+        //               PAPER_Religion_DR "Religion",
+        //               PAPMI_MobPhone "MobilePhone",
+        //               PAPMI_Email "Email",
+        //               PAPMI_PrefLanguage_DR "Language",
+        //               '' "LinkExpireDate"
+        //               FROM PA_PatMas
+        //               INNER JOIN PA_Person ON PA_PatMas.PAPMI_PAPER_DR = PA_Person.PAPER_RowId
+        //               INNER JOIN PA_Adm ON PA_PatMas.PAPMI_RowId = PA_Adm.PAADM_PAPMI_DR
+        //               WHERE YEAR(PAADM_AdmDate) BETWEEN 2021 AND 2021 AND PAADM_AdmNo IS NOT NULL AND PAADM_VisitStatus <> 'C' AND PAADM_VisitStatus <> 'Cancelled'`;           
+        //               statement.executeQuery(query, function (
+        //                 err: any,
+        //                 resultset: any
+        //               ) {
+        //                 if (err) {
+        //                   reject(err);
+        //                 } else {
+        //                   resultset.toObjArray(function (
+        //                     err: any,
+        //                     results: any
+        //                   ) {
+        //                     resolve(results);
+        //                   });
+        //                 }
+        //               });
+        //             }
+        //           });
+        //         }
+        //       });
+        //       repos.release(connObj, function (err: any) {
+        //         if (err) {
+        //           console.log(err);
+        //         }
+        //       });
+        //     }
+        //   });
+        // });
+        
+        // await req.body.map((d:any) => {
+        //   let linkexpiredate = new Date()
+        //   linkexpiredate.setDate(linkexpiredate.getDate() + 7)
+        //   d.LinkExpireDate = linkexpiredate
+        //   console.log(d)
+
+        //   let queryInfo = `REPLACE INTO Consent_Send_Email_Prepare.patient_data SET ?`
+
+        //   repos.query(queryInfo, d);
+        //   res.send({status: 200})
+        // })
+      } catch (error) {
+        res.send({status: 404})
+      }
+      
+      
+
+      
+      
+      
+      
+      // let repos = di.get("repos");
+      // try {
+      //   let test = axios({method: 'post',url:`http://10.105.10.29:1881/onetrust_consent_post`, data:  {national_id, site, consentData}})
+      // .then(function (response) {
+      //   res.send({status: 200})
+      // }).catch(function (error) {
+      //   res.send({status: 404})
+      //   //res.send(response.data)
+      // })
+      
+        
+      // } catch (error) {
+      //   console.log(error);
+      //   res.status(404).json([])
+      // }
+    }
+  }
   
   
   
 }
+
+
 
 const router = Router()
 const route = new ctRoute()
@@ -300,6 +455,7 @@ router
   .get("/city", route.getCity())
   .get("/cityarea", route.getCityArea())
   .post("/postpatientlist", route.postPatientList())
+  .post("/verifypatientdata", route.verifyPatientData())
   
   
 export const patient = router
