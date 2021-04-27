@@ -96,6 +96,126 @@ class ctRoute {
             // res.send(result1)
         }
     }
+
+    getPatientData() {
+        return async (req : Request, res : Response) => {
+            let {national_id, passport} = req.query
+            let repos = di.get('repos')
+            console.log(req.query)
+            repos = di.get("cache");
+            let result: any = await new Promise((resolve, reject) => {
+                repos.reserve((err : any, connObj : any) => {
+                    if (connObj) {
+                        let conn = connObj.conn;
+
+                        conn.createStatement((err : any, statement : any) => {
+                            if (err) {
+                                reject(err);
+                            } else {
+                                statement.setFetchSize(100, function (err : any) {
+                                    if (err) {
+                                        reject(err);
+                                    } else {
+
+                                        let query = `SELECT DISTINCT PAPMI_RowId "TC_RowId",'' "TC_RowIdHash", PAPMI_No "HN", PAPER_PassportNumber "Passport",
+                      PAPMI_ID "NationalID",  PAPMI_Title_DR "Title", PAPMI_Name "FirstName", PAPMI_Name2 "LastName",
+                      tochar(PAPER_Dob, 'YYYY-MM-DD') "DOB",
+                      PAPMI_Sex_DR "Gender",
+                      PAPER_Nation_DR "Nationality",
+                      PAPER_Religion_DR "Religion",
+                      PAPMI_MobPhone "MobilePhone",
+                      PAPMI_Email "Email",
+                      PAPMI_PrefLanguage_DR "Language",
+                      '' "LinkExpireDate"
+                      FROM PA_PatMas
+                      INNER JOIN PA_Person ON PA_PatMas.PAPMI_PAPER_DR = PA_Person.PAPER_RowId
+                      WHERE `;
+                      if(!_.isEmpty(national_id))
+                      {
+                          query += ` PAPER_ID = '${
+                          national_id}' `
+                      }
+                      else
+                      {
+                          query += ` PAPER_PassportNumber = '${
+                          passport}' `
+                      }
+                      
+                                        statement.executeQuery(query, function (err : any, resultset : any) {
+                                            if (err) {
+                                                reject(err);
+                                            } else {
+                                                resultset.toObjArray(function (err : any, results : any) {
+                                                    resolve(results);
+                                                });
+                                            }
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                        repos.release(connObj, function (err : any) {
+                            if (err) {
+                                console.log(err);
+                            }
+                        });
+                    }
+                });
+            });
+            if(result.length > 0)
+            {
+                let reference =  Math.floor(Math.random() * 1000000)
+            let otp =  Math.floor(Math.random() * 1000000)
+            while(reference == otp)
+            {
+                otp =  Math.floor(Math.random() * 1000000)
+            }
+            let body = {
+                Identifier : !_.isEmpty(national_id) ? national_id : passport,
+                Reference : reference,
+                OTP : otp
+
+            }
+            repos = di.get('repos')
+            let query = `REPLACE INTO consent_management.OTP_Request SET ?`
+            await repos.query(query, body)
+
+            let mail_from = "noreply@samitivej.co.th"
+                let mail_to = "Pratarn.Ch@samitivej.co.th"
+                let mail_subject = "Samitivej OTP"
+                let mail_body = `Samitivej Ref:${reference} (within 15 minute) OTP code is ${otp}`
+                axios({
+                    method: 'post',
+                    url: `http://10.105.10.50:8014/Service/sendEmailAPI`,
+                    data: {
+                        mail_from,
+                        mail_to,
+                        mail_subject,
+                        mail_body
+                    }
+                })     
+            res.send({result, body})
+            } else {
+                res.send(null)
+            }
+            
+        }
+    }
+
+    verifyOTP() {
+        return async (req : Request, res : Response) => {
+            let {identifier, otp, reference} = req.query
+            let repos = di.get('repos')
+            
+            let query = `SELECT * FROM consent_management.OTP_Request WHERE Identifier = '${identifier}' 
+            AND Reference = '${reference}' AND OTP = '${otp}' AND ExpireTime > NOW()`
+            let data = await repos.query(query)
+
+            
+            res.send(data)
+        }
+    }
+
     getInfo() {
         return async (req : Request, res : Response) => {
             let {rowIdHash} = req.query
@@ -349,7 +469,7 @@ class ctRoute {
                     });
                 });
                 console.log(result)
-                let mail_from = "SamitivejHomeConnect@samitivej.co.th"
+                let mail_from = "Samitivej_NoReplay@samitivej.co.th"
                 let mail_to = "numpontae09@gmail.com"
                 let mail_subject = "Test Test"
                 let mail_body = "Test Test Body"
@@ -469,7 +589,19 @@ class ctRoute {
 const router = Router()
 const route = new ctRoute()
 
-router.get("/patientlist", route.getPatientList()).get("/info", route.getInfo()).get("/gender", route.getGender()).get("/religion", route.getReligion()).get("/zip", route.getZip()).get("/province", route.getProvince()).get("/city", route.getCity()).get("/testmail", route.testMail()).get("/cityarea", route.getCityArea()).post("/postpatientlist", route.postPatientList()).post("/verifypatientdata", route.verifyPatientData())
+router.get("/patientlist", route.getPatientList())
+.get("/info", route.getInfo())
+.get("/gender", route.getGender())
+.get("/religion", route.getReligion())
+.get("/zip", route.getZip())
+.get("/province", route.getProvince())
+.get("/city", route.getCity())
+.get("/testmail", route.testMail())
+.get("/cityarea", route.getCityArea())
+.post("/postpatientlist", route.postPatientList())
+.post("/verifypatientdata", route.verifyPatientData())
+.get("/getpatientdata", route.getPatientData())
+.get("/verifyotp", route.verifyOTP())
 
 
 export const patient = router
