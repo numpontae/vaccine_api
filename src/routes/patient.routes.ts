@@ -164,13 +164,13 @@ class ctRoute {
             });
             if(result.length > 0)
             {
-                let reference =  Math.floor(Math.random() * 1000000)
-            let otp =  Math.floor(Math.random() * 1000000)
-            while(reference == otp)
-            {
-                otp =  Math.floor(Math.random() * 1000000)
-            }
-            let body = {
+                var randomstring = require("randomstring");
+                let reference =  randomstring.generate({
+                    length: 6,
+                    charset: 'alphabetic'
+                  });
+                let otp =  Math.floor(Math.random() * 1000000)
+                let body = {
                 Identifier : !_.isEmpty(national_id) ? national_id : passport,
                 Reference : reference,
                 OTP : otp
@@ -181,6 +181,7 @@ class ctRoute {
             await repos.query(query, body)
 
             let mail_from = "noreply@samitivej.co.th"
+            // let mail_to = "numpon@lbsconsultant.com"
                 let mail_to = "Pratarn.Ch@samitivej.co.th"
                 let mail_subject = "Samitivej OTP"
                 let mail_body = `Samitivej Ref:${reference} (within 15 minute) OTP code is ${otp}`
