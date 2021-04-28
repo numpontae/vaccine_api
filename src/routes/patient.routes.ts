@@ -181,8 +181,8 @@ class ctRoute {
             await repos.query(query, body)
 
             let mail_from = "noreply@samitivej.co.th"
-            // let mail_to = "numpon@lbsconsultant.com"
-                let mail_to = "Pratarn.Ch@samitivej.co.th"
+            let mail_to = "numpon@lbsconsultant.com"
+                // let mail_to = "Pratarn.Ch@samitivej.co.th"
                 let mail_subject = "Samitivej OTP"
                 let mail_body = `Samitivej Ref:${reference} (within 15 minute) OTP code is ${otp}`
                 axios({
