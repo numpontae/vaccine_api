@@ -173,7 +173,7 @@ class ctRoute {
                 }
                 repos = di.get('repos')
                 let query = `REPLACE INTO consent_management.OTP_Request SET ?`
-                await repos.query(query, body)
+                repos.query(query, body)
 
                 let mail_from = "noreply@samitivej.co.th"
                 let mail_to = "numpon@lbsconsultant.com"
