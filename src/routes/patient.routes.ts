@@ -10,7 +10,9 @@ class ctRoute {
     Capitalize = (s : any) => {
         if (typeof s !== 'string') 
             return ''
+
         
+
         return s.charAt(0).toUpperCase() + s.slice(1)
     }
     getPatientList() {
@@ -99,10 +101,11 @@ class ctRoute {
 
     getPatientData() {
         return async (req : Request, res : Response) => {
-            let {national_id, passport} = req.query
+            let {national_id, passport, reference, otp} = req.query
             let repos = di.get('repos')
             console.log(req.query)
             repos = di.get("cache");
+
             let result: any = await new Promise((resolve, reject) => {
                 repos.reserve((err : any, connObj : any) => {
                     if (connObj) {
@@ -130,17 +133,16 @@ class ctRoute {
                       FROM PA_PatMas
                       INNER JOIN PA_Person ON PA_PatMas.PAPMI_PAPER_DR = PA_Person.PAPER_RowId
                       WHERE `;
-                      if(!_.isEmpty(national_id))
-                      {
-                          query += ` PAPER_ID = '${
-                          national_id}' `
-                      }
-                      else
-                      {
-                          query += ` PAPER_PassportNumber = '${
-                          passport}' `
-                      }
-                      
+                                        if (!_.isEmpty(national_id)) {
+                                            query += ` PAPER_ID = '${
+                                                national_id
+                                            }' `
+                                        } else {
+                                            query += ` PAPER_PassportNumber = '${
+                                                passport
+                                            }' `
+                                        }
+
                                         statement.executeQuery(query, function (err : any, resultset : any) {
                                             if (err) {
                                                 reject(err);
@@ -162,26 +164,19 @@ class ctRoute {
                     }
                 });
             });
-            if(result.length > 0)
-            {
-                var randomstring = require("randomstring");
-                let reference =  randomstring.generate({
-                    length: 6,
-                    charset: 'alphabetic'
-                  });
-                let otp =  Math.floor(Math.random() * 1000000)
+            if (result.length > 0) {
                 let body = {
-                Identifier : !_.isEmpty(national_id) ? national_id : passport,
-                Reference : reference,
-                OTP : otp
+                    Identifier: !_.isEmpty(national_id) ? national_id : passport,
+                    Reference: reference,
+                    OTP: otp
 
-            }
-            repos = di.get('repos')
-            let query = `REPLACE INTO consent_management.OTP_Request SET ?`
-            await repos.query(query, body)
+                }
+                repos = di.get('repos')
+                let query = `REPLACE INTO consent_management.OTP_Request SET ?`
+                await repos.query(query, body)
 
-            let mail_from = "noreply@samitivej.co.th"
-            let mail_to = "numpon@lbsconsultant.com"
+                let mail_from = "noreply@samitivej.co.th"
+                let mail_to = "numpon@lbsconsultant.com"
                 // let mail_to = "Pratarn.Ch@samitivej.co.th"
                 let mail_subject = "Samitivej OTP"
                 let mail_body = `Samitivej Ref:${reference} (within 15 minute) OTP code is ${otp}`
@@ -194,12 +189,21 @@ class ctRoute {
                         mail_subject,
                         mail_body
                     }
-                })     
-            res.send({result, body})
+                })
+                res.send({result, body})
             } else {
                 res.send(null)
             }
-            
+
+        }
+    }
+
+    test() {
+        return async (req : Request, res : Response) => {
+            let {identifier, otp, reference} = req.query
+            console.log(11111)
+            delete axios.defaults.baseURL
+            axios.get(`http://10.105.10.29:1881/verifypatientdata?national_id=1341400135163&passport=null`)
         }
     }
 
@@ -207,12 +211,12 @@ class ctRoute {
         return async (req : Request, res : Response) => {
             let {identifier, otp, reference} = req.query
             let repos = di.get('repos')
-            
+
             let query = `SELECT * FROM consent_management.OTP_Request WHERE Identifier = '${identifier}' 
             AND Reference = '${reference}' AND OTP = '${otp}' AND ExpireTime > NOW()`
             let data = await repos.query(query)
 
-            
+
             res.send(data)
         }
     }
@@ -280,7 +284,9 @@ class ctRoute {
             if (!_.isEmpty(provinceid) && provinceid !== 'undefined') 
                 query += `WHERE ca.Province_ID = '${provinceid}' `
 
+
             
+
 
             let result = await repos.query(query)
             let response: any
@@ -304,7 +310,9 @@ class ctRoute {
                 auth: {
                     user: "sysadmin@samitivej.co.th", // generated ethereal user
                     pass: "Pa$$w0rd!", // generated ethereal password
-                    tls: {rejectUnauthorized: false}
+                    tls: {
+                        rejectUnauthorized: false
+                    }
                 }
             });
 
@@ -331,7 +339,9 @@ class ctRoute {
             if (!_.isEmpty(cityid) && cityid !== 'undefined') 
                 query += `WHERE ca.City_ID = '${cityid}'`
 
+
             
+
 
             let result = await repos.query(query)
             let response: any
@@ -351,7 +361,9 @@ class ctRoute {
             if (!_.isEmpty(provinceid) && !_.isEmpty(cityid) && !_.isEmpty(cityareaid)) 
                 query += `Where Province_ID = '${provinceid}' AND City_ID = '${cityid}' AND Cityarea_ID = '${cityareaid}' `
 
+
             
+
 
             let result = await repos.query(query)
             res.send(result)
@@ -442,12 +454,12 @@ class ctRoute {
                                                 data.email
                                             }'`;
 
-                                            if(!_.isEmpty(data.national_id))
-                                            {
+                                            if (!_.isEmpty(data.national_id)) {
                                                 query += `AND PAPER_ID = '${
-                                                data.national_id}' `
+                                                    data.national_id
+                                                }' `
                                             }
-                                            
+
                                             statement.executeQuery(query, function (err : any, resultset : any) {
                                                 if (err) {
                                                     reject(err);
@@ -590,19 +602,7 @@ class ctRoute {
 const router = Router()
 const route = new ctRoute()
 
-router.get("/patientlist", route.getPatientList())
-.get("/info", route.getInfo())
-.get("/gender", route.getGender())
-.get("/religion", route.getReligion())
-.get("/zip", route.getZip())
-.get("/province", route.getProvince())
-.get("/city", route.getCity())
-.get("/testmail", route.testMail())
-.get("/cityarea", route.getCityArea())
-.post("/postpatientlist", route.postPatientList())
-.post("/verifypatientdata", route.verifyPatientData())
-.get("/getpatientdata", route.getPatientData())
-.get("/verifyotp", route.verifyOTP())
+router.get("/patientlist", route.getPatientList()).get("/info", route.getInfo()).get("/gender", route.getGender()).get("/religion", route.getReligion()).get("/zip", route.getZip()).get("/province", route.getProvince()).get("/city", route.getCity()).get("/testmail", route.testMail()).get("/cityarea", route.getCityArea()).post("/postpatientlist", route.postPatientList()).post("/verifypatientdata", route.verifyPatientData()).get("/getpatientdata", route.getPatientData()).get("/verifyotp", route.verifyOTP()).get("/test", route.test())
 
 
 export const patient = router
