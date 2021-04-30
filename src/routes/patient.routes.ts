@@ -134,7 +134,7 @@ class ctRoute {
                       INNER JOIN PA_Person ON PA_PatMas.PAPMI_PAPER_DR = PA_Person.PAPER_RowId
                       WHERE `;
                                         if (!_.isEmpty(national_id)) {
-                                            query += ` PAPER_ID = '${
+                                            query += ` REPLACE(PAPER_ID,' ','') = '${
                                                 national_id
                                             }' `
                                         } else {
