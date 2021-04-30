@@ -165,6 +165,7 @@ class ctRoute {
                 });
             });
             if (result.length > 0) {
+                console.log('1111')
                 let body = {
                     Identifier: !_.isEmpty(national_id) ? national_id : passport,
                     Reference: reference,
@@ -192,6 +193,7 @@ class ctRoute {
                 })
                 res.send({result, body})
             } else {
+                console.log('2222')
                 res.send(null)
             }
 
