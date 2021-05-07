@@ -37,7 +37,7 @@ class ctRoute {
                                     if (err) {
                                         reject(err);
                                     } else {
-                                        console.log('1111')
+                                        
 
                                         const query = `SELECT DISTINCT PAPMI_RowId "TC_RowId",'' "TC_RowIdHash", PAPMI_No "HN", PAPER_PassportNumber "Passport",
                       PAPMI_ID "NationalID",  PAPMI_Title_DR "Title", PAPMI_Name "FirstName", PAPMI_Name2 "LastName",
@@ -58,6 +58,7 @@ class ctRoute {
                                                 reject(err);
                                             } else {
                                                 resultset.toObjArray(function (err : any, results : any) {
+                                                    console.log(results)
                                                     resolve(results);
                                                 });
                                             }
@@ -148,6 +149,38 @@ class ctRoute {
                                                 reject(err);
                                             } else {
                                                 resultset.toObjArray(function (err : any, results : any) {
+                                                    if (results.length > 0) {
+                                                        console.log('1111')
+                                                        let body = {
+                                                            Identifier: !_.isEmpty(national_id) ? national_id : passport,
+                                                            Reference: reference,
+                                                            OTP: otp
+                                        
+                                                        }
+                                                        repos = di.get('repos')
+                                                        let query = `REPLACE INTO consent_management.OTP_Request SET ?`
+                                                        repos.query(query, body)
+                                        
+                                                        let mail_from = "noreply@samitivej.co.th"
+                                                        let mail_to = "numpon@lbsconsultant.com"
+                                                        // let mail_to = "Pratarn.Ch@samitivej.co.th"
+                                                        let mail_subject = "Samitivej OTP"
+                                                        let mail_body = `Samitivej Ref:${reference} (within 15 minute) OTP code is ${otp}`
+                                                        axios({
+                                                            method: 'post',
+                                                            url: `http://10.105.10.50:8014/Service/sendEmailAPI`,
+                                                            data: {
+                                                                mail_from,
+                                                                mail_to,
+                                                                mail_subject,
+                                                                mail_body
+                                                            }
+                                                        })
+                                                        res.send({result, body})
+                                                    } else {
+                                                        console.log('2222')
+                                                        res.send(null)
+                                                    }
                                                     resolve(results);
                                                 });
                                             }
@@ -164,38 +197,7 @@ class ctRoute {
                     }
                 });
             });
-            if (result.length > 0) {
-                console.log('1111')
-                let body = {
-                    Identifier: !_.isEmpty(national_id) ? national_id : passport,
-                    Reference: reference,
-                    OTP: otp
-
-                }
-                repos = di.get('repos')
-                let query = `REPLACE INTO consent_management.OTP_Request SET ?`
-                repos.query(query, body)
-
-                let mail_from = "noreply@samitivej.co.th"
-                let mail_to = "numpon@lbsconsultant.com"
-                // let mail_to = "Pratarn.Ch@samitivej.co.th"
-                let mail_subject = "Samitivej OTP"
-                let mail_body = `Samitivej Ref:${reference} (within 15 minute) OTP code is ${otp}`
-                axios({
-                    method: 'post',
-                    url: `http://10.105.10.50:8014/Service/sendEmailAPI`,
-                    data: {
-                        mail_from,
-                        mail_to,
-                        mail_subject,
-                        mail_body
-                    }
-                })
-                res.send({result, body})
-            } else {
-                console.log('2222')
-                res.send(null)
-            }
+            
 
         }
     }
@@ -467,6 +469,7 @@ class ctRoute {
                                                     reject(err);
                                                 } else {
                                                     resultset.toObjArray(function (err : any, results : any) {
+                                                        console.log(results)
                                                         resolve(results);
                                                     });
                                                 }
