@@ -104,99 +104,156 @@ class ctRoute {
         return async (req : Request, res : Response) => {
             let {national_id, passport, reference, otp} = req.query
             let repos = di.get('repos')
-            console.log(req.query)
-            repos = di.get("cache");
+            const neo4j = require('neo4j-driver')
 
-            let result: any = await new Promise((resolve, reject) => {
-                repos.reserve((err : any, connObj : any) => {
-                    if (connObj) {
-                        let conn = connObj.conn;
+    const driver = neo4j.driver('bolt://10.105.107.65:7687', neo4j.auth.basic('neo4j', 'svhadmin.641'))
+    const session = driver.session();
+    let condition = ''
+    if (!_.isEmpty(national_id)) {
+      condition = `{PAPER_ID : '${national_id}'}`
+    }else {
+      condition = `{PAPER_PasspoerNumber : '${passport}'}`
+    }
+    let neo4jquery = `MATCH (n:PA_Person ${condition}) RETURN n`
+    await session.run(neo4jquery).then(function(result : any)  {
+        if (result.records.length > 0) {                          
+            let body = {
+                Identifier: !_.isEmpty(national_id) ? national_id : passport,
+                Reference: reference,
+                OTP: otp
 
-                        conn.createStatement((err : any, statement : any) => {
-                            if (err) {
-                                reject(err);
-                            } else {
-                                statement.setFetchSize(100, function (err : any) {
-                                    if (err) {
-                                        reject(err);
-                                    } else {
+            }
+            repos = di.get('repos')
+            let query = `REPLACE INTO consent_management.OTP_Request SET ?`
+            repos.query(query, body)
 
-                                        let query = `SELECT DISTINCT PAPMI_RowId "TC_RowId",'' "TC_RowIdHash", PAPMI_No "HN", PAPER_PassportNumber "Passport",
-                      PAPMI_ID "NationalID",  PAPMI_Title_DR "Title", PAPMI_Name "FirstName", PAPMI_Name2 "LastName",
-                      tochar(PAPER_Dob, 'YYYY-MM-DD') "DOB",
-                      PAPMI_Sex_DR "Gender",
-                      PAPER_Nation_DR "Nationality",
-                      PAPER_Religion_DR "Religion",
-                      PAPMI_MobPhone "MobilePhone",
-                      PAPMI_Email "Email",
-                      PAPMI_PrefLanguage_DR "Language",
-                      '' "LinkExpireDate"
-                      FROM PA_PatMas
-                      INNER JOIN PA_Person ON PA_PatMas.PAPMI_PAPER_DR = PA_Person.PAPER_RowId
-                      WHERE `;
-                                        if (!_.isEmpty(national_id)) {
-                                            query += ` REPLACE(PAPER_ID,' ','') = '${
-                                                national_id
-                                            }' `
-                                        } else {
-                                            query += ` PAPER_PassportNumber = '${
-                                                passport
-                                            }' `
-                                        }
+            let mail_from = "noreply@samitivej.co.th"
+            let mail_to = "numpon@lbsconsultant.com"
+            // let mail_to = "Pratarn.Ch@samitivej.co.th"
+            let mail_subject = "Samitivej OTP"
+            let mail_body = `Samitivej Ref:${reference} (within 15 minute) OTP code is ${otp}`
+            axios({
+                method: 'post',
+                url: `http://10.105.10.50:8014/Service/sendEmailAPI`,
+                data: {
+                    mail_from,
+                    mail_to,
+                    mail_subject,
+                    mail_body
+                }
+            })
+            res.send({result, body})
+        } else {
+            res.send(null)
+        }
+        // console.log(result.records.length); 
+        // return result.records.map((record : any) => { 
+        //     console.log(record.get("n")); 
+        // });
+    }).catch((e : any) => {
+        // Output the error
+        console.log(e);
+    }).then(() => {
+        // Close the Session
+        return session.close();
+    }).then(() => {
+        // Close the Driver
+        return driver.close();
+    });
 
-                                        statement.executeQuery(query, function (err : any, resultset : any) {
-                                            if (err) {
-                                                reject(err);
-                                            } else {
-                                                resultset.toObjArray(function (err : any, results : any) {
-                                                    if (results.length > 0) {
-                                                        console.log('1111')
-                                                        let body = {
-                                                            Identifier: !_.isEmpty(national_id) ? national_id : passport,
-                                                            Reference: reference,
-                                                            OTP: otp
+    
+            
+
+            // let result: any = await new Promise((resolve, reject) => {
+            //     repos.reserve((err : any, connObj : any) => {
+            //         if (connObj) {
+            //             let conn = connObj.conn;
+
+            //             conn.createStatement((err : any, statement : any) => {
+            //                 if (err) {
+            //                     reject(err);
+            //                 } else {
+            //                     statement.setFetchSize(100, function (err : any) {
+            //                         if (err) {
+            //                             reject(err);
+            //                         } else {
+
+            //                             let query = `SELECT DISTINCT PAPMI_RowId "TC_RowId",'' "TC_RowIdHash", PAPMI_No "HN", PAPER_PassportNumber "Passport",
+            //           PAPMI_ID "NationalID",  PAPMI_Title_DR "Title", PAPMI_Name "FirstName", PAPMI_Name2 "LastName",
+            //           tochar(PAPER_Dob, 'YYYY-MM-DD') "DOB",
+            //           PAPMI_Sex_DR "Gender",
+            //           PAPER_Nation_DR "Nationality",
+            //           PAPER_Religion_DR "Religion",
+            //           PAPMI_MobPhone "MobilePhone",
+            //           PAPMI_Email "Email",
+            //           PAPMI_PrefLanguage_DR "Language",
+            //           '' "LinkExpireDate"
+            //           FROM PA_PatMas
+            //           INNER JOIN PA_Person ON PA_PatMas.PAPMI_PAPER_DR = PA_Person.PAPER_RowId
+            //           WHERE `;
+            //                             if (!_.isEmpty(national_id)) {
+            //                                 query += ` REPLACE(PAPER_ID,' ','') = '${
+            //                                     national_id
+            //                                 }' `
+            //                             } else {
+            //                                 query += ` PAPER_PassportNumber = '${
+            //                                     passport
+            //                                 }' `
+            //                             }
+
+            //                             statement.executeQuery(query, function (err : any, resultset : any) {
+            //                                 if (err) {
+            //                                     reject(err);
+            //                                 } else {
+            //                                     resultset.toObjArray(function (err : any, results : any) {
+            //                                         if (results.length > 0) {
+                                                        
+            //                                             let body = {
+            //                                                 Identifier: !_.isEmpty(national_id) ? national_id : passport,
+            //                                                 Reference: reference,
+            //                                                 OTP: otp
                                         
-                                                        }
-                                                        repos = di.get('repos')
-                                                        let query = `REPLACE INTO consent_management.OTP_Request SET ?`
-                                                        repos.query(query, body)
+            //                                             }
+            //                                             repos = di.get('repos')
+            //                                             let query = `REPLACE INTO consent_management.OTP_Request SET ?`
+            //                                             repos.query(query, body)
                                         
-                                                        let mail_from = "noreply@samitivej.co.th"
-                                                        let mail_to = "numpon@lbsconsultant.com"
-                                                        // let mail_to = "Pratarn.Ch@samitivej.co.th"
-                                                        let mail_subject = "Samitivej OTP"
-                                                        let mail_body = `Samitivej Ref:${reference} (within 15 minute) OTP code is ${otp}`
-                                                        axios({
-                                                            method: 'post',
-                                                            url: `http://10.105.10.50:8014/Service/sendEmailAPI`,
-                                                            data: {
-                                                                mail_from,
-                                                                mail_to,
-                                                                mail_subject,
-                                                                mail_body
-                                                            }
-                                                        })
-                                                        res.send({result, body})
-                                                    } else {
-                                                        console.log('2222')
-                                                        res.send(null)
-                                                    }
-                                                    resolve(results);
-                                                });
-                                            }
-                                        });
-                                    }
-                                });
-                            }
-                        });
-                        repos.release(connObj, function (err : any) {
-                            if (err) {
-                                console.log(err);
-                            }
-                        });
-                    }
-                });
-            });
+            //                                             let mail_from = "noreply@samitivej.co.th"
+            //                                             let mail_to = "numpon@lbsconsultant.com"
+            //                                             // let mail_to = "Pratarn.Ch@samitivej.co.th"
+            //                                             let mail_subject = "Samitivej OTP"
+            //                                             let mail_body = `Samitivej Ref:${reference} (within 15 minute) OTP code is ${otp}`
+            //                                             axios({
+            //                                                 method: 'post',
+            //                                                 url: `http://10.105.10.50:8014/Service/sendEmailAPI`,
+            //                                                 data: {
+            //                                                     mail_from,
+            //                                                     mail_to,
+            //                                                     mail_subject,
+            //                                                     mail_body
+            //                                                 }
+            //                                             })
+            //                                             res.send({result, body})
+            //                                         } else {
+            //                                             console.log('2222')
+            //                                             res.send(null)
+            //                                         }
+            //                                         resolve(results);
+            //                                     });
+            //                                 }
+            //                             });
+            //                         }
+            //                     });
+            //                 }
+            //             });
+            //             repos.release(connObj, function (err : any) {
+            //                 if (err) {
+            //                     console.log(err);
+            //                 }
+            //             });
+            //         }
+            //     });
+            // });
             
 
         }
