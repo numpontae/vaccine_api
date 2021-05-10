@@ -113,9 +113,9 @@ class ctRoute {
             const session = driver.session();
             let condition = ''
             if (!_.isEmpty(national_id)) {
-                condition = `replace(n.PAPER_ID," ","") = '${national_id}'`
+                condition = `replace(replace(n.PAPER_ID," ",""),"-","") = '${national_id}'`
             } else {
-                condition = `replace(n.PAPER_ID," ","") = '${passport}`
+                condition = `replace(replace(n.PassportNumber," ",""),"-","" = '${passport}`
             }
             let neo4jquery = `MATCH (n:PA_Person) WHERE ${condition} RETURN n`
             await session.run(neo4jquery).then(function (result: any) {
