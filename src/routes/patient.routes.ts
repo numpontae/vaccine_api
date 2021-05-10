@@ -5,13 +5,16 @@ import CryptoJS from "crypto-js";
 import moment from 'moment-timezone';
 moment.tz.setDefault('Asia/Bangkok');
 import axios from 'axios'
+import {neo4jSetting} from "../config/config";
 
 class ctRoute {
     Capitalize = (s : any) => {
         if (typeof s !== 'string') 
             return ''
 
+
         
+
 
         return s.charAt(0).toUpperCase() + s.slice(1)
     }
@@ -33,11 +36,11 @@ class ctRoute {
                             if (err) {
                                 reject(err);
                             } else {
-                                statement.setFetchSize(100, function (err : any) {
+                                statement.setFetchSize(100, function (err: any) {
                                     if (err) {
                                         reject(err);
                                     } else {
-                                        
+
 
                                         const query = `SELECT DISTINCT PAPMI_RowId "TC_RowId",'' "TC_RowIdHash", PAPMI_No "HN", PAPER_PassportNumber "Passport",
                       PAPMI_ID "NationalID",  PAPMI_Title_DR "Title", PAPMI_Name "FirstName", PAPMI_Name2 "LastName",
@@ -53,11 +56,11 @@ class ctRoute {
                       INNER JOIN PA_Person ON PA_PatMas.PAPMI_PAPER_DR = PA_Person.PAPER_RowId
                       INNER JOIN PA_Adm ON PA_PatMas.PAPMI_RowId = PA_Adm.PAADM_PAPMI_DR
                       WHERE YEAR(PAADM_AdmDate) BETWEEN 2021 AND 2021 AND PAADM_AdmNo IS NOT NULL AND PAADM_VisitStatus <> 'C' AND PAADM_VisitStatus <> 'Cancelled'`;
-                                        statement.executeQuery(query, function (err : any, resultset : any) {
+                                        statement.executeQuery(query, function (err: any, resultset: any) {
                                             if (err) {
                                                 reject(err);
                                             } else {
-                                                resultset.toObjArray(function (err : any, results : any) {
+                                                resultset.toObjArray(function (err: any, results: any) {
                                                     console.log(results)
                                                     resolve(results);
                                                 });
@@ -67,7 +70,7 @@ class ctRoute {
                                 });
                             }
                         });
-                        repos.release(connObj, function (err : any) {
+                        repos.release(connObj, function (err: any) {
                             if (err) {
                                 console.log(err);
                             }
@@ -106,63 +109,58 @@ class ctRoute {
             let repos = di.get('repos')
             const neo4j = require('neo4j-driver')
 
-    const driver = neo4j.driver('bolt://10.105.107.65:7687', neo4j.auth.basic('neo4j', 'svhadmin.641'))
-    const session = driver.session();
-    let condition = ''
-    if (!_.isEmpty(national_id)) {
-      condition = `{PAPER_ID : '${national_id}'}`
-    }else {
-      condition = `{PAPER_PasspoerNumber : '${passport}'}`
-    }
-    let neo4jquery = `MATCH (n:PA_Person ${condition}) RETURN n`
-    await session.run(neo4jquery).then(function(result : any)  {
-        if (result.records.length > 0) {                          
-            let body = {
-                Identifier: !_.isEmpty(national_id) ? national_id : passport,
-                Reference: reference,
-                OTP: otp
-
+            const driver = neo4j.driver('bolt://10.105.107.65:7687', neo4j.auth.basic(neo4jSetting.USER, neo4jSetting.PASSWORD))
+            const session = driver.session();
+            let condition = ''
+            if (!_.isEmpty(national_id)) {
+                condition = `replace(n.PAPER_ID," ","") = '${national_id}'`
+            } else {
+                condition = `replace(n.PAPER_ID," ","") = '${passport}`
             }
-            repos = di.get('repos')
-            let query = `REPLACE INTO consent_management.OTP_Request SET ?`
-            repos.query(query, body)
+            let neo4jquery = `MATCH (n:PA_Person) WHERE ${condition} RETURN n`
+            await session.run(neo4jquery).then(function (result: any) {
+                if (result.records.length > 0) {
+                    let body = {
+                        Identifier: !_.isEmpty(national_id) ? national_id : passport,
+                        Reference: reference,
+                        OTP: otp
 
-            let mail_from = "noreply@samitivej.co.th"
-            let mail_to = "numpon@lbsconsultant.com"
-            // let mail_to = "Pratarn.Ch@samitivej.co.th"
-            let mail_subject = "Samitivej OTP"
-            let mail_body = `Samitivej Ref:${reference} (within 15 minute) OTP code is ${otp}`
-            axios({
-                method: 'post',
-                url: `http://10.105.10.50:8014/Service/sendEmailAPI`,
-                data: {
-                    mail_from,
-                    mail_to,
-                    mail_subject,
-                    mail_body
+                    }
+                    repos = di.get('repos')
+                    let query = `REPLACE INTO consent_management.OTP_Request SET ?`
+                    repos.query(query, body)
+
+                    let mail_from = "noreply@samitivej.co.th"
+                    let mail_to = "numpon@lbsconsultant.com"
+                    // let mail_to = "Pratarn.Ch@samitivej.co.th"
+                    let mail_subject = "Samitivej OTP"
+                    let mail_body = `Samitivej Ref:${reference} (within 15 minute) OTP code is ${otp}`
+                    axios({
+                        method: 'post',
+                        url: `http://10.105.10.50:8014/Service/sendEmailAPI`,
+                        data: {
+                            mail_from,
+                            mail_to,
+                            mail_subject,
+                            mail_body
+                        }
+                    })
+                    res.send({result, body})
+                } else {
+                    res.send(null)
                 }
-            })
-            res.send({result, body})
-        } else {
-            res.send(null)
-        }
-        // console.log(result.records.length); 
-        // return result.records.map((record : any) => { 
-        //     console.log(record.get("n")); 
-        // });
-    }).catch((e : any) => {
-        // Output the error
-        console.log(e);
-    }).then(() => {
-        // Close the Session
-        return session.close();
-    }).then(() => {
-        // Close the Driver
-        return driver.close();
-    });
+                // console.log(result.records.length);
+                // return result.records.map((record : any) => {
+                //     console.log(record.get("n"));
+                // });
+            }).catch((e : any) => { // Output the error
+                console.log(e);
+            }).then(() => { // Close the Session
+                return session.close();
+            }).then(() => { // Close the Driver
+                return driver.close();
+            });
 
-    
-            
 
             // let result: any = await new Promise((resolve, reject) => {
             //     repos.reserve((err : any, connObj : any) => {
@@ -207,17 +205,17 @@ class ctRoute {
             //                                 } else {
             //                                     resultset.toObjArray(function (err : any, results : any) {
             //                                         if (results.length > 0) {
-                                                        
+
             //                                             let body = {
             //                                                 Identifier: !_.isEmpty(national_id) ? national_id : passport,
             //                                                 Reference: reference,
             //                                                 OTP: otp
-                                        
+
             //                                             }
             //                                             repos = di.get('repos')
             //                                             let query = `REPLACE INTO consent_management.OTP_Request SET ?`
             //                                             repos.query(query, body)
-                                        
+
             //                                             let mail_from = "noreply@samitivej.co.th"
             //                                             let mail_to = "numpon@lbsconsultant.com"
             //                                             // let mail_to = "Pratarn.Ch@samitivej.co.th"
@@ -254,7 +252,7 @@ class ctRoute {
             //         }
             //     });
             // });
-            
+
 
         }
     }
@@ -350,7 +348,7 @@ class ctRoute {
 
 
             let result = await repos.query(query)
-            let response: any
+            let response: any 
             response = await result.map((d : any) => {
                 return {ID: d.ID, Desc: d.Desc}
             })
@@ -492,7 +490,7 @@ class ctRoute {
                                 if (err) {
                                     reject(err);
                                 } else {
-                                    statement.setFetchSize(100, function (err : any) {
+                                    statement.setFetchSize(100, function (err: any) {
                                         if (err) {
                                             reject(err);
                                         } else {
@@ -521,11 +519,11 @@ class ctRoute {
                                                 }' `
                                             }
 
-                                            statement.executeQuery(query, function (err : any, resultset : any) {
+                                            statement.executeQuery(query, function (err: any, resultset: any) {
                                                 if (err) {
                                                     reject(err);
                                                 } else {
-                                                    resultset.toObjArray(function (err : any, results : any) {
+                                                    resultset.toObjArray(function (err: any, results: any) {
                                                         console.log(results)
                                                         resolve(results);
                                                     });
@@ -535,7 +533,7 @@ class ctRoute {
                                     });
                                 }
                             });
-                            repos.release(connObj, function (err : any) {
+                            repos.release(connObj, function (err: any) {
                                 if (err) {
                                     console.log(err);
                                 }

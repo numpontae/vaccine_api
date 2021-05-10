@@ -18,4 +18,9 @@ export const
   rpaSetting = {
     SERVER: env.SERVER,
     SERVER_TYPE: env.SERVER_TYPE,
+  },
+  neo4jSetting = {
+    URL: 'bolt://10.105.107.65:7687',
+    USER: 'neo4j',
+    PASSWORD: 'svhadmin.641'
   }
