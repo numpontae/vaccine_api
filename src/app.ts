@@ -39,19 +39,19 @@ const registerConfig: any = {
     connectionLimit: 10,
     debug: false
 };
-if (! jinst.isJvmCreated()) {
-    jinst.addOption("-Xrs");
-    jinst.setupClasspath([
-        process.cwd() + "/src/jdk/cachedb.jar",
-        process.cwd() + "/src/jdk/cacheextreme.jar",
-        process.cwd() + "/src/jdk/cachegateway.jar",
-        process.cwd() + "/src/jdk/cachejdbc.jar",
-        process.cwd() + "/src/jdk/habanero.jar",
-        process.cwd() + "/src/jdk/jtds-1.3.1.jar"
-    ]);
-}
-let cacheInit = false;
-let cachedb = new JDBC(cache);
+// if (! jinst.isJvmCreated()) {
+//     jinst.addOption("-Xrs");
+//     jinst.setupClasspath([
+//         process.cwd() + "/src/jdk/cachedb.jar",
+//         process.cwd() + "/src/jdk/cacheextreme.jar",
+//         process.cwd() + "/src/jdk/cachegateway.jar",
+//         process.cwd() + "/src/jdk/cachejdbc.jar",
+//         process.cwd() + "/src/jdk/habanero.jar",
+//         process.cwd() + "/src/jdk/jtds-1.3.1.jar"
+//     ]);
+// }
+// let cacheInit = false;
+// let cachedb = new JDBC(cache);
 
 
 app.listen(port, async () => {
@@ -65,17 +65,17 @@ app.listen(port, async () => {
         console.log(`mysql connected`);
         di.set('repos', pool);
     });
-    if (! cacheInit) {
-        cachedb.initialize(function (err: any) {
-            if (err) {
-                console.log(err);
-            } else {
-                console.log('cache connect');
-                cacheInit = true;
-            }
-        });
-        di.set("cache", cachedb)
-    }
+    // if (! cacheInit) {
+    //     cachedb.initialize(function (err: any) {
+    //         if (err) {
+    //             console.log(err);
+    //         } else {
+    //             console.log('cache connect');
+    //             cacheInit = true;
+    //         }
+    //     });
+    //     di.set("cache", cachedb)
+    // }
 
     
     // var mqtt = require('mqtt');

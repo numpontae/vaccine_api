@@ -36,7 +36,7 @@ class ctRoute {
                             if (err) {
                                 reject(err);
                             } else {
-                                statement.setFetchSize(100, function (err: any) {
+                                statement.setFetchSize(100, function (err : any) {
                                     if (err) {
                                         reject(err);
                                     } else {
@@ -56,11 +56,11 @@ class ctRoute {
                       INNER JOIN PA_Person ON PA_PatMas.PAPMI_PAPER_DR = PA_Person.PAPER_RowId
                       INNER JOIN PA_Adm ON PA_PatMas.PAPMI_RowId = PA_Adm.PAADM_PAPMI_DR
                       WHERE YEAR(PAADM_AdmDate) BETWEEN 2021 AND 2021 AND PAADM_AdmNo IS NOT NULL AND PAADM_VisitStatus <> 'C' AND PAADM_VisitStatus <> 'Cancelled'`;
-                                        statement.executeQuery(query, function (err: any, resultset: any) {
+                                        statement.executeQuery(query, function (err : any, resultset : any) {
                                             if (err) {
                                                 reject(err);
                                             } else {
-                                                resultset.toObjArray(function (err: any, results: any) {
+                                                resultset.toObjArray(function (err : any, results : any) {
                                                     console.log(results)
                                                     resolve(results);
                                                 });
@@ -70,7 +70,7 @@ class ctRoute {
                                 });
                             }
                         });
-                        repos.release(connObj, function (err: any) {
+                        repos.release(connObj, function (err : any) {
                             if (err) {
                                 console.log(err);
                             }
@@ -109,8 +109,8 @@ class ctRoute {
             let repos = di.get('repos')
             const neo4j = require('neo4j-driver')
 
-            const driver = neo4j.driver('bolt://10.105.107.65:7687', neo4j.auth.basic(neo4jSetting.USER, neo4jSetting.PASSWORD))
-            const session = driver.session();
+            const driver = neo4j.driver('bolt://10.105.107.65:7687/', neo4j.auth.basic(neo4jSetting.USER, neo4jSetting.PASSWORD))
+            const session = driver.session({database: 'prodtrak'});
             let condition = ''
             if (!_.isEmpty(national_id)) {
                 condition = `replace(replace(n.PAPER_ID," ",""),"-","") = '${national_id}'`
@@ -118,7 +118,7 @@ class ctRoute {
                 condition = `replace(replace(n.PassportNumber," ",""),"-","" = '${passport}`
             }
             let neo4jquery = `MATCH (n:PA_Person) WHERE ${condition} RETURN n`
-            await session.run(neo4jquery).then(function (result: any) {
+            await session.run(neo4jquery).then(function (result : any) {
                 if (result.records.length > 0) {
                     let body = {
                         Identifier: !_.isEmpty(national_id) ? national_id : passport,
@@ -257,10 +257,70 @@ class ctRoute {
         }
     }
 
+    getCaptcha() {
+        return async (req : Request, res : Response) => {
+            let {site} = req.query
+            var svgCaptcha = require('svg-captcha');
+            let option = {
+                size: 6, // size of random string
+                noise: 5, // number of noise lines
+                color: true, // characters will have distinct colors instead of grey, true if background option is set
+                background: '#cc9966' // background color of the svg image
+            }
+
+            var captcha = svgCaptcha.create(option, 'text');
+            res.status(200).send(captcha);
+
+
+        }
+    }
+
+    postToken() {
+        return async (req : Request, res : Response) => {
+            let {token, randomstrfont, randomstrback} = req.body
+            console.log(req.body)
+            let repos = di.get('repos')
+            let datatoken = {
+                Token: token,
+                RandomStrFont: randomstrfont,
+                RandomStrBack: randomstrback
+              }
+              let queryInfo = `INSERT INTO Vaccine_Token.Vaccine_Token 
+               SET ?`
+              await repos.query(queryInfo, datatoken);
+              console.log('1111')
+              res.send([])
+
+        }
+    }
+    postReisterVaccine() {
+        return async (req : Request, res : Response) => {
+            let repos = di.get('repos')
+              let queryInfo = `INSERT INTO Vaccine_Token.Vaccine_Register
+               SET ?`
+              await repos.query(queryInfo, req.body);
+              res.send([])
+
+        }
+    }
+
+    checkTokenExpire() {
+        return async (req : Request, res : Response) => {
+            let repos = di.get('repos')
+            let {token} = req.body
+            console.log(req.body)
+            let query = `SELECT * FROM Vaccine_Token.Vaccine_Token Where Token = '${token}' AND ExpireDateTime > NOW()`
+            let data = await repos.query(query)
+            console.log(data)
+
+            res.send(data)
+
+        }
+    }
+
     test() {
         return async (req : Request, res : Response) => {
             let {identifier, otp, reference} = req.query
-            console.log(11111)
             delete axios.defaults.baseURL
             axios.get(`http://10.105.10.29:1881/verifypatientdata?national_id=1341400135163&passport=null`)
         }
@@ -290,12 +350,12 @@ class ctRoute {
                     date.getMonth() + 1
                 )
             ).slice(-2) + "-" + date.getDate()
-            // let query = `SELECT * FROM consent_management.Patient_Data WHERE TC_RowIdHash = '${rowIdHash}' AND LinkExpireDate < '2021-03-23'`
-            // let result = await repos.query(query)
-            // if(result.length > 0)
-            // {
-            // res.send(result[0])
-            // }
+            let query = `SELECT * FROM consent_management.Patient_Data WHERE TC_RowIdHash = '${rowIdHash}' AND LinkExpireDate < ${linkexpiredate}`
+            let result = await repos.query(query)
+            if(result.length > 0)
+            {
+            res.send(result[0])
+            }
 
 
         }
@@ -348,7 +408,7 @@ class ctRoute {
 
 
             let result = await repos.query(query)
-            let response: any 
+            let response: any
             response = await result.map((d : any) => {
                 return {ID: d.ID, Desc: d.Desc}
             })
@@ -490,11 +550,10 @@ class ctRoute {
                                 if (err) {
                                     reject(err);
                                 } else {
-                                    statement.setFetchSize(100, function (err: any) {
+                                    statement.setFetchSize(100, function (err : any) {
                                         if (err) {
                                             reject(err);
                                         } else {
-                                            console.log('1111')
                                             let query = `SELECT PAPER_PAPMI_DR->PAPMI_No
                       FROM PA_Person
                       WHERE PAPER_Name = '${
@@ -519,11 +578,11 @@ class ctRoute {
                                                 }' `
                                             }
 
-                                            statement.executeQuery(query, function (err: any, resultset: any) {
+                                            statement.executeQuery(query, function (err : any, resultset : any) {
                                                 if (err) {
                                                     reject(err);
                                                 } else {
-                                                    resultset.toObjArray(function (err: any, results: any) {
+                                                    resultset.toObjArray(function (err : any, results : any) {
                                                         console.log(results)
                                                         resolve(results);
                                                     });
@@ -533,7 +592,7 @@ class ctRoute {
                                     });
                                 }
                             });
-                            repos.release(connObj, function (err: any) {
+                            repos.release(connObj, function (err : any) {
                                 if (err) {
                                     console.log(err);
                                 }
@@ -662,7 +721,9 @@ class ctRoute {
 const router = Router()
 const route = new ctRoute()
 
-router.get("/patientlist", route.getPatientList()).get("/info", route.getInfo()).get("/gender", route.getGender()).get("/religion", route.getReligion()).get("/zip", route.getZip()).get("/province", route.getProvince()).get("/city", route.getCity()).get("/testmail", route.testMail()).get("/cityarea", route.getCityArea()).post("/postpatientlist", route.postPatientList()).post("/verifypatientdata", route.verifyPatientData()).get("/getpatientdata", route.getPatientData()).get("/verifyotp", route.verifyOTP()).get("/test", route.test())
-
+router
+.post("/posttoken", route.postToken())
+.post("/postregister", route.postReisterVaccine())
+.post("/checktokenexpire", route.checkTokenExpire())
 
 export const patient = router
