@@ -4,8 +4,7 @@ import bodyParser from "body-parser";
 import {preRegister} from "./config/config";
 import {di} from "./di";
 import {Routes} from './routes';
-const jinst = require("jdbc/lib/jinst");
-const JDBC = require("jdbc");
+
 
 const app = express();
 const port = 30020;
@@ -23,14 +22,6 @@ app.use((req, res, next) => {
 const routes = new Routes(app);
 routes.setRoutes();
 
-const cache: any = {
-    url: "jdbc:Cache://10.104.10.89:1972/prod-trak",
-    user: "superuser",
-    password: "sys",
-    minpoolsize: 10,
-    maxpoolsize: 20,
-    maxidle: 20 * 60 * 1000
-};
 const registerConfig: any = {
     user: preRegister.USER,
     password: preRegister.PASSWORD,

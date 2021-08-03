@@ -23,8 +23,6 @@
     "dotenv-parse-variables": "^0.3.0",
     "express": "^4.17.1",
     "ipp": "^2.0.1",
-    "java": "^0.12.1",
-    "jdbc": "^0.7.1",
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.15",
     "moment": "^2.28.0",
