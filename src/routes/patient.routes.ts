@@ -279,26 +279,23 @@ class ctRoute {
         return async (req : Request, res : Response) => {
             let {token, randomstrfont, randomstrback} = req.body
             console.log(req.body)
-            let repos = di.get('repos')
-            let datatoken = {
-                Token: token,
-                RandomStrFont: randomstrfont,
-                RandomStrBack: randomstrback
-              }
-              let queryInfo = `INSERT INTO Vaccine_Token.Vaccine_Token 
-               SET ?`
-              await repos.query(queryInfo, datatoken);
-              console.log('1111')
+            let repos = di.get('sql')
+              let queryInfo = `INSERT INTO Vaccine_Token 
+               (Token, RandomStrFont, RandomStrBack) VALUES ('${token}', '${randomstrfont}', '${randomstrback}')`
+               await repos.query(queryInfo)
               res.send([])
 
         }
     }
     postReisterVaccine() {
         return async (req : Request, res : Response) => {
-            let repos = di.get('repos')
-              let queryInfo = `INSERT INTO Vaccine_Token.Vaccine_Register
-               SET ?`
-              await repos.query(queryInfo, req.body);
+            let repos = di.get('sql')
+            let {Firstname, Lastname, VaccineQuantity, Nationality, Mobilephone, HN, token} = req.body
+              let queryInfo = `INSERT INTO Vaccine_Register
+              (Firstname, Lastname, VaccineQuantity, Nationality, Mobilephone, HN, Token)
+              VALUES('${Firstname}', '${Lastname}', '${VaccineQuantity}', '${Nationality}', '${Mobilephone}', '${HN}', '${token}');
+              `
+              await repos.query(queryInfo);
               res.send([])
 
         }
@@ -306,14 +303,12 @@ class ctRoute {
 
     checkTokenExpire() {
         return async (req : Request, res : Response) => {
-            let repos = di.get('repos')
+            let repos = di.get('sql')
             let {token} = req.body
-            console.log(req.body)
-            let query = `SELECT * FROM Vaccine_Token.Vaccine_Token Where Token = '${token}' AND ExpireDateTime > NOW()`
-            let data = await repos.query(query)
-            console.log(data)
 
-            res.send(data)
+            let query = `SELECT * from Vaccine_Token Where Token = '${token}' AND ExpireDateTime > DATEADD(HOUR, 7, GETDATE())`
+            let data = await repos.query(query)
+            res.send(data.rowsAffected)
 
         }
     }

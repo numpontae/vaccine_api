@@ -4,8 +4,29 @@ import bodyParser from "body-parser";
 import {preRegister} from "./config/config";
 import {di} from "./di";
 import {Routes} from './routes';
+const sql = require('mssql')
 
-
+const config: any = {
+    server: 'vaccine-db.database.windows.net',
+    port: 1433,
+    user: 'svnh-vaccine',
+    password: 'S@m1t1vej',
+    database: 'vaccine-db',
+    connectionTimeout: 5000,
+    pool: {
+        max:50,
+        min:0,
+        idleTimeoutMillis: 5000
+    },
+    options: {
+        enableArithAbort: true,
+        encrypt: true, // for azure
+        trustServerCertificate: false // change to true for local dev / self-signed certs
+      }
+};
+sql.on('error', (err:any) => {
+    console.log(err.message)
+})
 const app = express();
 const port = 30020;
 
@@ -56,6 +77,17 @@ app.listen(port, async () => {
         console.log(`mysql connected`);
         di.set('repos', pool);
     });
+
+    const poolsql = await sql.connect(config)
+    await poolsql.request().query('SELECT 1', function (error: any, results: any, fields: any) {
+        if (error) 
+            throw error;
+        
+        console.log(`sql server connected`);
+        di.set('sql', poolsql);
+    });
+
+    
     // if (! cacheInit) {
     //     cachedb.initialize(function (err: any) {
     //         if (err) {
