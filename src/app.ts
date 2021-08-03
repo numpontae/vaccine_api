@@ -28,7 +28,7 @@ sql.on('error', (err:any) => {
     console.log(err.message)
 })
 const app = express();
-const port = 30020;
+const port = 3000;
 
 app.get("/", function (req, res) {
     res.send("Hello Worlxxxxd!");
@@ -68,15 +68,6 @@ const registerConfig: any = {
 
 app.listen(port, async () => {
     console.log(`server start with port ${port}`);
-    const pool = await mysql.createPool(registerConfig);
-    pool.getConnection();
-    pool.query('SELECT 1', function (error: any, results: any, fields: any) {
-        if (error) 
-            throw error;
-        
-        console.log(`mysql connected`);
-        di.set('repos', pool);
-    });
 
     const poolsql = await sql.connect(config)
     await poolsql.request().query('SELECT 1', function (error: any, results: any, fields: any) {
