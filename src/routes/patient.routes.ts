@@ -278,7 +278,6 @@ class ctRoute {
     postToken() {
         return async (req : Request, res : Response) => {
             let {token, randomstrfont, randomstrback} = req.body
-            console.log(req.body)
             let repos = di.get('sql')
               let queryInfo = `INSERT INTO Vaccine_Token 
                (Token, RandomStrFont, RandomStrBack) VALUES ('${token}', '${randomstrfont}', '${randomstrback}')`
@@ -305,7 +304,6 @@ class ctRoute {
         return async (req : Request, res : Response) => {
             let repos = di.get('sql')
             let {token} = req.body
-
             let query = `SELECT * from Vaccine_Token Where Token = '${token}' AND ExpireDateTime > DATEADD(HOUR, 7, GETDATE())`
             let data = await repos.query(query)
             res.send(data.rowsAffected)

@@ -4,7 +4,9 @@ import bodyParser from "body-parser";
 import {preRegister} from "./config/config";
 import {di} from "./di";
 import {Routes} from './routes';
+import  https from 'https';
 const sql = require('mssql')
+var fs = require('fs');
 
 const config: any = {
     server: 'vaccine-db.database.windows.net',
@@ -29,6 +31,10 @@ sql.on('error', (err:any) => {
 })
 const app = express();
 const port = 3000;
+var privateKey  = fs.readFileSync('./src/server.key', 'utf8');
+var certificate = fs.readFileSync('./src/server.cert', 'utf8');
+var credentials = {key: privateKey, cert: certificate};
+var httpsServer = https.createServer(credentials, app);
 
 app.get("/", function (req, res) {
     res.send("Hello Worlxxxxd!");
@@ -65,8 +71,8 @@ const registerConfig: any = {
 // let cacheInit = false;
 // let cachedb = new JDBC(cache);
 
-
-app.listen(port, async () => {
+// httpsServer.listen(8443);
+httpsServer.listen(port, async () => {
     console.log(`server start with port ${port}`);
 
     const poolsql = await sql.connect(config)
